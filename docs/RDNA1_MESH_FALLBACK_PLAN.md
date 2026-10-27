@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-27. **Plan revision:** 0.2. **Overall status:** P0 IN_PROGRESS — local checkout verified; two-machine workflow documented; baseline build and hardware validation not attempted.
+> **Last edited:** 2026-10-27. **Plan revision:** 0.3. **Overall status:** P0 IN_PROGRESS — unmodified Qt-free core baseline compiled; 3 selected CPU/offline tests passed; broader regressions, packaging and hardware validation remain pending.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P0 — Fork and baseline** |
-| Current subtask | P0.2a — document two-machine workflow and baseline validation gates; DONE (documentation evidence in S-001) |
-| Status | `IN_PROGRESS` for P0; no build or hardware gate complete |
-| Last verified git commit | Session input `d1df5ff71d670174fe88191f182cfbf971dec94d`; S-001 documentation is identified by its containing commit (`git log -1` after commit) |
+| Current subtask | P0.4 — first unmodified Qt-free baseline build attempt, with prerequisite P0.3 inventory authorized for S-002; scoped build/test attempt complete |
+| Status | `IN_PROGRESS` for P0/P0.4; core compilation PASS, broader regression baseline incomplete; no hardware gate complete |
+| Last verified git commit | Build source `7f5213f42ba50aa1a36066cca2d65c7a3a762e63` (clean before/during build); S-002 handoff is identified by its containing documentation commit |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
-| Checkout evidence | Clean initial status; pinned tag is an ancestor; all 14 recursive submodules match recorded commits; local origin/upstream URLs verified (S-001) |
-| Build status | Not attempted |
+| Checkout evidence | S-002 rechecked clean status, pinned ancestry, branch, full SHAs, local remotes and 14 matching recursive submodules; `src`, `tests`, root CMake and `3rdparty` match pinned source |
+| Build status | Qt-free Release/Ninja/clang-cl core configure PASS; `kyty_emulator` build PASS (1089.09 s, 2 jobs, no PGO/IPO); GUI/install/package not attempted |
 | Native RDNA1 smoke test | Not run in this fork |
-| Passing tests | None verified |
-| Known blockers / limits | No toolchain inventory or baseline build; desktop tests pending; prior RX mesh failure needs reproduction; fallback architecture unconfirmed; remote GitHub fork/push state not checked |
-| Next single actionable task | P0.3 only: inventory the laptop toolchain. Gate: record versions/availability of Git, CMake, Ninja, x64 VS/Build Tools, clang-cl, lld-link, llvm-lib, Python, glslang and Qt 6.8+ MSVC x64 (or explicit Qt-free choice), plus missing prerequisites. Do not build or edit renderer yet. |
+| Passing tests | `range_set`, `spirv_local_arrays`, `device_compat`: 3/3 PASS via serial CTest, 0.32 s total; 425 tests registered, remaining 422 not run |
+| Known blockers / limits | Initial fetch/glslang blockers resolved without source changes. Broader regression baseline pending; Qt and standalone `spirv-val` not located; no emulator launch, GPU/game test, install or deployment; remote fork/push state unchecked |
+| Next single actionable task | P0.4 CPU/offline regression validation only: classify all 425 registered cases from registrations/source, build/run the confirmed CPU/offline subset at 2 build jobs and 1 test job. Gate: named case/category inventory and actual pass/fail/exclusion counts; keep Vulkan/RDNA1/game cases explicitly pending. Stop before packaging or P1. |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -54,9 +54,9 @@ Never change a phase to `DONE` without a command/test/log and its actual result.
 
 | Validation category | Current evidence in this fork |
 | --- | --- |
-| Compilation | NOT RUN |
-| Unit tests | NOT RUN |
-| Shader compilation and SPIR-V validation | NOT RUN |
+| Compilation | PASS: unmodified Qt-free `kyty_emulator` linked, exit 0; GUI/install/package not run |
+| Unit tests | PASS (subset): `range_set`, `device_compat`; `spirv_local_arrays` also passed as offline shader regression. Full 425-case suite not run |
+| Shader compilation and SPIR-V validation | PASS (scoped): 38 existing build shaders generated; `spirv_local_arrays` synthetic assembly/validation for Vulkan 1.3 passed. No independent validation of the full generated shader corpus; standalone `spirv-val` absent |
 | Vulkan integration tests | NOT RUN on either machine |
 | RDNA1 hardware tests | NOT RUN on RX 5700 XT |
 | Astro Bot compatibility tests | NOT RUN on RX 5700 XT; pre-fork observations retained separately |
@@ -85,7 +85,7 @@ Never change a phase to `DONE` without a command/test/log and its actual result.
 
 ### 2.1 Laptop build policy and source-verified options
 
-These are instructions for future P0 builds, **not executed build results**. Use an x64 Visual Studio developer shell with Ninja and clang-cl as documented in README. Default to **2 jobs**, preserve incremental outputs, close unnecessary memory-heavy applications and run only one build/test suite at a time. Intel Iris Xe shares system memory; 16 GB system RAM is not a dedicated GPU budget. On memory exhaustion, retain the failure log and retry the same build with **1 job**. If a single compile/link still exhausts memory, record the blocker and reassess configuration.
+This is the build policy; actual execution evidence for the first Qt-free baseline is in S-002. Use an x64 Visual Studio developer shell with Ninja and clang-cl as documented in README. Default to **2 jobs**, preserve incremental outputs, close unnecessary memory-heavy applications and run only one build/test suite at a time. Intel Iris Xe shares system memory; 16 GB system RAM is not a dedicated GPU budget. On memory exhaustion, retain the failure log and retry the same build with **1 job**. If a single compile/link still exhausts memory, record the blocker and reassess configuration.
 
 Source checks at S-001 input HEAD:
 
@@ -94,7 +94,7 @@ Source checks at S-001 input HEAD:
 - Root CMake requires `glslangValidator` or `glslang` on PATH. `3rdparty/CMakeLists.txt` forces `SPIRV_SKIP_EXECUTABLES=ON`: do not assume a `spirv-val` executable is produced by this build; inventory a separate validator where needed.
 - `src/generate_version.cmake` and `src/kytyGitVersion.h.in` already generate full `KYTY_GIT_REVISION` plus short/dirty labels. Verify generated identity for each build; do not invent a build-ID flag.
 
-Example initial Qt-free configure/build recipe (verify tool availability in P0.3 first):
+Qt-free configure/build recipe (core configure/build executed in S-002; the aggregate `kyty_tests` command below has NOT been run):
 
 ```powershell
 $env:CMAKE_BUILD_PARALLEL_LEVEL = '2'
@@ -125,7 +125,7 @@ Hardware-dependent gates in P0.5 and P3–P8 remain incomplete until required te
 
 ### 2.3 Build identity, future packaging and reproducible PC deployment
 
-**Planned after the baseline is stable; no packaging script/workflow is implemented or validated this session.** Stable means P0.4 compilation passes and CPU/offline baseline results have failures/skips explained. P0.5 hardware baseline remains separate. Every local build, including failed attempts, records full `git rev-parse HEAD`, dirty/untracked state, submodule revisions, UTC build time, configuration and toolchain. Dirty builds retain a local diff plus untracked-source inventory/content; do not distribute them as clean commit builds.
+**Planned after the baseline is stable; no packaging script/workflow is implemented or validated this session.** Stable means P0.4 compilation passes and the classified CPU/offline baseline has recorded results with failures/skips explained. The first 3 passing cases in S-002 leave that broader gate open (D-010). P0.5 hardware baseline remains separate. Every local build, including failed attempts, records full `git rev-parse HEAD`, dirty/untracked state, submodule revisions, UTC build time, configuration and toolchain. Dirty builds retain a local diff plus untracked-source inventory/content; do not distribute them as clean commit builds.
 
 1. From clean committed source, verify pinned ancestry, recursive submodule cleanliness and full SHA. Start fresh staging; record configure/build/install commands, toolchain/dependency versions, CMake options, portable CPU baseline, 2/1-job setting and six-category results. Sanitize manifests; user-specific absolute paths stay local.
 2. Build Windows x64 core or GUI with the validated recipe, then `cmake --install <build-dir> --prefix <fresh-stage-dir>`. Use an explicit allowlist derived from install output/dependencies. GUI packages need matching Qt runtime/plugins and the existing updater dependency. Review MSVC runtime prerequisites: current `windeployqt` arguments exclude compiler runtime, so install alone does not prove a self-contained package.
@@ -159,14 +159,14 @@ After **every** desktop hardware test, including early failure, append an E-ID i
 ## 3. Phases and acceptance gates
 
 ### P0 — Manual fork, pinned checkout, reproducible baseline
-Status: **IN_PROGRESS** — S-001 verifies local checkout and documents workflow; build/hardware work remains pending.
+Status: **IN_PROGRESS** — S-002 verifies toolchain and unmodified Qt-free core build plus 3 CPU/offline tests; broader regressions, packaging and hardware gates remain pending.
 
 **Tasks:**
 - P0.1: User creates a GitHub fork of Jetsku/KytyPS5; clones with submodules; adds `upstream`; fetches tags; creates/pushes feature branch from `u59-windows-20261024-int21`.
 - P0.2: Record full `git rev-parse HEAD`, remotes, branch and submodule status, and verify license and original attribution.
 - P0.2a: Document two-machine roles, laptop memory policy, validation categories and future packaging/deployment/CI gates. **DONE in S-001 (docs only).** P0.1/P0.2 local evidence verified; remote fork/push state unchecked.
-- P0.3: Inventory laptop toolchain (Git, CMake, Ninja, x64 VS/Build Tools, clang-cl, lld-link, llvm-lib, Qt 6.8+ MSVC x64 incl. Widgets/Network/Concurrent or explicit Qt-free choice, glslang, Python and separate SPIR-V validator availability). Use inspected source/README/release workflow, not guessed flags.
-- P0.4: Build a baseline with **unmodified pinned renderer/source** on the laptop (documentation commits allowed). Use Release/Ninja/clang-cl, no PGO, emulator IPO off, 2 jobs with 1-job memory retry; optionally Qt-free core/CLI. Record compilation, inspected CPU unit-test selection and offline shader/SPIR-V results separately; report unrun categories. Stable build does not imply hardware success.
+- P0.3: **DONE (inventory, S-002):** Git/CMake/Ninja/x64 VS tools/LLVM/Python verified, explicit Qt-free choice, glslang provisioned locally; Qt and standalone SPIR-V CLI validator not located. Exact versions/evidence below. This is not a GUI build/toolchain gate.
+- P0.4: **IN_PROGRESS:** unmodified pinned renderer/source (documentation commits allowed) built successfully on laptop with Release/Ninja/clang-cl, no PGO/IPO, 2 jobs; 3 selected CPU/offline tests passed. Next complete the CPU/offline regression inventory and confirmed subset before calling the broader baseline stable. Record shader and Vulkan categories independently; hardware success is a separate gate.
 - P0.4a (after P0.4): Implement Windows x64 packaging and verify desktop deployment/rollback per section 2.3, independently of rendering validation.
 - P0.5 (after deployment): On RX 5700 XT verify GPU/driver, reproduce expected mesh-draw failure or record any different result; capture logs/screenshots/available metrics in an experiment. No gameplay success claimed.
 - P0.6 (future, after local recipe validation): Integrate GitHub Actions per section 2.4 as its own subtask; manual hardware baseline does not depend on hosted CI.
@@ -272,6 +272,8 @@ Status: **NOT_STARTED**
 | D-006 | 2026-10-27 | Initial builds: 2 jobs, 1-job memory retry, no PGO, emulator IPO off, optional verified Qt-free core | 16 GB laptop RAM; reproducible correctness builds first | Measured memory pressure or later performance phase |
 | D-007 | 2026-10-27 | Add P0.2a workflow docs, P0.4a packaging/deployment, independent P0.5 hardware baseline and future P0.6 CI | Build, deployment and RDNA1 success need separate gates | Stable baseline/package evidence; CI capacity |
 | D-008 | 2026-10-27 | Require commit/build identity, hashes and per-category experiment evidence | Separate-machine tests must map to exact source/package | Provenance or artifact policy changes |
+| D-009 | 2026-10-27 | Use installed VS 2022 x64 LLVM 19.1.5 for no-PGO core baseline; add digest-verified glslang 16.6.0 only under ignored `_Build` | Developer shell resolved PATH gaps; dependencies and missing glslang were resolved without source edits; baseline linked | New compiler/shader failure, GUI requirements or later PGO work |
+| D-010 | 2026-10-27 | Keep P0.4 broader regression gate open after first core build and 3 passing tests | Actual CTest inventory has 425 cases across CPU and GPU categories; 3 passes cannot certify the remaining 422 | Classified CPU/offline baseline results |
 
 ## 5. Experiments and evidence
 
@@ -280,6 +282,7 @@ Status: **NOT_STARTED**
 | E-000 | Pre-fork user test, Oct 2026 | Run on RDNA1 native with U59 | Error: `VK_EXT_mesh_shader` required | Baseline context only; needs local reproduction |
 | E-001 | Pre-fork user test, Oct 2026 | Use Lavapipe Vulkan ICD | Splash visible; no confirmed menu/gameplay; CPU ~85% | CPU-only reference; not native GPU solution |
 | E-002 | 2026-10-27; local checkout `d1df5ff71d670174fe88191f182cfbf971dec94d`; no GPU selected | Documentation/source audit: verify checkout and proposed flags/targets | PASS for local clean checkout, pinned ancestry, 14 matching recursive submodules, flags/targets and version helper; no configure/build/test execution | S-001 summaries and section 2.1 source references; driver/device/performance N/A (read-only audit) |
+| E-003 | 2026-10-27; Huawei development host; clean source `7f5213f42ba50aa1a36066cca2d65c7a3a762e63`; no GPU selected | P0 unmodified Qt-free Release baseline with 2 jobs, no PGO/IPO; inspect/execute CPU/offline tests | PASS configure (8.07 s), core build (1089.09 s), selected test build (9.25 s), CTest 3/3 (0.32 s). Fetch attempts and glslang error resolved without source changes. 38 build shaders generated; synthetic SPIR-V validation passed; no GPU/game evidence | Exact commands/attempt history in S-002; local ignored `_Build/p0-s002/` logs and `_Build/windows-core/` outputs. Driver/device N/A; broader baseline remains incomplete |
 
 New experiments MUST include real date, commit SHA, driver, device, exact command/config, time budget, result (PASS/FAIL/INCONCLUSIVE), and logs/artifact location. Hardware tests must also follow section 2.5 for package identity, screenshots and metrics (or explicit unavailability reasons). Avoid adding game code/assets to git.
 
@@ -323,7 +326,68 @@ New experiments MUST include real date, commit SHA, driver, device, exact comman
 - **Decisions / revision:** D-005–D-008; revision 0.2. Added future tasks without completing build, packaging, CI or hardware milestones. Remote service state, laptop prerequisites, runtime dependencies and desktop behavior remain unverified.
 - **Next single task / acceptance gate:** P0.3 only: inventory Git/CMake/Ninja, x64 VS/Build Tools, clang-cl/lld-link/llvm-lib, Python, glslang, separate SPIR-V validator availability and Qt 6.8+ MSVC x64 (or explicit Qt-free choice). Record actual versions/locations locally, sanitized versions/missing prerequisites in this plan, then stop. No build or renderer changes yet.
 
-### Template for S-002 onward
+### Session S-002 — 2026-10-27 — P0 toolchain and unmodified core baseline (Codex)
+
+- **Branch / HEAD before → after:** `feature/rdna1-mesh-fallback`; build input `7f5213f42ba50aa1a36066cca2d65c7a3a762e63` → documentation commit containing this entry. The executable retains the input SHA; the later documentation commit is not a rebuilt executable. No merge/rebase/push.
+- **Phase / scope:** user explicitly authorized P0 inventory followed by baseline build for THIS SESSION ONLY, superseding S-001's inventory-only stop. Performed P0.3 prerequisites and one P0.4 baseline build/test attempt. No P1, packaging, renderer changes, game-file changes or game run.
+- **Repository verification (PASS):** `git status --short` clean before and after execution; `git log -1 --oneline` = `7f5213f4 docs: define two-machine workflow`; branch correct; `git rev-parse HEAD` and `git rev-parse 'u59-windows-20261024-int21^{commit}'` matched recorded SHAs. `git merge-base --is-ancestor u59-windows-20261024-int21 HEAD` exit 0. `git submodule status --recursive` showed all 14 initialized at recorded revisions; `git remote -v` matched S-001. Git checks ran outside the sandbox due the already established submodule metadata restriction. `git diff --exit-code u59-windows-20261024-int21 HEAD -- src tests CMakeLists.txt 3rdparty` exit 0: build source matches the pin. Only the three Markdown files differed from the tag before this session. No remote fork-ownership or push-state check.
+- **Toolchain inventory:** initial shell PATH lacked CMake/Ninja/LLVM tools. `vswhere -all -products '*' -format json` located VS Build Tools 2019 and 2022; `vswhere -latest -version '[17.0,18.0)' -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath` and `-find '**/cmake.exe'`, `-find '**/ninja.exe'`, `-find '**/clang-cl.exe'` located the VS 2022 installation and bundled tools. Selected its x64 developer environment, not the ARM64 compiler. Commands/results: `git --version` = 2.39.2.windows.1; `cmake --version` = 3.31.6-msvc6; `ninja --version` = 1.12.1; `clang-cl --version` = 19.1.5 targeting x86_64-pc-windows-msvc; `lld-link --version` = 19.1.5; `llvm-lib /?` worked. VS developer prompt = 17.14.42; `set VCToolsVersion` = 14.44.35207; `set WindowsSDKVersion` = 10.0.26100.0; target architecture x64. `python --version` = 3.11.0.
+- **Qt / shader tools:** deliberately chose source-supported `KYTY_BUILD_LAUNCHER=OFF`; Qt tools were not found on PATH or in the checked conventional tool directories, so GUI prerequisites remain unverified. `glslang`/`glslangValidator` and standalone `spirv-val` were initially absent from those locations. The VS-bundled vcpkg executable existed but was not used to install anything. Standalone `spirv-val` remains unavailable; the selected offline regression uses the pinned SPIRV-Tools library directly.
+- **Local glslang provisioning (PASS):** inspected [official Khronos glslang releases](https://github.com/KhronosGroup/glslang/releases/tag/16.6.0) and queried `https://api.github.com/repos/KhronosGroup/glslang/releases/tags/16.6.0`. Downloaded `https://github.com/KhronosGroup/glslang/releases/download/16.6.0/glslang-16.6.0-windows-x86_64-release.zip` with `Invoke-WebRequest -OutFile <ignored-local-archive> -TimeoutSec 90`; `Get-FileHash -Algorithm SHA256` matched the API asset digest `82bf434e69b9bb4829de7e2b4bc2c5e7a7861e53d66cf75e5cc70f5f694a8d9b` before `Expand-Archive`. Files remain under `_Build/p0-tools/glslang-16.6.0/`; `extracted/bin/glslang.exe --version` reported `11:16.6.0`, SPIR-V 1.6 support. Added that directory only to configure/build process PATH; no global install or persistent PATH change.
+
+**Exact successful baseline commands** (from repository root in `cmd.exe`; command scripts/logs retained under ignored `_Build/p0-s002/`):
+
+```bat
+call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64
+set "PATH=%CD%\_Build\p0-tools\glslang-16.6.0\extracted\bin;%PATH%"
+set CMAKE_BUILD_PARALLEL_LEVEL=2
+cmake -S . -B _Build/windows-core -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl -DKYTY_BUILD_LAUNCHER=OFF -DBUILD_TESTING=ON -DKYTY_PGO_GENERATE=OFF -DKYTY_PGO_USE:FILEPATH= -DKYTY_EMULATOR_IPO=OFF -DKYTY_MARCH:STRING=
+cmake --build _Build/windows-core --target kyty_emulator --parallel 2
+cmake --build _Build/windows-core --target device_compat_tests range_set_tests spirv_local_arrays_tests --parallel 2
+```
+
+Configure retries 03–05 also set these transient Git transfer limits; no repository/global Git config was changed:
+
+```bat
+set GIT_CONFIG_COUNT=2
+set GIT_CONFIG_KEY_0=http.lowSpeedLimit
+set GIT_CONFIG_VALUE_0=1
+set GIT_CONFIG_KEY_1=http.lowSpeedTime
+set GIT_CONFIG_VALUE_1=30
+```
+
+**Attempt history / exact errors (retained, not rewritten as successes):**
+
+| Attempt | Command / environment | Actual result |
+| --- | --- | --- |
+| Configure 01 | Same core CMake flags, x64 developer shell, default sandbox, no local glslang yet | FAIL, exit 1 after 10.25 s. Compiler ABI detection completed, then Opus clone failed three times: `fatal: unable to access 'https://github.com/xiph/opus.git/': getaddrinfo() thread failed to start`; CMake: `Failed to clone repository: 'https://github.com/xiph/opus.git'` at generated `opus-gitclone.cmake:50`, called by `3rdparty/CMakeLists.txt:24`. |
+| Configure 02 | Same flags, outside sandbox for public pinned dependency fetch | Interrupted with Ctrl+C while Opus clone appeared stalled. Tool reported exit 1 for the interruption; no natural CMake result. |
+| Connectivity diagnostic | `git -c http.lowSpeedLimit=1 -c http.lowSpeedTime=20 ls-remote https://github.com/xiph/opus.git HEAD`, owned process with 45-second cap | PASS, Git exit 0 in 6.39 s; HEAD `a8b2545eec71e0f53ecead2d583e7b6baa42684d`. This checks connectivity only; dependencies still use their pinned commits, not this moving HEAD. |
+| Configure 03 | Same flags outside sandbox, transient Git low-speed settings above | Interrupted after 194.32 s at the three-minute diagnostic budget (tool interruption exit 1, not a natural configure failure). Reviewing the latest log showed Opus at `ddbe48383984d56acd9e1ab6a090c54ca6b735a6` and OpenXR at `f2448a8797c85814aa892efc1ab8707900fbcc78`; progress had resumed near the cutoff. Continued from this cache rather than declaring the fetch impossible. |
+| Configure 04 | Same flags/settings, resumed cached dependencies | Dependency downloads completed. FAIL, exit 1 after 162.78 s at root `CMakeLists.txt:339`: `Could not find KYTY_GLSLANG_VALIDATOR using the following names: glslangValidator, glslang`. |
+| Configure 05 | Same flags/settings plus verified local glslang PATH | PASS, exit 0 in 8.07 s, generated `_Build/windows-core/build.ninja`. Cache confirms Release, testing ON, launcher OFF, PGO generation OFF/use empty, emulator IPO OFF and empty portable CPU baseline. |
+| Core build 01 | `cmake --build _Build/windows-core --target kyty_emulator --parallel 2` | PASS, exit 0 in 1089.09 s; UTC start `2026-10-27T18:11:00.0636229Z`. Linked `kyty_emulator.exe`. Nonfatal CRT deprecations and return-path warnings (including `src/libs/libKernel.cpp:2177`, `src/loader/runtimeLinker.cpp:992`) remain unchanged; no source patches or warning suppression. |
+| Selected test build | Three target names in command block above, 2 jobs | PASS, exit 0 in 9.25 s. |
+
+**CTest commands / actual results** (same bundled CTest executable; run from PowerShell, after target build):
+
+```powershell
+ctest --test-dir _Build/windows-core --show-only=json-v1
+ctest --test-dir _Build/windows-core -N -R '^(device_compat|range_set|spirv_local_arrays)$'
+ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(device_compat|range_set|spirv_local_arrays)$'
+```
+
+- Full inventory exited 0 with **425 registered cases**; selected inventory exited 0 with 3. Actual invocation used the absolute VS-bundled `ctest.exe` path because the parent PowerShell PATH lacked it. Selection source/registrations inspected: `tests/DeviceCompatTests.cpp` (synthetic capability/breadcrumb logic, Vulkan headers only), `tests/RangeSetTests.cpp` (CPU range/allocator cases) and `tests/SpirvLocalArraysTests.cpp` (synthetic assembly/validation/shrink using `SPV_ENV_VULKAN_1_3`; no Vulkan device).
+- Run at UTC `2026-10-27T18:29:35.8203871Z`: `range_set` PASS 0.15 s; `spirv_local_arrays` PASS 0.09 s; `device_compat` PASS 0.05 s. **3/3 PASS, 0 failed, 0.32 s CTest total, exit 0**. Remaining 422 registered cases not executed; aggregate `kyty_tests` target not built. No full-suite claim.
+- **Shader scope:** ordinary build generated 38 existing `.spv` files: tiler 26, blit 7, DCC 4, mesh-indirect helper 1. This is existing baseline shader generation, not Mesh Shader emulation implementation. The offline test validates its synthetic modules using the pinned SPIRV-Tools library; the complete set of 38 generated shaders was not independently validated by a CLI validator.
+- **Memory:** 2 jobs throughout; no observed memory-exhaustion error and no 1-job retry. Valid sampled snapshot: 16183 MiB total physical RAM, 2658 MiB free, two Clang processes; this is one observation, not peak usage. An initial sandbox CIM query was denied; discarded its invalid zero-valued sample and replaced it with a successful outside-sandbox snapshot. No hardware rendering/performance inference.
+- **Artifact identity:** `_Build/windows-core/kyty_emulator.exe`, 33,247,744 bytes; SHA-256 `8dc7ec2680205f1c7d0663d1b41380f796c740f39d5818701545e7bfe941b149`. Generated `kytyGitVersion.h` contains full `KYTY_GIT_REVISION` = `7f5213f42ba50aa1a36066cca2d65c7a3a762e63`, short label `7f5213f` without dirty suffix. No binary/package committed or distributed; no emulator launch, GUI build, install or deployment test.
+- **Local evidence paths:** `_Build/p0-s002/provenance.txt`, `inventory.log`, `configure-01.log` through `configure-05.log`, `configure-*-result.txt` where produced (interrupted 02 has no natural result file), `opus-connectivity.*.log`, `opus-connectivity-result.txt`, `glslang-download.txt`, `glslang-version.txt`, `build-01.log`, `build-01-result.txt`, `test-build.log`, `test-build-result.txt`, `ctest-inventory.json`, `ctest-selected-inventory.log`, `ctest-selected.log`, `ctest-selected-result.txt`, `memory-snapshots.jsonl`, `artifact-identity.txt`; build cache/generated headers in `_Build/windows-core/`. These are ignored local outputs; this entry preserves compact sanitized results in Git.
+- **Changed tracked files / validation:** `AGENTS.md` current task and this plan only. `git diff --check` PASS (exit 0, only LF→CRLF conversion notices); reviewed documentation against command logs and checked balanced code fences, retained prior session headings and current evidence IDs (PASS). No source, CMake, workflow, game, firmware or cache files added to Git; `git check-ignore` confirmed representative logs/executable/local compiler are ignored.
+- **Decisions / limits:** D-009/D-010; revision 0.3. No unresolved blocker for the achieved core-build/3-test scope. Broader CPU/offline regression coverage, standalone SPIR-V CLI availability, GUI prerequisites, packaging/deployment and all Vulkan/RDNA1/Astro Bot results remain unverified. No GPU selected; no screenshots/FPS/VRAM data applicable to this build-only experiment.
+- **Next exact single task / gate:** P0.4 CPU/offline baseline regression validation: classify the 425 cases from actual source/registrations; build/run the confirmed CPU/offline subset with 2 build jobs (1 if memory is exhausted) and serial tests. Gate: committed named case/category inventory, exact commands and actual pass/fail/exclusion counts; keep device-dependent categories explicitly pending. Then stop; do not package or begin P1 automatically.
+
+### Template for S-003 onward
 - **Date / who:**
 - **Branch / HEAD before → after:**
 - **Phase / one subtask:**
@@ -340,6 +404,7 @@ New experiments MUST include real date, commit SHA, driver, device, exact comman
 | --- | --- | --- | --- |
 | 2026-10-27 | 0.1 | All | Initial roadmap; phases subject to evidence-based evolution |
 | 2026-10-27 | 0.2 | 0–9; AGENTS.md; README | User specified Huawei/Intel laptop and separate RX 5700 XT PC. Local checkout/source audit supports low-memory build policy and Qt-free option. Split validation, add future package/deployment/CI gates and hardware evidence requirements; preserve prior observations/history. Documentation only (S-001). |
+| 2026-10-27 | 0.3 | 1–5, 7–8; AGENTS.md | S-002 user-authorized P0 inventory/build: installed x64 developer tools plus local digest-verified glslang enabled unmodified core compilation and 3 CPU/offline passes. Preserve failed/interrupted attempts, record exact source/artifact identity and keep broader 425-case baseline/hardware gates open. |
 
 ## 9. Quick commands (reference; verify before running)
 
