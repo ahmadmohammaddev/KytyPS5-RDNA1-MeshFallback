@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-27. **Plan revision:** 0.3. **Overall status:** P0 IN_PROGRESS — unmodified Qt-free core baseline compiled; 3 selected CPU/offline tests passed; broader regressions, packaging and hardware validation remain pending.
+> **Last edited:** 2026-10-27. **Plan revision:** 0.4. **Overall status:** P0 IN_PROGRESS — core baseline compiled; S-003 lightweight regression batch 22/22 passed; full CPU/offline audit, packaging and hardware validation remain pending.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P0 — Fork and baseline** |
-| Current subtask | P0.4 — first unmodified Qt-free baseline build attempt, with prerequisite P0.3 inventory authorized for S-002; scoped build/test attempt complete |
+| Current subtask | P0.4 — lightweight CPU/offline batch complete (S-003); full baseline gate remains open |
 | Status | `IN_PROGRESS` for P0/P0.4; core compilation PASS, broader regression baseline incomplete; no hardware gate complete |
-| Last verified git commit | Build source `7f5213f42ba50aa1a36066cca2d65c7a3a762e63` (clean before/during build); S-002 handoff is identified by its containing documentation commit |
+| Last verified git commit | S-003 test build source `53bd13f21416d2dd67af05814a7781e2dc4c05bd` (clean); checkpoint commit identified by containing commit. S-002 emulator binary was not rebuilt |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | S-002 rechecked clean status, pinned ancestry, branch, full SHAs, local remotes and 14 matching recursive submodules; `src`, `tests`, root CMake and `3rdparty` match pinned source |
 | Build status | Qt-free Release/Ninja/clang-cl core configure PASS; `kyty_emulator` build PASS (1089.09 s, 2 jobs, no PGO/IPO); GUI/install/package not attempted |
 | Native RDNA1 smoke test | Not run in this fork |
-| Passing tests | `range_set`, `spirv_local_arrays`, `device_compat`: 3/3 PASS via serial CTest, 0.32 s total; 425 tests registered, remaining 422 not run |
+| Passing tests | S-003: 22/22 PASS, 0 failures/skips, serial CTest 1.69 s (20 CPU helpers + 2 offline SPIR-V); 403 not run. Named inventory: `docs/RDNA1_BASELINE_TEST_INVENTORY.md` |
 | Known blockers / limits | Initial fetch/glslang blockers resolved without source changes. Broader regression baseline pending; Qt and standalone `spirv-val` not located; no emulator launch, GPU/game test, install or deployment; remote fork/push state unchecked |
-| Next single actionable task | P0.4 CPU/offline regression validation only: classify all 425 registered cases from registrations/source, build/run the confirmed CPU/offline subset at 2 build jobs and 1 test job. Gate: named case/category inventory and actual pass/fail/exclusion counts; keep Vulkan/RDNA1/game cases explicitly pending. Stop before packaging or P1. |
+| Next single actionable task | P0.4 source/dispatch audit only: resolve the 82 deferred cases in `docs/RDNA1_BASELINE_TEST_INVENTORY.md` using registrations, main/argument branches and initialization paths; record CPU/offline vs device/host requirements and select the next bounded build batch (including the already-confirmed CPU `null_texture_desc` as appropriate). Gate: zero unresolved dispositions among those 82, exact source/dispatch evidence and named next batch; no tests/build, packaging or P1 in that audit subtask. |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -55,8 +55,8 @@ Never change a phase to `DONE` without a command/test/log and its actual result.
 | Validation category | Current evidence in this fork |
 | --- | --- |
 | Compilation | PASS: unmodified Qt-free `kyty_emulator` linked, exit 0; GUI/install/package not run |
-| Unit tests | PASS (subset): `range_set`, `device_compat`; `spirv_local_arrays` also passed as offline shader regression. Full 425-case suite not run |
-| Shader compilation and SPIR-V validation | PASS (scoped): 38 existing build shaders generated; `spirv_local_arrays` synthetic assembly/validation for Vulkan 1.3 passed. No independent validation of the full generated shader corpus; standalone `spirv-val` absent |
+| Unit tests | PASS (subset): S-003 20 CPU helper cases; see named inventory. Full CPU baseline not yet classified/executed |
+| Shader compilation and SPIR-V validation | PASS (scoped): 38 existing build shaders generated; `spirv_local_arrays` synthetic assembly/validation for Vulkan 1.3 passed. S-003 also passed `spirv_cache_salt` synthetic Vulkan 1.3 assembly/validation. No independent validation of the full generated shader corpus; standalone `spirv-val` absent |
 | Vulkan integration tests | NOT RUN on either machine |
 | RDNA1 hardware tests | NOT RUN on RX 5700 XT |
 | Astro Bot compatibility tests | NOT RUN on RX 5700 XT; pre-fork observations retained separately |
@@ -115,7 +115,7 @@ Every checkpoint/test report must give a separate result for each category: PASS
 | Category | Where / method | Acceptance evidence |
 | --- | --- | --- |
 | Compilation | Laptop initially, future Windows x64 CI | Configure/selected targets exit 0; flags, tool versions, job count, build logs and generated Git identity retained. Compilation says nothing about rendering. |
-| Unit tests | Laptop / future CI, verified CPU-only subset | Inventory with `ctest --test-dir <build-dir> -N`; inspect registrations/source before selecting cases; run with `--output-on-failure --parallel 1`, record named tests/counts/failures/skips. No CPU-only selection verified yet. |
+| Unit tests | Laptop / future CI, verified CPU-only subset | Inventory with `ctest --test-dir <build-dir> -N`; inspect registrations/source before selecting cases; run with `--output-on-failure --parallel 1`, record named tests/counts/failures/skips. S-003 confirms a 20-case CPU helper batch; broader selection remains incomplete. |
 | Shader compilation and SPIR-V validation | Offline synthetic fixtures on laptop / future CI | Record compiler/SPIRV-Tools versions, fixture identity, exact Vulkan/SPIR-V target environment and validator results. Building glslang shaders alone does not validate all generated recompiler SPIR-V. |
 | Vulkan integration tests | Available device; laptop explicitly Intel; desktop explicitly AMD | Record physical device, driver/ICD, features, validation-layer/synchronization settings and messages, correctness assertions and skips. The aggregate `kyty_tests` includes GPU-related executables; a full CTest run is not automatically a CPU unit-test result. |
 | RDNA1 hardware tests | **RX 5700 XT desktop only** | Confirm native AMD ICD and selected physical device; archive phase-specific synthetic/rendering correctness, validation and performance evidence. Intel, hosted CI and Lavapipe cannot close this gate. |
@@ -166,7 +166,7 @@ Status: **IN_PROGRESS** — S-002 verifies toolchain and unmodified Qt-free core
 - P0.2: Record full `git rev-parse HEAD`, remotes, branch and submodule status, and verify license and original attribution.
 - P0.2a: Document two-machine roles, laptop memory policy, validation categories and future packaging/deployment/CI gates. **DONE in S-001 (docs only).** P0.1/P0.2 local evidence verified; remote fork/push state unchecked.
 - P0.3: **DONE (inventory, S-002):** Git/CMake/Ninja/x64 VS tools/LLVM/Python verified, explicit Qt-free choice, glslang provisioned locally; Qt and standalone SPIR-V CLI validator not located. Exact versions/evidence below. This is not a GUI build/toolchain gate.
-- P0.4: **IN_PROGRESS:** unmodified pinned renderer/source (documentation commits allowed) built successfully on laptop with Release/Ninja/clang-cl, no PGO/IPO, 2 jobs; 3 selected CPU/offline tests passed. Next complete the CPU/offline regression inventory and confirmed subset before calling the broader baseline stable. Record shader and Vulkan categories independently; hardware success is a separate gate.
+- P0.4: **IN_PROGRESS:** unmodified pinned renderer/source (documentation commits allowed) built successfully on laptop with Release/Ninja/clang-cl, no PGO/IPO, 2 jobs; 3 selected CPU/offline tests passed. S-003 completed a bounded 22-case lightweight CPU/offline batch and named all 425 registrations. Continue source/dispatch classification of 82 deferred cases and later execution of remaining confirmed CPU/offline cases before calling the broader baseline stable (D-011). Record shader and Vulkan categories independently; hardware success is a separate gate.
 - P0.4a (after P0.4): Implement Windows x64 packaging and verify desktop deployment/rollback per section 2.3, independently of rendering validation.
 - P0.5 (after deployment): On RX 5700 XT verify GPU/driver, reproduce expected mesh-draw failure or record any different result; capture logs/screenshots/available metrics in an experiment. No gameplay success claimed.
 - P0.6 (future, after local recipe validation): Integrate GitHub Actions per section 2.4 as its own subtask; manual hardware baseline does not depend on hosted CI.
@@ -274,6 +274,7 @@ Status: **NOT_STARTED**
 | D-008 | 2026-10-27 | Require commit/build identity, hashes and per-category experiment evidence | Separate-machine tests must map to exact source/package | Provenance or artifact policy changes |
 | D-009 | 2026-10-27 | Use installed VS 2022 x64 LLVM 19.1.5 for no-PGO core baseline; add digest-verified glslang 16.6.0 only under ignored `_Build` | Developer shell resolved PATH gaps; dependencies and missing glslang were resolved without source edits; baseline linked | New compiler/shader failure, GUI requirements or later PGO work |
 | D-010 | 2026-10-27 | Keep P0.4 broader regression gate open after first core build and 3 passing tests | Actual CTest inventory has 425 cases across CPU and GPU categories; 3 passes cannot certify the remaining 422 | Classified CPU/offline baseline results |
+| D-011 | 2026-10-27 | Split P0.4 into bounded source-audit/build batches; retain full baseline gate | 425 registrations include 317 branches of one large Vulkan/mixed executable and full-emulator-linked CPU tests. S-003 validates 22 lightweight cases; 82 unresolved dispositions and one confirmed CPU full-emulator build remain. A named inventory is not complete execution/classification | Remaining source/dispatch audit and CPU/offline runs |
 
 ## 5. Experiments and evidence
 
@@ -283,6 +284,7 @@ Status: **NOT_STARTED**
 | E-001 | Pre-fork user test, Oct 2026 | Use Lavapipe Vulkan ICD | Splash visible; no confirmed menu/gameplay; CPU ~85% | CPU-only reference; not native GPU solution |
 | E-002 | 2026-10-27; local checkout `d1df5ff71d670174fe88191f182cfbf971dec94d`; no GPU selected | Documentation/source audit: verify checkout and proposed flags/targets | PASS for local clean checkout, pinned ancestry, 14 matching recursive submodules, flags/targets and version helper; no configure/build/test execution | S-001 summaries and section 2.1 source references; driver/device/performance N/A (read-only audit) |
 | E-003 | 2026-10-27; Huawei development host; clean source `7f5213f42ba50aa1a36066cca2d65c7a3a762e63`; no GPU selected | P0 unmodified Qt-free Release baseline with 2 jobs, no PGO/IPO; inspect/execute CPU/offline tests | PASS configure (8.07 s), core build (1089.09 s), selected test build (9.25 s), CTest 3/3 (0.32 s). Fetch attempts and glslang error resolved without source changes. 38 build shaders generated; synthetic SPIR-V validation passed; no GPU/game evidence | Exact commands/attempt history in S-002; local ignored `_Build/p0-s002/` logs and `_Build/windows-core/` outputs. Driver/device N/A; broader baseline remains incomplete |
+| E-004 | 2026-10-27; clean source `53bd13f21416d2dd67af05814a7781e2dc4c05bd`; development host, no GPU/driver selected | P0.4 lightweight CPU/offline batch, x64 LLVM 19.1.5, cached Release/no-PGO/no-IPO, 2 build jobs | Build exit 0; serial CTest 22/22 PASS, 0 failures/skips, 1.69 s. 403 not run; full baseline still open | Named inventory and commands in `docs/RDNA1_BASELINE_TEST_INVENTORY.md`; ignored `_Build/p0-s003/` evidence. No hardware metrics applicable |
 
 New experiments MUST include real date, commit SHA, driver, device, exact command/config, time budget, result (PASS/FAIL/INCONCLUSIVE), and logs/artifact location. Hardware tests must also follow section 2.5 for package identity, screenshots and metrics (or explicit unavailability reasons). Avoid adding game code/assets to git.
 
@@ -387,7 +389,20 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(devi
 - **Decisions / limits:** D-009/D-010; revision 0.3. No unresolved blocker for the achieved core-build/3-test scope. Broader CPU/offline regression coverage, standalone SPIR-V CLI availability, GUI prerequisites, packaging/deployment and all Vulkan/RDNA1/Astro Bot results remain unverified. No GPU selected; no screenshots/FPS/VRAM data applicable to this build-only experiment.
 - **Next exact single task / gate:** P0.4 CPU/offline baseline regression validation: classify the 425 cases from actual source/registrations; build/run the confirmed CPU/offline subset with 2 build jobs (1 if memory is exhausted) and serial tests. Gate: committed named case/category inventory, exact commands and actual pass/fail/exclusion counts; keep device-dependent categories explicitly pending. Then stop; do not package or begin P1 automatically.
 
-### Template for S-003 onward
+### Session S-003 — 2026-10-27 — P0.4 lightweight regression batch (Codex)
+
+- **Branch / input SHA:** `feature/rdna1-mesh-fallback`, `53bd13f21416d2dd67af05814a7781e2dc4c05bd` → containing documentation commit; no merge/rebase/push. Required Git status/log/branch and 14 recursive submodules verified clean/matching outside sandbox. `git diff --exit-code u59-windows-20261024-int21 HEAD -- src tests CMakeLists.txt 3rdparty` exit 0. Source still matches pin.
+- **One subtask / revision:** P0.4 lightweight CPU/offline regression batch. D-011 splits the previously broad task after inspection showed 317 registrations on one large mixed Vulkan executable and costly full-emulator-linked CPU tests. This completes only the 22-case batch and named inventory, not the full P0.4 acceptance gate. No renderer/CMake changes, packaging, P1 or GPU/game execution.
+- **Changes:** new `docs/RDNA1_BASELINE_TEST_INVENTORY.md` records all 425 exact names, command targets/arguments, root registration lines, selected source/rationale, commands and dispositions. Plan and AGENTS checkpoint synchronized. Current counts: 20 CPU PASS; 2 offline SPIR-V PASS; 1 additional confirmed CPU case (`null_texture_desc`) deferred full-emulator build; 318 Vulkan/mixed registrations conservatively excluded; 2 harness/setup excluded; 82 source/dispatch audits pending. Exclusions are not runtime skips or passes.
+- **Build / tests:** S-002 x64 VS developer shell and local glslang PATH; `cmake --build _Build/windows-core --target <22 exact targets in inventory> --parallel 2` exit 0, 44 Ninja actions, build-log UTC file timestamps 18:47:40–18:47:57. Existing cached flags confirmed Release, launcher OFF, testing ON, PGO OFF/use empty, emulator IPO OFF, empty MARCH. No reconfigure, emulator rebuild or launch; old emulator identity remains S-002. LLVM 19.1.5, CMake 3.31.6-msvc6, Ninja 1.12.1, VS 17.14.42, MSVC headers 14.44.35207 and SDK 10.0.26100.0 rechecked. Nonfatal CRT deprecation warnings retained; no memory exhaustion/retry.
+- **Actual CTest:** absolute VS-bundled CTest, `--test-dir _Build/windows-core --output-on-failure --parallel 1 --timeout 60 -R <anchored 22-name regex in inventory>` exit 0: 22/22 PASS, 0 failures/skips, 1.69 s. Both shader fixtures use pinned SPIRV-Tools `7f2d9ee926f98fc77a3ed1e1e0f113b8c9c49458`, `SPV_ENV_VULKAN_1_3`. Standalone validator/full generated shader corpus not run.
+- **Failures / corrected observations:** initial sandbox status could not access LibAtrac9 Git metadata; submodule command hit MSYS permission failure. Required checks succeeded outside sandbox. An exploratory grouping of S-002 JSON failed because commands are absent for unbuilt executables; switched to generated CTest registrations with root-source backtraces. Initial executable-group classification put `null_texture_desc` among device exclusions; inspected its entire main and corrected it to confirmed CPU, deferred build (full emulator sources in CMake). A documentation check hit Python Windows default-encoding decoding/mojibake; corrected UTF-8 handling and reviewed the diff to preserve historical text. No test/build failures or source workarounds.
+- **Evidence / provenance:** `_Build/p0-s003/`: build/toolchain `.cmd`/`.log`, result files, full named inventory JSON, selected regex, source SHA, clean status, empty source diff/untracked inventory, all recursive submodule revisions. Precise process duration was not instrumented; build timestamps are file observations. CTest detail in `_Build/windows-core/Testing/Temporary/LastTest.log`. No GPU selected; driver, screenshots, FPS/VRAM metrics N/A. No transferred packages/private assets.
+- **Six categories:** Compilation PASS (22 test targets, prior core baseline retained); Unit tests PASS (20-case subset); Shader compilation and SPIR-V validation PASS (2 synthetic offline fixtures, scoped); Vulkan integration NOT RUN; RDNA1 hardware NOT RUN; Astro Bot compatibility NOT RUN.
+- **Documentation verification:** `git diff --check`, inventory count/unique-name/source-registration checks and Markdown fence checks PASS; fresh CTest JSON confirms 425 registrations. Build source was clean; subsequent edits are Markdown only. Checkpoint is identified by its containing commit, not the unrecompiled S-002 binary.
+- **Next exact single task / gate:** P0.4 source/dispatch audit only: resolve the 82 deferred registrations with exact source/main/argument/initialization evidence, record device/host dependencies, and name the next bounded CPU/offline build batch. Gate: all 82 have resolved dispositions and evidence; keep execution pending. Do not build/run, package or begin P1 during that audit subtask. The additional confirmed CPU `null_texture_desc` remains unexecuted until a later build batch.
+
+### Template for S-004 onward
 - **Date / who:**
 - **Branch / HEAD before → after:**
 - **Phase / one subtask:**
@@ -405,6 +420,7 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(devi
 | 2026-10-27 | 0.1 | All | Initial roadmap; phases subject to evidence-based evolution |
 | 2026-10-27 | 0.2 | 0–9; AGENTS.md; README | User specified Huawei/Intel laptop and separate RX 5700 XT PC. Local checkout/source audit supports low-memory build policy and Qt-free option. Split validation, add future package/deployment/CI gates and hardware evidence requirements; preserve prior observations/history. Documentation only (S-001). |
 | 2026-10-27 | 0.3 | 1–5, 7–8; AGENTS.md | S-002 user-authorized P0 inventory/build: installed x64 developer tools plus local digest-verified glslang enabled unmodified core compilation and 3 CPU/offline passes. Preserve failed/interrupted attempts, record exact source/artifact identity and keep broader 425-case baseline/hardware gates open. |
+| 2026-10-27 | 0.4 | 1–5, 7–8; AGENTS.md; named test inventory | S-003 builds/runs 22 lightweight cases with all passing; records all 425 names and honest exclusions/deferred audits. D-011 splits P0.4 into bounded batches; baseline remains incomplete. |
 
 ## 9. Quick commands (reference; verify before running)
 
