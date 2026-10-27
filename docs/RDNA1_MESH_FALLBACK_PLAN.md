@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-27. **Plan revision:** 0.8. **Overall status:** P0 IN_PROGRESS — S-005 focused CPU build passed; initial serial tests 15/16 PASS, live_switch FAIL then isolated outside-sandbox retry PASS. S-006 19/19 CPU cases passed; S-007 six host cases passed; thread_service failed twice. Next diagnose timing failure. Broader gates remain open.
+> **Last edited:** 2026-10-27. **Plan revision:** 0.9. **Overall status:** P0 IN_PROGRESS — S-005 focused CPU build passed; initial serial tests 15/16 PASS, live_switch FAIL then isolated outside-sandbox retry PASS. S-006 19/19 CPU cases passed; S-007 six host cases passed; thread_service failed twice. S-008 measured coarse-wait oversleep; next focused precise-wait fix. Broader gates remain open.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P0 — Fork and baseline** |
-| Current subtask | P0.4 — S-007 host batch recorded; thread_service timing diagnosis next |
+| Current subtask | P0.4 — S-008 timing diagnosis complete; focused Windows precise-wait fix next |
 | Status | `IN_PROGRESS` for P0/P0.4; core compilation PASS, broader regression baseline incomplete; no hardware gate complete |
-| Last verified git commit | S-007 clean input `40626837f0f76d99096862a6337cf84e4ad28295`; clean generated identity; containing commit identifies checkpoint |
+| Last verified git commit | S-008 input `3e7e5bb3175a4a9484b6c32ed73c347a5c4ca116`; diagnostic dirty diffs retained, no new passing baseline binary |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | S-004 rechecked clean status, recent commits, branch, pinned ancestry and 14 matching recursive submodules; `src`, `tests`, root CMake and `3rdparty` still match pin. Remote service/push state unchecked |
 | Build status | Qt-free Release/Ninja/clang-cl core configure PASS; `kyty_emulator` build PASS (1089.09 s, 2 jobs, no PGO/IPO); GUI/install/package not attempted |
 | Native RDNA1 smoke test | Not run in this fork |
 | Passing tests | S-007 6/7 PASS, thread_service FAIL twice; prior evidence retained. 63 distinct passing cases, 1 failed-only, 361 never run |
-| Known blockers / limits | thread_service precise-wait median threshold fails in batch and isolated retry outside sandbox; actual median/root cause not captured. Broader baseline/hardware/package gates remain open |
-| Next single actionable task | P0.4 thread_service timing failure diagnosis only: inspect tests/ThreadServiceTests.cpp:220 and src/common/condWaitUntil.h, capture unbuffered median-lateness/timing evidence and actual host timer/scheduler conditions, and distinguish host scheduling limits from implementation/fixture defects. Gate: reproduce the named assertion with measured values and a source-backed cause or bounded remaining hypotheses; propose a minimal follow-up. Keep thresholds/assertions unchanged in this diagnostic subtask; no other batch, GPU, packaging or P1. |
+| Known blockers / limits | Measured coarse cv wait 15.959 ms overshoots 5 ms deadline; thread_service still fails. OS timer-policy cause not proven; early-signal check unreached. See diagnosis |
+| Next single actionable task | P0.4 precise CondWaitUntil Windows wait fix only: prevent the coarse condition-variable phase from overshooting the deadline under coarse host scheduling, while preserving wake/lock/dispatch semantics and existing timing assertions. Gate: focused thread_service build at 2 jobs and repeated serial measured runs pass both deadline and early-signal assertions with source/host/provenance evidence; record failures, commit and stop. No global timer/power-policy changes, unrelated batch, GPU, packaging or P1. |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -166,7 +166,7 @@ Status: **IN_PROGRESS** — prior core build/S-003 22 passes retained; S-004 sou
 - P0.2: Record full `git rev-parse HEAD`, remotes, branch and submodule status, and verify license and original attribution.
 - P0.2a: Document two-machine roles, laptop memory policy, validation categories and future packaging/deployment/CI gates. **DONE in S-001 (docs only).** P0.1/P0.2 local evidence verified; remote fork/push state unchecked.
 - P0.3: **DONE (inventory, S-002):** Git/CMake/Ninja/x64 VS tools/LLVM/Python verified, explicit Qt-free choice, glslang provisioned locally; Qt and standalone SPIR-V CLI validator not located. Exact versions/evidence below. This is not a GUI build/toolchain gate.
-- P0.4: **IN_PROGRESS:** unmodified pinned renderer/source (documentation commits allowed) built successfully on laptop with Release/Ninja/clang-cl, no PGO/IPO, 2 jobs; 3 selected CPU/offline tests passed. S-003 completed a bounded 22-case lightweight CPU/offline batch and named all 425 registrations. S-004 resolves those 82 by source (37 CPU/offline, 31 CPU with host dependencies, 13 offline shader, 1 Vulkan-required), with no execution. S-005 built those 16 (PASS), initial CTest 15/16 PASS with live_switch rename FAIL then isolated outside-sandbox retry PASS. S-006 remaining 19 focused CPU cases PASS (67.74 s), clean generated identity outside sandbox. S-007 host batch built (PASS), CTest 6/7 PASS and thread_service FAIL twice; next diagnose that timing failure; later other CPU/offline runs and per-branch review of the 317-case conservative mixed-harness exclusion are still required before calling the baseline stable (D-011/D-012). Record shader and Vulkan categories independently; hardware success is a separate gate.
+- P0.4: **IN_PROGRESS:** unmodified pinned renderer/source (documentation commits allowed) built successfully on laptop with Release/Ninja/clang-cl, no PGO/IPO, 2 jobs; 3 selected CPU/offline tests passed. S-003 completed a bounded 22-case lightweight CPU/offline batch and named all 425 registrations. S-004 resolves those 82 by source (37 CPU/offline, 31 CPU with host dependencies, 13 offline shader, 1 Vulkan-required), with no execution. S-005 built those 16 (PASS), initial CTest 15/16 PASS with live_switch rename FAIL then isolated outside-sandbox retry PASS. S-006 remaining 19 focused CPU cases PASS (67.74 s), clean generated identity outside sandbox. S-007 host batch built (PASS), CTest 6/7 PASS and thread_service FAIL twice; S-008 measured coarse condition-variable oversleep; next fix the precise-wait coarse-phase assumption; later other CPU/offline runs and per-branch review of the 317-case conservative mixed-harness exclusion are still required before calling the baseline stable (D-011/D-012). Record shader and Vulkan categories independently; hardware success is a separate gate.
 - P0.4a (after P0.4): Implement Windows x64 packaging and verify desktop deployment/rollback per section 2.3, independently of rendering validation.
 - P0.5 (after deployment): On RX 5700 XT verify GPU/driver, reproduce expected mesh-draw failure or record any different result; capture logs/screenshots/available metrics in an experiment. No gameplay success claimed.
 - P0.6 (future, after local recipe validation): Integrate GitHub Actions per section 2.4 as its own subtask; manual hardware baseline does not depend on hosted CI.
@@ -278,6 +278,7 @@ Status: **NOT_STARTED**
 | D-012 | 2026-10-27 | Use source dispatch/initialization to classify the 82 deferred cases; next run 16 focused CPU targets | Kernel file-system main requires Vulkan despite its name; shader CFG is offline (validator helper Vulkan 1.2); CPU placement may internally skip. Linkage and test labels alone are insufficient. Audit completes classification only; 317 mixed-harness registrations remain conservatively excluded | New source/dispatch change or runtime contradiction |
 | D-013 | 2026-10-27 | Retain initial sandbox failure and isolated outside-sandbox pass separately; retain generated dirty/unknown label | S-005 source checked clean outside sandbox but version helper suppresses Git errors; live_switch temp rename failed only in sandbox attempt. Environment-specific causation is inferred, not proven. No source patch or clean-package claim | Repeated failure outside sandbox or future packaging/provenance work |
 | D-014 | 2026-10-27 | Diagnose thread_service before another baseline batch; do not weaken timing assertion | S-007 fails the precise-wait median threshold in batch and one isolated outside-sandbox retry; actual median/host timer conditions unavailable, so no cause established | Measured diagnostic evidence |
+| D-015 | 2026-10-27 | Fix precise-wait coarse-phase assumption next; retain thresholds | S-008 measures cv.wait_for(2500 us) at 15959 us, exceeding whole 5 ms deadline; fine phase cannot recover. Keep unbuffered test diagnostics, no global timer-policy workaround | Focused fix evidence |
 
 ## 5. Experiments and evidence
 
@@ -292,6 +293,7 @@ Status: **NOT_STARTED**
 | E-006 | 2026-10-27; build/test source `073eefecbc4f708d289439c6e3591d5a39d7a367`; no GPU selected | 16 focused CPU targets, Release/x64 LLVM 19.1.5, 2 jobs, serial CTest | Build PASS exit 0, 46.57 s. Initial 15/16 PASS, live_switch rename FAIL (0xc0000409), exit 8, 6.55 s, 0 skipped; isolated outside-sandbox retry PASS, exit 0, 1.58 s. Generated version label discrepancy retained | `docs/RDNA1_BASELINE_BATCH_S005.md`, ignored `_Build/p0-s005/` command logs, XML, hashes and provenance; no driver/ICD or performance data applicable |
 | E-007 | 2026-10-27; clean `4ead9cbe9143d4ebb59f6c688e7ffcef5e965091`; development host, no GPU selected | 19 focused CPU cases, Release/x64 LLVM 19.1.5, outside sandbox, 2 build jobs/serial tests | Build exit 0, 131.95 s; CTest 19/19 PASS, 0 failed/skipped, exit 0, 67.74 s; no retries; clean generated version | `docs/RDNA1_BASELINE_BATCH_S006.md`, ignored `_Build/p0-s006/` logs/XML/hashes/provenance; device/driver/performance N/A |
 | E-008 | 2026-10-27; clean `40626837f0f76d99096862a6337cf84e4ad28295`; no GPU selected | Five targets/seven host timer-thread cases, 2 build jobs, serial tests outside sandbox | Build PASS 20.80 s; CTest 6/7 PASS, thread_service FAIL, exit 8, 7.83 s; isolated retry FAIL, 2.19 s; 0 skips. Root cause pending | `docs/RDNA1_BASELINE_BATCH_S007.md`, ignored `_Build/p0-s007/`; no hardware/performance evidence |
+| E-009 | 2026-10-27; dirty diagnostic variants at `3e7e5bb3175a4a9484b6c32ed73c347a5c4ca116`; laptop Windows build 26300 | Capture median lateness and component wait latency, two target builds/runs | Builds PASS; tests FAIL twice unchanged threshold; precise late 10449–10994 us, coarse 2500 us wait elapsed 15959 us, fine 500 us sleep elapsed 1116 us | `docs/RDNA1_THREAD_SERVICE_DIAGNOSIS.md`, ignored `_Build/p0-s008/` source diffs/logs/host snapshots/hash; no GPU |
 
 New experiments MUST include real date, commit SHA, driver, device, exact command/config, time budget, result (PASS/FAIL/INCONCLUSIVE), and logs/artifact location. Hardware tests must also follow section 2.5 for package identity, screenshots and metrics (or explicit unavailability reasons). Avoid adding game code/assets to git.
 
@@ -459,7 +461,17 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(devi
 - **Status/verification:** P0/P0.4 IN_PROGRESS; timing failure blocks declaring this baseline stable. Revision 0.8/D-014 records next diagnosis, not new implementation scope. Exact registration/name preservation, result counts, UTF-8/fences and git diff --check verified before commit.
 - **Next exact single task/gate:** thread_service timing diagnosis only, source paths in batch document. Capture unbuffered actual median lateness and host timer/scheduler evidence; reproduce and identify source-backed cause or bounded remaining hypotheses plus minimal follow-up. Leave thresholds unchanged, no next test batch/renderer/GPU/package/P1; commit findings and stop.
 
-### Template for S-008 onward
+### Session S-008 — 2026-10-27 — thread_service timing diagnosis
+
+- **Branch/input:** feature/rdna1-mesh-fallback, `3e7e5bb3175a4a9484b6c32ed73c347a5c4ca116` → containing commit. Clean input, required status/log/branch/14 matching submodules checked; no merge/rebase/push.
+- **One task/results:** diagnosis only. Two thread_service diagnostic target builds at two jobs PASS, both direct serial runs outside sandbox FAIL unchanged 400 us assertion. Unbuffered medians 10449/10548/10564 us, then 10971/10994/10575 us. Direct 2500 us cv wait median 15959 us; SleepMicro500 median 1116 us. Coarse wait overshoots entire deadline before fine mode; this establishes a violated implementation assumption on this host, not the exact OS internal mechanism. Early-signal checks not reached.
+- **Changes:** tests/ThreadServiceTests.cpp keeps unbuffered stdout only, no threshold/behavior change. Temporary probes removed; both dirty variants retained as local diffs. New diagnosis document, AGENTS/plan updated; no renderer/CMake/game changes. Final source equals first diagnostic variant, last local executable includes temporary second probe; do not distribute it as final source.
+- **Host/evidence:** Windows 11 Home build26300, i5-1135G7/8 logical CPUs, Balanced plan, pre-run CPU20%, QPC10MHz, NtQueryTimerResolution current1ms/min15.625ms/max0.5ms; no settings changed. Snapshot is not process wait-resolution guarantee or peak/load trace. `_Build/p0-s008/` retains source SHA/submodules/dirty diff/untracked inventory/cache, both build/run logs/results, timer/CPU/OS/power snapshots, generated dirty header and binary hash. Exact commands/toolchain use S-002 x64 VS LLVM19.1.5/noPGO/noIPO, isolated thread_service target; details in diagnosis. No memory failure/retry; no other suite run.
+- **Six categories:** Compilation PASS diagnostic target; Unit tests FAIL twice; Shader/SPIR-V NOT RUN; Vulkan NOT RUN; RDNA1 NOT RUN; Astro Bot NOT RUN. Counts unchanged:63 passing cases, one failed-only,361 never run. Prior failures retained.
+- **Decision/status:** D-015/revision0.9; diagnostic gate complete, P0/P0.4 incomplete pending fix. Documentation/source diff checks before commit; no GPU/performance claim.
+- **Next exact task/gate:** focused Windows precise CondWaitUntil fix with unchanged assertions, preserve wake/lock/dispatch semantics; focused two-job build and measured serial repeated deadline/early-signal passes, full provenance, commit and stop. No global timer/power change, unrelated batch/package/P1.
+
+### Template for S-009 onward
 - **Date / who:**
 - **Branch / HEAD before → after:**
 - **Phase / one subtask:**
@@ -482,6 +494,7 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(devi
 | 2026-10-27 | 0.6 | 1, 3–5, 7–8; AGENTS, inventory, audit follow-up, new batch evidence | S-005 selected build passed; retain 15/16 initial result and outside-sandbox failed-case retry pass plus version-label discrepancy. D-013 preserves environment/provenance limits; next 19-case CPU batch, baseline gate open |
 | 2026-10-27 | 0.7 | 1, 3, 5, 7–8; AGENTS/inventory/new batch | S-006 19/19 focused CPU passes and clean version generation outside sandbox; retain all prior failures. Next seven host timer/thread cases; broader gate open |
 | 2026-10-27 | 0.8 | 1, 3–5, 7–8; AGENTS/inventory/new batch | S-007 build passes, thread_service timing fails twice; retain six passes and both failures. D-014 prioritizes diagnosis over further batches |
+| 2026-10-27 | 0.9 | 1,4–5,7–8; AGENTS/diagnosis/test stdout | S-008 measured coarse-phase oversleep, retains assertion failures and diagnostic-only change; D-015 selects focused wait fix |
 
 ## 9. Quick commands (reference; verify before running)
 
