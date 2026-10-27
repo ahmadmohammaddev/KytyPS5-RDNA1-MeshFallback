@@ -25,3 +25,5 @@ Local ignored evidence `_Build/p0-s008/`: sha/submodules/status/untracked, cache
 ## Next single task
 
 P0.4 precise CondWaitUntil Windows wait fix only: prevent the coarse condition-variable phase from overshooting the deadline under coarse host scheduling, while preserving wake/lock/dispatch semantics and existing timing assertions. Gate: focused thread_service build at 2 jobs and repeated serial measured runs pass both deadline and early-signal assertions with source/host/provenance evidence; record failures, commit and stop. No global timer/power-policy changes, unrelated batch, GPU, packaging or P1.
+
+S-009 priority update: the recommendation above is historical and superseded by plan D-016. Retain this failure as a known baseline issue; no timer repair without direct evidence blocking mesh development. Next task is the targeted output contract in docs/rdna1-mesh-architecture.md.

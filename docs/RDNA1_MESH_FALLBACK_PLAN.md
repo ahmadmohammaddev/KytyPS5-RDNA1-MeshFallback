@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-27. **Plan revision:** 0.9. **Overall status:** P0 IN_PROGRESS — S-005 focused CPU build passed; initial serial tests 15/16 PASS, live_switch FAIL then isolated outside-sandbox retry PASS. S-006 19/19 CPU cases passed; S-007 six host cases passed; thread_service failed twice. S-008 measured coarse-wait oversleep; next focused precise-wait fix. Broader gates remain open.
+> **Last edited:** 2026-10-27. **Plan revision:** 1.0. **Overall status:** P1 static investigation complete (S-009); P0 baseline remains incomplete with known timing failure. Generic inventory expansion and timer fixes deferred under D-016. No fallback implemented; P2.1 targeted output-contract test next.
 
 ## 0. Mission and boundaries
 
@@ -35,17 +35,17 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 
 | Field | Current value |
 | --- | --- |
-| Current phase | **P0 — Fork and baseline** |
-| Current subtask | P0.4 — S-008 timing diagnosis complete; focused Windows precise-wait fix next |
-| Status | `IN_PROGRESS` for P0/P0.4; core compilation PASS, broader regression baseline incomplete; no hardware gate complete |
-| Last verified git commit | S-008 input `3e7e5bb3175a4a9484b6c32ed73c347a5c4ca116`; diagnostic dirty diffs retained, no new passing baseline binary |
+| Current phase | **P1 — native mesh source investigation complete; P2.1 next** |
+| Current subtask | S-009 strategic review and P1 static architecture mapping complete |
+| Status | P1 DONE (static evidence); P0/P0.4 incomplete and deferred, hardware gates open |
+| Last verified git commit | S-009 input `57348577135f7ae12ed01d7fefad15856be9b92e`; clean source, 14 matching submodules; documentation commit is not a rebuilt binary |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
-| Checkout evidence | S-004 rechecked clean status, recent commits, branch, pinned ancestry and 14 matching recursive submodules; `src`, `tests`, root CMake and `3rdparty` still match pin. Remote service/push state unchecked |
+| Checkout evidence | S-009 clean status, recent eight commits, branch, pinned ancestry and 14 matching submodules verified; only source/test difference from pin is one unbuffered stdout line |
 | Build status | Qt-free Release/Ninja/clang-cl core configure PASS; `kyty_emulator` build PASS (1089.09 s, 2 jobs, no PGO/IPO); GUI/install/package not attempted |
 | Native RDNA1 smoke test | Not run in this fork |
 | Passing tests | S-007 6/7 PASS, thread_service FAIL twice; prior evidence retained. 63 distinct passing cases, 1 failed-only, 361 never run |
-| Known blockers / limits | Measured coarse cv wait 15.959 ms overshoots 5 ms deadline; thread_service still fails. OS timer-policy cause not proven; early-signal check unreached. See diagnosis |
-| Next single actionable task | P0.4 precise CondWaitUntil Windows wait fix only: prevent the coarse condition-variable phase from overshooting the deadline under coarse host scheduling, while preserving wake/lock/dispatch semantics and existing timing assertions. Gate: focused thread_service build at 2 jobs and repeated serial measured runs pass both deadline and early-signal assertions with source/host/provenance evidence; record failures, commit and stop. No global timer/power-policy changes, unrelated batch, GPU, packaging or P1. |
+| Known blockers / limits | CondWaitUntil failure retained as known baseline issue, no evidence blocking static renderer research. Early-signal check unreached; no stable full-suite or hardware claim |
+| Next single actionable task | P2.1 offline synthetic output-contract test only: fixed positions/indices/count/status layout, alignment/capacity/zero-output/overflow/guards; focused 2-job build and serial CPU pass with provenance. No dispatch, renderer wiring, guest translation or timer change; commit and stop. |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -166,27 +166,28 @@ Status: **IN_PROGRESS** — prior core build/S-003 22 passes retained; S-004 sou
 - P0.2: Record full `git rev-parse HEAD`, remotes, branch and submodule status, and verify license and original attribution.
 - P0.2a: Document two-machine roles, laptop memory policy, validation categories and future packaging/deployment/CI gates. **DONE in S-001 (docs only).** P0.1/P0.2 local evidence verified; remote fork/push state unchecked.
 - P0.3: **DONE (inventory, S-002):** Git/CMake/Ninja/x64 VS tools/LLVM/Python verified, explicit Qt-free choice, glslang provisioned locally; Qt and standalone SPIR-V CLI validator not located. Exact versions/evidence below. This is not a GUI build/toolchain gate.
-- P0.4: **IN_PROGRESS:** unmodified pinned renderer/source (documentation commits allowed) built successfully on laptop with Release/Ninja/clang-cl, no PGO/IPO, 2 jobs; 3 selected CPU/offline tests passed. S-003 completed a bounded 22-case lightweight CPU/offline batch and named all 425 registrations. S-004 resolves those 82 by source (37 CPU/offline, 31 CPU with host dependencies, 13 offline shader, 1 Vulkan-required), with no execution. S-005 built those 16 (PASS), initial CTest 15/16 PASS with live_switch rename FAIL then isolated outside-sandbox retry PASS. S-006 remaining 19 focused CPU cases PASS (67.74 s), clean generated identity outside sandbox. S-007 host batch built (PASS), CTest 6/7 PASS and thread_service FAIL twice; S-008 measured coarse condition-variable oversleep; next fix the precise-wait coarse-phase assumption; later other CPU/offline runs and per-branch review of the 317-case conservative mixed-harness exclusion are still required before calling the baseline stable (D-011/D-012). Record shader and Vulkan categories independently; hardware success is a separate gate.
+- P0.4: **IN_PROGRESS:** unmodified pinned renderer/source (documentation commits allowed) built successfully on laptop with Release/Ninja/clang-cl, no PGO/IPO, 2 jobs; 3 selected CPU/offline tests passed. S-003 completed a bounded 22-case lightweight CPU/offline batch and named all 425 registrations. S-004 resolves those 82 by source (37 CPU/offline, 31 CPU with host dependencies, 13 offline shader, 1 Vulkan-required), with no execution. S-005 built those 16 (PASS), initial CTest 15/16 PASS with live_switch rename FAIL then isolated outside-sandbox retry PASS. S-006 remaining 19 focused CPU cases PASS (67.74 s), clean generated identity outside sandbox. S-007 host batch built (PASS), CTest 6/7 PASS and thread_service FAIL twice; S-008 measured coarse condition-variable oversleep; known failure deferred by D-016; further generic CPU/offline runs paused. Historically planned other CPU/offline runs and per-branch review of the 317-case conservative mixed-harness exclusion are still required before calling the baseline stable (D-011/D-012). Record shader and Vulkan categories independently; hardware success is a separate gate.
 - P0.4a (after P0.4): Implement Windows x64 packaging and verify desktop deployment/rollback per section 2.3, independently of rendering validation.
 - P0.5 (after deployment): On RX 5700 XT verify GPU/driver, reproduce expected mesh-draw failure or record any different result; capture logs/screenshots/available metrics in an experiment. No gameplay success claimed.
 - P0.6 (future, after local recipe validation): Integrate GitHub Actions per section 2.4 as its own subtask; manual hardware baseline does not depend on hosted CI.
 
-**Gate:** P0.1–P0.5 evidence: full SHA, clean submodules, independent build/test category results, reproducible package deployment/rollback and actual RX 5700 XT baseline limitation. P0.6 stays independently tracked future CI work. **No fallback code until the baseline gate passes.**
+**Gate:** P0.1–P0.5 evidence: full SHA, clean submodules, independent build/test category results, reproducible package deployment/rollback and actual RX 5700 XT baseline limitation. P0.6 stays independently tracked future CI work. **P0 is not complete. D-016 permits source investigation and narrowly scoped synthetic feasibility work without completing every generic baseline/packaging gate; production/game integration still requires applicable regression, deployment and hardware evidence.**
 
 ### P1 — Map the real native mesh pipeline (read-only)
-Status: **NOT_STARTED**
+Status: **DONE (static investigation S-009)** — `docs/rdna1-mesh-architecture.md`, source `57348577135f7ae12ed01d7fefad15856be9b92e`. No runtime/fallback claim; independent human review pending.
 
 - Find guest mesh draw decoding/dispatch, shader types and recompiler IR/SPIR-V backend; host pipeline-cache Vulkan extension requirements; memory/barrier and draw command flow.
 - Produce `docs/rdna1-mesh-architecture.md` with an accurate call graph and exact source-file:line references.
 - List native mesh semantics relied on: workgroups, subgroup width, per-vertex/per-primitive outputs, primitive topology, indices, culling, payload and indirect draws.
 - Assess what existing IR can express as compute and what must be added. Do NOT presume a simple SPIR-V execution model substitution works.
 
-**Gate:** Reviewed architecture note, risks, proposed minimal insertion point, no runtime behavior change.
+**Gate:** Source-backed architecture note maps guest detection and ABI, front/back translation, IR exports/allocation, native SPIR-V and pipeline creation, capability checks, direct/indirect draw and recorder paths, I/O, wave/LDS and synchronization assumptions, risks and minimal compute prototype with explicit limits. Agent source review complete; no runtime behavior change, independent review pending.
 
-### P2 — Feature detection, traceability and negative test
+### P2 — Output contract, feature detection, traceability and negative test
 Status: **NOT_STARTED**
 
-- Distinguish `meshShader` feature vs extension presence, Barycentric and other independent capabilities.
+- P2.1 next: focused CPU/offline fixed output-contract test as specified in the architecture report. No Vulkan dispatch or guest lowering in this task.
+- Native extension AND feature checks already exist (S-009); extend selection diagnostics/tests only where evidence requires. Keep Barycentric and other independent capabilities separate.
 - Add targeted diagnostics on RDNA1 for a failed mesh draw, including safe shader/pipeline identifiers and capability reasons, without repeated log spam.
 - Add a feature-mocked/synthetic test that exercises selection logic; native supported devices must keep their existing path.
 - Design fallback mode selection using explicit capability check; optional env flag remains off by default.
@@ -279,6 +280,7 @@ Status: **NOT_STARTED**
 | D-013 | 2026-10-27 | Retain initial sandbox failure and isolated outside-sandbox pass separately; retain generated dirty/unknown label | S-005 source checked clean outside sandbox but version helper suppresses Git errors; live_switch temp rename failed only in sandbox attempt. Environment-specific causation is inferred, not proven. No source patch or clean-package claim | Repeated failure outside sandbox or future packaging/provenance work |
 | D-014 | 2026-10-27 | Diagnose thread_service before another baseline batch; do not weaken timing assertion | S-007 fails the precise-wait median threshold in batch and one isolated outside-sandbox retry; actual median/host timer conditions unavailable, so no cause established | Measured diagnostic evidence |
 | D-015 | 2026-10-27 | Fix precise-wait coarse-phase assumption next; retain thresholds | S-008 measures cv.wait_for(2500 us) at 15959 us, exceeding whole 5 ms deadline; fine phase cannot recover. Keep unbuffered test diagnostics, no global timer-policy workaround | Focused fix evidence |
+| D-016 | 2026-10-27 | Supersede D-014/D-015 next-action priority: defer CondWaitUntil fix and generic test expansion; allow P1 static review and bounded synthetic feasibility before full P0 closure | User strategic review; core build and 63 distinct passes suffice for source analysis, no evidence timer failure blocks mesh development. P0 remains incomplete, no thresholds changed | Direct renderer/prototype dependence on timing failure, or integration regression gate |
 
 ## 5. Experiments and evidence
 
@@ -294,6 +296,7 @@ Status: **NOT_STARTED**
 | E-007 | 2026-10-27; clean `4ead9cbe9143d4ebb59f6c688e7ffcef5e965091`; development host, no GPU selected | 19 focused CPU cases, Release/x64 LLVM 19.1.5, outside sandbox, 2 build jobs/serial tests | Build exit 0, 131.95 s; CTest 19/19 PASS, 0 failed/skipped, exit 0, 67.74 s; no retries; clean generated version | `docs/RDNA1_BASELINE_BATCH_S006.md`, ignored `_Build/p0-s006/` logs/XML/hashes/provenance; device/driver/performance N/A |
 | E-008 | 2026-10-27; clean `40626837f0f76d99096862a6337cf84e4ad28295`; no GPU selected | Five targets/seven host timer-thread cases, 2 build jobs, serial tests outside sandbox | Build PASS 20.80 s; CTest 6/7 PASS, thread_service FAIL, exit 8, 7.83 s; isolated retry FAIL, 2.19 s; 0 skips. Root cause pending | `docs/RDNA1_BASELINE_BATCH_S007.md`, ignored `_Build/p0-s007/`; no hardware/performance evidence |
 | E-009 | 2026-10-27; dirty diagnostic variants at `3e7e5bb3175a4a9484b6c32ed73c347a5c4ca116`; laptop Windows build 26300 | Capture median lateness and component wait latency, two target builds/runs | Builds PASS; tests FAIL twice unchanged threshold; precise late 10449–10994 us, coarse 2500 us wait elapsed 15959 us, fine 500 us sleep elapsed 1116 us | `docs/RDNA1_THREAD_SERVICE_DIAGNOSIS.md`, ignored `_Build/p0-s008/` source diffs/logs/host snapshots/hash; no GPU |
+| E-010 | 2026-10-27; clean source `57348577135f7ae12ed01d7fefad15856be9b92e`; no device/driver selected | Static P1 source investigation using rg/Get-Content and Git provenance checks | PASS static mapping; baseline sufficient for investigation only, known timing failure retained. No build/test/dispatch executed | `docs/rdna1-mesh-architecture.md`; S-009. No runtime duration/FPS/screenshots or hardware metrics applicable |
 
 New experiments MUST include real date, commit SHA, driver, device, exact command/config, time budget, result (PASS/FAIL/INCONCLUSIVE), and logs/artifact location. Hardware tests must also follow section 2.5 for package identity, screenshots and metrics (or explicit unavailability reasons). Avoid adding game code/assets to git.
 
@@ -471,7 +474,18 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(devi
 - **Decision/status:** D-015/revision0.9; diagnostic gate complete, P0/P0.4 incomplete pending fix. Documentation/source diff checks before commit; no GPU/performance claim.
 - **Next exact task/gate:** focused Windows precise CondWaitUntil fix with unchanged assertions, preserve wake/lock/dispatch semantics; focused two-job build and measured serial repeated deadline/early-signal passes, full provenance, commit and stop. No global timer/power change, unrelated batch/package/P1.
 
-### Template for S-009 onward
+### Session S-009 — 2026-10-27 — strategic review and P1 static investigation
+
+- **Branch/input:** feature/rdna1-mesh-fallback, 57348577135f7ae12ed01d7fefad15856be9b92e -> containing documentation commit. Clean input; recent eight commits reviewed; pin ancestry exit 0; 14 recursive submodules match. Sandbox Git status/submodule checks failed from metadata/MSYS permissions; outside-sandbox repeat PASS. No merge/rebase/push.
+- **Selected task:** P1 investigation only, explicitly authorized by user in place of S-008's proposed timer fix. Read AGENTS/whole living plan/README and relevant release/diagnosis notes. Core compilation and 63 distinct passing cases suffice for static work; one failed-only and 361 unexecuted remain. No evidence timer issue blocks this work; defer repair and generic inventory expansion. No baseline declared stable.
+- **Files:** new docs/rdna1-mesh-architecture.md supplies source map, NGG ABI, recompiler/pipeline/draw/capability/recording paths, output/memory semantics, risks, insertion hypothesis and proposed bounded GPU experiment. Plan and AGENTS synchronized; diagnosis gets superseding-priority pointer. No production/test/CMake source changes.
+- **Commands/results:** rg/Get-Content source audit; git status --short clean; git log -8/-1, branch and submodule checks PASS outside sandbox; git rev-parse HEAD and git merge-base --is-ancestor pin HEAD PASS; source diff from pin shows only prior one-line stdout diagnostic. Some exploratory guessed paths/globs failed, corrected through rg --files/directory searches; report references verified in tree. git diff --check PASS after whitespace cleanup; source-reference existence/line-range and Markdown fence checks PASS. No benchmark or new test run.
+- **Six categories this session:** Compilation NOT RUN (prior core PASS); Unit tests NOT RUN (prior thread_service FAIL retained); Shader compilation/SPIR-V validation NOT RUN (prior scoped passes retained); Vulkan integration NOT RUN; RDNA1 hardware NOT RUN; Astro Bot compatibility NOT RUN. No device/driver, screenshots, FPS/VRAM or duration metrics because no runtime experiment. Existing local S-008 probe executable still is not distributable final-source evidence.
+- **Findings/limits:** explicit unsupported-mesh failure occurs at FinishMeshStage and graphics pipeline creation; native compute indirect converter still needs mesh rendering. NGG ABI, wave/LDS, allocation, packed indices/cull, fragment linkage and lifetimes require real lowering. Simple compute buffers or triangle drawing cannot prove PS5 compatibility. No Astro Bot shader subset established.
+- **Decision/revision:** D-016/revision 1.0; P1 static exit met, independent review pending. P0 incomplete/deferred; package/CI/hardware gates retained. No fallback implementation. End this session after committing docs.
+- **Next exact single task/gate:** P2.1 offline synthetic output-contract test only: fixed positions/indices/count/status layout, alignment/capacity/zero-output/overflow/guards; focused 2-job build and serial CPU pass with provenance. No dispatch, renderer wiring, guest translation or timer change; commit and stop.
+
+### Template for S-010 onward
 - **Date / who:**
 - **Branch / HEAD before → after:**
 - **Phase / one subtask:**
@@ -495,6 +509,7 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(devi
 | 2026-10-27 | 0.7 | 1, 3, 5, 7–8; AGENTS/inventory/new batch | S-006 19/19 focused CPU passes and clean version generation outside sandbox; retain all prior failures. Next seven host timer/thread cases; broader gate open |
 | 2026-10-27 | 0.8 | 1, 3–5, 7–8; AGENTS/inventory/new batch | S-007 build passes, thread_service timing fails twice; retain six passes and both failures. D-014 prioritizes diagnosis over further batches |
 | 2026-10-27 | 0.9 | 1,4–5,7–8; AGENTS/diagnosis/test stdout | S-008 measured coarse-phase oversleep, retains assertion failures and diagnostic-only change; D-015 selects focused wait fix |
+| 2026-10-27 | 1.0 | 1,3–5,7–8; AGENTS; architecture/diagnosis | S-009 user strategic review defers timer repair/generic inventory, completes P1 static map, defines bounded prototype and P2.1 contract gate; no implementation or runtime claims |
 
 ## 9. Quick commands (reference; verify before running)
 
