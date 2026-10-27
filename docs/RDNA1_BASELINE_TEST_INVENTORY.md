@@ -1,6 +1,6 @@
-# P0.4 regression inventory — S-004
+# P0.4 regression inventory — S-005
 
-Source: `53bd13f21416d2dd67af05814a7781e2dc4c05bd`, clean, pinned renderer unchanged. Generated root `CTestTestfile.cmake` contains 425 cases. Source registrations are in root `CMakeLists.txt`; names below retain CTest spelling. S-004 resolves the 82 formerly deferred registrations at source `226ea5adb896fcd610b82d8e34b1657e0392b16c`; see [source/dispatch evidence](RDNA1_BASELINE_SOURCE_AUDIT.md). Execution results below remain S-003; no new tests run. The 317-case mixed executable still has a conservative exclusion, not a complete per-branch audit.
+Source: `53bd13f21416d2dd67af05814a7781e2dc4c05bd`, clean, pinned renderer unchanged. Generated root `CTestTestfile.cmake` contains 425 cases. Source registrations are in root `CMakeLists.txt`; names below retain CTest spelling. S-004 resolves the 82 formerly deferred registrations at source `226ea5adb896fcd610b82d8e34b1657e0392b16c`; see [source/dispatch evidence](RDNA1_BASELINE_SOURCE_AUDIT.md). S-005 adds the [16-case batch evidence](RDNA1_BASELINE_BATCH_S005.md): initial 15/16 PASS, live_switch FAIL, then isolated outside-sandbox retry PASS; S-003 results retained separately. The 317-case mixed executable still has a conservative exclusion, not a complete per-branch audit.
 
 | Disposition | Count | Execution |
 | --- | ---: | --- |
@@ -9,7 +9,9 @@ Source: `53bd13f21416d2dd67af05814a7781e2dc4c05bd`, clean, pinned renderer uncha
 | Vulkan/mixed executable | 318 | Excluded, NOT RUN |
 | Confirmed CPU, full-emulator target deferred | 1 | NOT RUN: `null_texture_desc` |
 | Harness/setup | 2 | Excluded, NOT RUN |
-| S-004 CPU offline | 37 | NOT RUN; source evidence only |
+| S-005 focused CPU initial pass | 15 | PASS |
+| S-005 live_switch | 1 | Initial FAIL; isolated outside-sandbox retry PASS |
+| Remaining S-004 CPU offline | 21 | NOT RUN; source evidence only |
 | S-004 CPU host-dependent | 31 | NOT RUN; source evidence only |
 | S-004 Offline shader | 13 | NOT RUN; source evidence only |
 | S-004 Vulkan required | 1 | NOT RUN; source evidence only |
@@ -65,14 +67,14 @@ S-004 replaces all 82 deferred dispositions with source-audited requirements (de
 
 | Case | Executable/command | Arguments | Disposition | Registration |
 | --- | --- | --- | --- | --- |
-| `occlusion_reset` | `occlusion_reset_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1082` |
+| `occlusion_reset` | `occlusion_reset_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1082` |
 | `occlusion_pairs` | `occlusion_pairs_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1086` |
 | `occlusion_query_state` | `occlusion_query_state_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1092` |
 | `emulator_user_name_cli` | `kyty_emulator` | `"--help" "--user-name" "1234567890123456"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1165` |
 | `emulator_user_name_too_long` | `kyty_emulator` | `"--help" "--user-name" "12345678901234567"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1167` |
 | `emulator_present_mode_cli` | `kyty_emulator` | `"--help" "--present-mode" "Immediate"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1170` |
 | `emulator_present_mode_invalid` | `kyty_emulator` | `"--help" "--present-mode" "Invalid"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1172` |
-| `ime_dialog` | `ime_dialog_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1175` |
+| `ime_dialog` | `ime_dialog_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1175` |
 | `upsync2_shader_ir` | `shader_cfg_tests` | `"--upsync2-only"` | Offline shader NOT RUN | `CMakeLists.txt:1176` |
 | `upsync2_shader_ir_linear_uses` | `shader_cfg_tests` | `"--upsync2-only"` | Offline shader NOT RUN | `CMakeLists.txt:1179` |
 | `wave_reductions_linear_uses` | `shader_cfg_tests` | `"--wave-reduction-only"` | Offline shader NOT RUN | `CMakeLists.txt:1182` |
@@ -89,21 +91,21 @@ S-004 replaces all 82 deferred dispositions with source-audited requirements (de
 | `registered_shader_code_cert` | `shader_recompiler_compute_tests` | `"--draw-prep-code-cert-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1202` |
 | `scalar_provenance` | `scalar_provenance_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1204` |
 | `lane_local` | `lane_local_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1205` |
-| `image_page_table` | `image_page_table_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1206` |
-| `texel_image_lookup` | `texel_image_lookup_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1207` |
-| `texture_set_cache` | `texture_set_cache_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1208` |
+| `image_page_table` | `image_page_table_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1206` |
+| `texel_image_lookup` | `texel_image_lookup_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1207` |
+| `texture_set_cache` | `texture_set_cache_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1208` |
 | `image_cache_gc_policy` | `image_cache_gc_policy_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1209` |
 | `image_clear_range` | `image_clear_range_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1210` |
 | `image_gpu_keep` | `image_gpu_keep_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1211` |
-| `clear_register_decode` | `clear_register_decode_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1212` |
+| `clear_register_decode` | `clear_register_decode_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1212` |
 | `ampr_counter_bank` | `ampr_counter_bank_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1213` |
 | `draw_prep` | `draw_prep_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1214` |
-| `eop_timestamp` | `eop_timestamp_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1215` |
+| `eop_timestamp` | `eop_timestamp_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1215` |
 | `host_input_pulse` | `host_input_pulse_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1216` |
 | `repeat_trace` | `repeat_trace_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1217` |
-| `binding_path` | `binding_path_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1218` |
-| `cp_recorder` | `cp_recorder_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1219` |
-| `cp_sequencer` | `cp_sequencer_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1220` |
+| `binding_path` | `binding_path_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1218` |
+| `cp_recorder` | `cp_recorder_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1219` |
+| `cp_sequencer` | `cp_sequencer_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1220` |
 | `image_exact_lookup` | `shader_recompiler_compute_tests` | `"--image-exact-lookup-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1221` |
 | `image_pressure_retirement` | `shader_recompiler_compute_tests` | `"--image-pressure-retirement-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1223` |
 | `present_box_downscale` | `shader_recompiler_compute_tests` | `"--present-box-downscale-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1225` |
@@ -125,13 +127,13 @@ S-004 replaces all 82 deferred dispositions with source-audited requirements (de
 | `cpu_placement_vcache_sets` | `cpu_placement_tests` | `"--vcache" "sets"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1244` |
 | `cpu_placement_vcache_affinity` | `cpu_placement_tests` | `"--vcache" "affinity"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1245` |
 | `cpu_placement_vcache_pending` | `cpu_placement_tests` | `"--vcache" "pending"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1247` |
-| `live_switch` | `live_switch_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1249` |
+| `live_switch` | `live_switch_tests` | `(none)` | CPU FAIL sandbox; PASS retry S-005 | `CMakeLists.txt:1249` |
 | `guest_probe_retire` | `guest_probe_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1250` |
 | `guest_probe_shared` | `guest_probe_tests` | `"--shared"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1251` |
 | `guest_probe_equals` | `guest_probe_tests` | `"--equals"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1252` |
 | `lod_stats_report` | `lod_stats_report_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1254` |
 | `game_patch_filter` | `game_patch_filter_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1255` |
-| `u59_preset` | `u59_preset_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1256` |
+| `u59_preset` | `u59_preset_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1256` |
 | `shader_codegen` | `shader_recompiler_compute_tests` | `"--codegen-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1257` |
 | `lod_stats_codegen` | `shader_recompiler_compute_tests` | `"--lod-stats-codegen-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1259` |
 | `gi_probe_codegen` | `shader_recompiler_compute_tests` | `"--gi-probe-codegen-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1261` |
@@ -164,7 +166,7 @@ S-004 replaces all 82 deferred dispositions with source-audited requirements (de
 | `pipeline_prefetch_draw_run` | `shader_recompiler_compute_tests` | `"--draw-run-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1342` |
 | `vram_budget` | `vram_budget_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1346` |
 | `device_compat` | `device_compat_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1347` |
-| `shader_vertex_metadata` | `shader_vertex_metadata_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1348` |
+| `shader_vertex_metadata` | `shader_vertex_metadata_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1348` |
 | `resource_materialization` | `resource_materialization_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1349` |
 | `resource_tracking` | `resource_tracking_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1350` |
 | `event_queue_lifetime` | `event_queue_lifetime_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1351` |
@@ -177,14 +179,14 @@ S-004 replaces all 82 deferred dispositions with source-audited requirements (de
 | `audio_mix` | `audio_mix_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1358` |
 | `audio_out_timing` | `audio_out_timing_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1359` |
 | `ngs2_sampler` | `ngs2_sampler_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1360` |
-| `audio_propagation` | `audio_propagation_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1361` |
+| `audio_propagation` | `audio_propagation_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1361` |
 | `unresolved_import_log` | `unresolved_import_log_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1362` |
 | `pad_haptics` | `pad_haptics_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1363` |
 | `controller_settings` | `controller_settings_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1364` |
 | `host_input` | `host_input_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1365` |
 | `save_data_memory` | `save_data_memory_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1366` |
-| `png_enc` | `png_enc_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1367` |
-| `ces` | `ces_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1368` |
+| `png_enc` | `png_enc_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1367` |
+| `ces` | `ces_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1368` |
 | `save_data_dialog` | `save_data_dialog_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1369` |
 | `http_uri_parse` | `http_uri_parse_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1370` |
 | `shader_recompiler_compute` | `shader_recompiler_compute_tests` | `(none)` | Vulkan/mixed executable excluded | `CMakeLists.txt:1371` |

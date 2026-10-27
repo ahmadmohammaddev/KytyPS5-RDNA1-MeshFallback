@@ -186,3 +186,7 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 --timeout 
 ```
 
 Acceptance: exact selection inventory is 16 named cases; build exits 0; serial run records all 16 results, failures/skips/internal exclusions and duration. Explain any failure without broadening into renderer changes; leave P0.4 incomplete while other confirmed CPU/offline cases and mixed-branch audit remain. Stop after committing evidence/checkpoint; do not package or begin P1. `null_texture_desc` stays in a later full-emulator-target batch.
+
+## Execution follow-up — S-005
+
+The selected 16-case batch was built and run at `073eefecbc4f708d289439c6e3591d5a39d7a367`: initial 15/16 passed, live_switch failed its temp-file rename assertion; an isolated outside-sandbox retry passed. See [S-005 evidence and next 19-case commands](RDNA1_BASELINE_BATCH_S005.md). The tables above retain S-004’s historical NOT RUN state, not current execution status.
