@@ -13,6 +13,21 @@ This fork retains sanitized development history and upstream attribution.
 The badges and general project description below refer to upstream. Packaged
 Windows builds are available under Releases.
 
+## RDNA1 research branch workflow
+
+The [living RDNA1 Mesh Fallback plan](docs/RDNA1_MESH_FALLBACK_PLAN.md) tracks this
+branch's verified state and next task. Development uses a Huawei Windows 11 laptop
+(i5-1135G7, 16 GB RAM, Intel Iris Xe); independent hardware validation uses a Windows
+x64 desktop (Ryzen 5 7500F, RX 5700 XT 8 GB, 32 GB DDR5). Laptop and CI results cannot
+complete RDNA1 or Astro Bot hardware milestones.
+
+For initial laptop development, use 2 build jobs, retry with 1 on memory exhaustion,
+disable PGO and emulator IPO, and consider the source-supported Qt-free CLI/core
+build. Plan sections 2.1–2.5 define flags, six separate validation categories,
+commit identity requirements, planned Windows packaging/deployment and future CI.
+Packaging and desktop deployment remain unverified until their acceptance gates pass.
+Keep game files, firmware and large shader caches outside Git.
+
 [![Build KytyPS5 (Windows)](https://img.shields.io/github/check-runs/KytyPS5/KytyPS5/main?nameFilter=Build%20KytyPS5%20%28Windows%29&label=Build%20KytyPS5%20%28Windows%29)](https://github.com/KytyPS5/KytyPS5/actions/workflows/build.yml)
 [![Build KytyPS5 (Linux)](https://img.shields.io/github/check-runs/KytyPS5/KytyPS5/main?nameFilter=Build%20KytyPS5%20%28Linux%29&label=Build%20KytyPS5%20%28Linux%29)](https://github.com/KytyPS5/KytyPS5/actions/workflows/build.yml)
 [![Build KytyPS5 (macOS)](https://img.shields.io/github/check-runs/KytyPS5/KytyPS5/main?nameFilter=Build%20KytyPS5%20%28macOS%29&label=Build%20KytyPS5%20%28macOS%29)](https://github.com/KytyPS5/KytyPS5/actions/workflows/build.yml)
