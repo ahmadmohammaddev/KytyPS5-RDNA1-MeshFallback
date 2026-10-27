@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-27. **Plan revision:** 0.6. **Overall status:** P0 IN_PROGRESS — S-005 focused CPU build passed; initial serial tests 15/16 PASS, live_switch FAIL then isolated outside-sandbox retry PASS. Next 19-case focused CPU batch; broader baseline/hardware gates remain open.
+> **Last edited:** 2026-10-27. **Plan revision:** 0.7. **Overall status:** P0 IN_PROGRESS — S-005 focused CPU build passed; initial serial tests 15/16 PASS, live_switch FAIL then isolated outside-sandbox retry PASS. S-006 19/19 CPU cases passed; next seven host timer/thread cases. Broader baseline/hardware gates remain open.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P0 — Fork and baseline** |
-| Current subtask | P0.4 — focused 16-case batch complete with retained failure/retry evidence (S-005); full baseline gate open |
+| Current subtask | P0.4 — S-006 19-case CPU batch complete; broader baseline open |
 | Status | `IN_PROGRESS` for P0/P0.4; core compilation PASS, broader regression baseline incomplete; no hardware gate complete |
-| Last verified git commit | S-005 build/test input `073eefecbc4f708d289439c6e3591d5a39d7a367`; outside-sandbox source clean, generated version unknown/dirty discrepancy retained. Containing commit identifies checkpoint; emulator remains S-002 |
+| Last verified git commit | S-006 clean build/test input `4ead9cbe9143d4ebb59f6c688e7ffcef5e965091`; correct clean generated header, containing commit identifies checkpoint |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | S-004 rechecked clean status, recent commits, branch, pinned ancestry and 14 matching recursive submodules; `src`, `tests`, root CMake and `3rdparty` still match pin. Remote service/push state unchecked |
 | Build status | Qt-free Release/Ninja/clang-cl core configure PASS; `kyty_emulator` build PASS (1089.09 s, 2 jobs, no PGO/IPO); GUI/install/package not attempted |
 | Native RDNA1 smoke test | Not run in this fork |
-| Passing tests | S-003 22/22 PASS retained. S-005 initial 15/16 PASS, live_switch FAIL, 0 skips, 6.55 s; isolated live_switch retry PASS outside sandbox (1.58 s). 38 distinct cases have passing executions across recorded inputs; not a single 38-case run. 387 cases never run |
-| Known blockers / limits | live_switch sandbox rename failure passed isolated outside-sandbox retry; precise OS error/cause not captured. Generated unknown/dirty version label despite outside-sandbox clean Git. No clean package claim; broader CPU/mixed audit, Qt/validator, GPU/game/deployment and remote service state pending |
-| Next single actionable task | P0.4 remaining 19 focused CPU build/run cases only, exact targets and anchored regex in `docs/RDNA1_BASELINE_BATCH_S005.md`. Build 2 jobs (1 only after memory failure retained), serial tests with 120 s cap. Gate: exact selection 19, build exit 0, named outcomes/failures/skips/duration and source/header provenance recorded; commit and stop. Preserve sandbox errors and bounded failed-case retries separately. No renderer/full-emulator-target changes/builds, packaging or P1. |
+| Passing tests | S-006 19/19 PASS, 0 failures/skips, 67.74 s; prior 38 passing cases retained with S-005 failure/retry. 57 distinct passing executions across inputs; 368 never run |
+| Known blockers / limits | live_switch sandbox rename failure passed isolated outside-sandbox retry; precise OS error/cause not captured. S-005 generated unknown/dirty label retained; S-006 outside-sandbox generation is correct/clean. No clean package claim; broader CPU/mixed audit, Qt/validator, GPU/game/deployment and remote service state pending |
+| Next single actionable task | P0.4 host timer/thread batch only: build event_queue_lifetime_tests, event_queue_semantics_tests, thread_service_tests, sync_on_address_tests and hang_watchdog_tests at 2 jobs (1 only after retained memory exhaustion). Run exactly the seven cases listed in docs/RDNA1_BASELINE_BATCH_S006.md serially, 120 s cap with existing CTest properties retained. Gate: selection 7, build exit 0, all named outcomes/internal skips/failures/duration/provenance recorded; commit and stop. No VM/JIT/topology/GPU/full-emulator targets, packaging or P1. |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -55,7 +55,7 @@ Never change a phase to `DONE` without a command/test/log and its actual result.
 | Validation category | Current evidence in this fork |
 | --- | --- |
 | Compilation | PASS: unmodified Qt-free `kyty_emulator` linked, exit 0; GUI/install/package not run |
-| Unit tests | S-003 20 CPU PASS; S-005 initial 15 CPU PASS/1 FAIL then isolated retry PASS outside sandbox. See batch evidence; full CPU baseline remains incomplete |
+| Unit tests | S-006 19 CPU PASS; S-003 20 CPU PASS; S-005 initial 15 CPU PASS/1 FAIL then isolated retry PASS outside sandbox. See batch evidence; full CPU baseline remains incomplete |
 | Shader compilation and SPIR-V validation | PASS (scoped): 38 existing build shaders generated; `spirv_local_arrays` synthetic assembly/validation for Vulkan 1.3 passed. S-003 also passed `spirv_cache_salt` synthetic Vulkan 1.3 assembly/validation. No independent validation of the full generated shader corpus; standalone `spirv-val` absent |
 | Vulkan integration tests | NOT RUN on either machine |
 | RDNA1 hardware tests | NOT RUN on RX 5700 XT |
@@ -166,7 +166,7 @@ Status: **IN_PROGRESS** — prior core build/S-003 22 passes retained; S-004 sou
 - P0.2: Record full `git rev-parse HEAD`, remotes, branch and submodule status, and verify license and original attribution.
 - P0.2a: Document two-machine roles, laptop memory policy, validation categories and future packaging/deployment/CI gates. **DONE in S-001 (docs only).** P0.1/P0.2 local evidence verified; remote fork/push state unchecked.
 - P0.3: **DONE (inventory, S-002):** Git/CMake/Ninja/x64 VS tools/LLVM/Python verified, explicit Qt-free choice, glslang provisioned locally; Qt and standalone SPIR-V CLI validator not located. Exact versions/evidence below. This is not a GUI build/toolchain gate.
-- P0.4: **IN_PROGRESS:** unmodified pinned renderer/source (documentation commits allowed) built successfully on laptop with Release/Ninja/clang-cl, no PGO/IPO, 2 jobs; 3 selected CPU/offline tests passed. S-003 completed a bounded 22-case lightweight CPU/offline batch and named all 425 registrations. S-004 resolves those 82 by source (37 CPU/offline, 31 CPU with host dependencies, 13 offline shader, 1 Vulkan-required), with no execution. S-005 built those 16 (PASS), initial CTest 15/16 PASS with live_switch rename FAIL then isolated outside-sandbox retry PASS. Next run the remaining 19 focused CPU cases; later other CPU/offline runs and per-branch review of the 317-case conservative mixed-harness exclusion are still required before calling the baseline stable (D-011/D-012). Record shader and Vulkan categories independently; hardware success is a separate gate.
+- P0.4: **IN_PROGRESS:** unmodified pinned renderer/source (documentation commits allowed) built successfully on laptop with Release/Ninja/clang-cl, no PGO/IPO, 2 jobs; 3 selected CPU/offline tests passed. S-003 completed a bounded 22-case lightweight CPU/offline batch and named all 425 registrations. S-004 resolves those 82 by source (37 CPU/offline, 31 CPU with host dependencies, 13 offline shader, 1 Vulkan-required), with no execution. S-005 built those 16 (PASS), initial CTest 15/16 PASS with live_switch rename FAIL then isolated outside-sandbox retry PASS. S-006 remaining 19 focused CPU cases PASS (67.74 s), clean generated identity outside sandbox. Next run seven host timer/thread cases; later other CPU/offline runs and per-branch review of the 317-case conservative mixed-harness exclusion are still required before calling the baseline stable (D-011/D-012). Record shader and Vulkan categories independently; hardware success is a separate gate.
 - P0.4a (after P0.4): Implement Windows x64 packaging and verify desktop deployment/rollback per section 2.3, independently of rendering validation.
 - P0.5 (after deployment): On RX 5700 XT verify GPU/driver, reproduce expected mesh-draw failure or record any different result; capture logs/screenshots/available metrics in an experiment. No gameplay success claimed.
 - P0.6 (future, after local recipe validation): Integrate GitHub Actions per section 2.4 as its own subtask; manual hardware baseline does not depend on hosted CI.
@@ -289,6 +289,7 @@ Status: **NOT_STARTED**
 | E-004 | 2026-10-27; clean source `53bd13f21416d2dd67af05814a7781e2dc4c05bd`; development host, no GPU/driver selected | P0.4 lightweight CPU/offline batch, x64 LLVM 19.1.5, cached Release/no-PGO/no-IPO, 2 build jobs | Build exit 0; serial CTest 22/22 PASS, 0 failures/skips, 1.69 s. 403 not run; full baseline still open | Named inventory and commands in `docs/RDNA1_BASELINE_TEST_INVENTORY.md`; ignored `_Build/p0-s003/` evidence. No hardware metrics applicable |
 | E-005 | 2026-10-27; clean audit source `226ea5adb896fcd610b82d8e34b1657e0392b16c`; no GPU/driver selected | Read-only P0.4 source/dispatch classification of 82 deferred registrations | PASS static gate: all 82 resolved with main/branch/init evidence and CTest properties; next 16-case focused CPU batch selected. No build/test/validator/runtime execution | `docs/RDNA1_BASELINE_SOURCE_AUDIT.md`, updated 425-case inventory; ignored `_Build/p0-s004/` audit/verification data. Performance/screenshots N/A |
 | E-006 | 2026-10-27; build/test source `073eefecbc4f708d289439c6e3591d5a39d7a367`; no GPU selected | 16 focused CPU targets, Release/x64 LLVM 19.1.5, 2 jobs, serial CTest | Build PASS exit 0, 46.57 s. Initial 15/16 PASS, live_switch rename FAIL (0xc0000409), exit 8, 6.55 s, 0 skipped; isolated outside-sandbox retry PASS, exit 0, 1.58 s. Generated version label discrepancy retained | `docs/RDNA1_BASELINE_BATCH_S005.md`, ignored `_Build/p0-s005/` command logs, XML, hashes and provenance; no driver/ICD or performance data applicable |
+| E-007 | 2026-10-27; clean `4ead9cbe9143d4ebb59f6c688e7ffcef5e965091`; development host, no GPU selected | 19 focused CPU cases, Release/x64 LLVM 19.1.5, outside sandbox, 2 build jobs/serial tests | Build exit 0, 131.95 s; CTest 19/19 PASS, 0 failed/skipped, exit 0, 67.74 s; no retries; clean generated version | `docs/RDNA1_BASELINE_BATCH_S006.md`, ignored `_Build/p0-s006/` logs/XML/hashes/provenance; device/driver/performance N/A |
 
 New experiments MUST include real date, commit SHA, driver, device, exact command/config, time budget, result (PASS/FAIL/INCONCLUSIVE), and logs/artifact location. Hardware tests must also follow section 2.5 for package identity, screenshots and metrics (or explicit unavailability reasons). Avoid adding game code/assets to git.
 
@@ -433,7 +434,18 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(devi
 - **Documentation verification / status:** exact 425 names/arguments/registrations preserved; only 16 new execution dispositions, named counts/XML/hash manifest and balanced UTF-8 Markdown checked; `git diff --check` PASS before commit. D-013/revision 0.6; P0/P0.4 remain IN_PROGRESS. No blocker to next bounded CPU attempt; environment sensitivity/version-label issue stays recorded for future reproduction/packaging.
 - **Next exact single task / gate:** remaining 19 focused CPU cases in batch evidence, no full-emulator targets. Use 2 jobs (1 only on retained memory failure), serial 120 s CTest cap and exact 19-name regex. Gate: selection 19, build exit 0, all named actual results/failures/skips/duration/source/header provenance documented, checkpoint committed; stop. Other host-sensitive/13 shader CFG/full-emulator/mixed-harness cases, packaging and P1 remain later work.
 
-### Template for S-006 onward
+### Session S-006 — 2026-10-27 — P0.4 remaining 19 focused CPU cases
+
+- **Branch/input:** `feature/rdna1-mesh-fallback`, `4ead9cbe9143d4ebb59f6c688e7ffcef5e965091` → containing documentation commit; required Git status/log/branch/14 recursive submodules, pinned ancestry/source diff PASS. Clean before/after execution. No merge/rebase/push.
+- **One subtask:** 19 focused CPU target build/run only. Exact commands, named outcomes and next seven-case batch in new `docs/RDNA1_BASELINE_BATCH_S006.md`. Updated AGENTS, plan and inventory; no source/CMake/renderer changes, packaging or P1.
+- **Build:** outside sandbox, S-002 x64 VS/local glslang, Release/no PGO/no IPO/empty MARCH, two jobs. PASS exit 0, 131.954 s, start UTC 2026-10-27T19:19:03.0751678Z, 85 actions. Tool versions/cache verified in batch evidence. No memory exhaustion/retry. Generated full SHA correct, clean short label/version; S-005 discrepancy retained historically. Emulator binary remains S-002. Nonfatal deprecation warnings retained.
+- **Tests:** selection exactly 19, outside sandbox, serial with 120 s cap and JUnit output. PASS 19/19, 0 failures/skips, exit 0, 67.74 s. draw_prep 65.18 s. No retries or source workarounds. No new build/test failures. Internal skip scan and exact XML verification retained with local evidence.
+- **Provenance/evidence:** `_Build/p0-s006/` retains source/submodule before/after clean inventories/diffs, build script/log/timing, CMake cache, generated header, environment/selection, test log/XML/detail, 19 executable SHA-256s and verification. No private assets/binaries committed. No GPU/driver/ICD/screenshots or performance measurements applicable.
+- **Six categories:** Compilation PASS; Unit tests PASS (19 subset); Shader compilation/SPIR-V validation NOT RUN; Vulkan integration NOT RUN; RDNA1 hardware NOT RUN; Astro Bot compatibility NOT RUN. Across sessions 57 distinct cases have passing executions, 368 never run; S-005 initial failure retained, no full-suite claim.
+- **Plan/status:** revision 0.7, no scope revision; continue D-011/D-013 bounded batches, P0/P0.4 IN_PROGRESS. Documentation names/counts/UTF-8/fences and git diff --check verified before commit. No blocker to next bounded attempt; mixed harness, other CPU/offline, Qt/validator, packaging/hardware/remote gates pending.
+- **Next single task/gate:** seven host timer/thread cases in batch document, five focused targets, 2/1-job memory policy, serial tests, retain existing CTest properties (watchdog fire/fatal timeout 15 s). Gate selection 7, build exit 0, all named results/internal skips/failures/duration/provenance documented; commit and stop. No memory/JIT/topology/GPU/full-emulator/package/P1 scope.
+
+### Template for S-007 onward
 - **Date / who:**
 - **Branch / HEAD before → after:**
 - **Phase / one subtask:**
@@ -454,6 +466,7 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(devi
 | 2026-10-27 | 0.4 | 1–5, 7–8; AGENTS.md; named test inventory | S-003 builds/runs 22 lightweight cases with all passing; records all 425 names and honest exclusions/deferred audits. D-011 splits P0.4 into bounded batches; baseline remains incomplete. |
 | 2026-10-27 | 0.5 | 1, 3–5, 7–8; AGENTS; inventory and new source audit | S-004 resolves all 82 deferred source dispositions and identifies host/hidden Vulkan dependencies. D-012 chooses next 16-case focused CPU batch; no execution gate advanced |
 | 2026-10-27 | 0.6 | 1, 3–5, 7–8; AGENTS, inventory, audit follow-up, new batch evidence | S-005 selected build passed; retain 15/16 initial result and outside-sandbox failed-case retry pass plus version-label discrepancy. D-013 preserves environment/provenance limits; next 19-case CPU batch, baseline gate open |
+| 2026-10-27 | 0.7 | 1, 3, 5, 7–8; AGENTS/inventory/new batch | S-006 19/19 focused CPU passes and clean version generation outside sandbox; retain all prior failures. Next seven host timer/thread cases; broader gate open |
 
 ## 9. Quick commands (reference; verify before running)
 
