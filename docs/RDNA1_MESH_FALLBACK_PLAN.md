@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-27. **Plan revision:** 0.7. **Overall status:** P0 IN_PROGRESS — S-005 focused CPU build passed; initial serial tests 15/16 PASS, live_switch FAIL then isolated outside-sandbox retry PASS. S-006 19/19 CPU cases passed; next seven host timer/thread cases. Broader baseline/hardware gates remain open.
+> **Last edited:** 2026-10-27. **Plan revision:** 0.8. **Overall status:** P0 IN_PROGRESS — S-005 focused CPU build passed; initial serial tests 15/16 PASS, live_switch FAIL then isolated outside-sandbox retry PASS. S-006 19/19 CPU cases passed; S-007 six host cases passed; thread_service failed twice. Next diagnose timing failure. Broader gates remain open.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P0 — Fork and baseline** |
-| Current subtask | P0.4 — S-006 19-case CPU batch complete; broader baseline open |
+| Current subtask | P0.4 — S-007 host batch recorded; thread_service timing diagnosis next |
 | Status | `IN_PROGRESS` for P0/P0.4; core compilation PASS, broader regression baseline incomplete; no hardware gate complete |
-| Last verified git commit | S-006 clean build/test input `4ead9cbe9143d4ebb59f6c688e7ffcef5e965091`; correct clean generated header, containing commit identifies checkpoint |
+| Last verified git commit | S-007 clean input `40626837f0f76d99096862a6337cf84e4ad28295`; clean generated identity; containing commit identifies checkpoint |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | S-004 rechecked clean status, recent commits, branch, pinned ancestry and 14 matching recursive submodules; `src`, `tests`, root CMake and `3rdparty` still match pin. Remote service/push state unchecked |
 | Build status | Qt-free Release/Ninja/clang-cl core configure PASS; `kyty_emulator` build PASS (1089.09 s, 2 jobs, no PGO/IPO); GUI/install/package not attempted |
 | Native RDNA1 smoke test | Not run in this fork |
-| Passing tests | S-006 19/19 PASS, 0 failures/skips, 67.74 s; prior 38 passing cases retained with S-005 failure/retry. 57 distinct passing executions across inputs; 368 never run |
-| Known blockers / limits | live_switch sandbox rename failure passed isolated outside-sandbox retry; precise OS error/cause not captured. S-005 generated unknown/dirty label retained; S-006 outside-sandbox generation is correct/clean. No clean package claim; broader CPU/mixed audit, Qt/validator, GPU/game/deployment and remote service state pending |
-| Next single actionable task | P0.4 host timer/thread batch only: build event_queue_lifetime_tests, event_queue_semantics_tests, thread_service_tests, sync_on_address_tests and hang_watchdog_tests at 2 jobs (1 only after retained memory exhaustion). Run exactly the seven cases listed in docs/RDNA1_BASELINE_BATCH_S006.md serially, 120 s cap with existing CTest properties retained. Gate: selection 7, build exit 0, all named outcomes/internal skips/failures/duration/provenance recorded; commit and stop. No VM/JIT/topology/GPU/full-emulator targets, packaging or P1. |
+| Passing tests | S-007 6/7 PASS, thread_service FAIL twice; prior evidence retained. 63 distinct passing cases, 1 failed-only, 361 never run |
+| Known blockers / limits | thread_service precise-wait median threshold fails in batch and isolated retry outside sandbox; actual median/root cause not captured. Broader baseline/hardware/package gates remain open |
+| Next single actionable task | P0.4 thread_service timing failure diagnosis only: inspect tests/ThreadServiceTests.cpp:220 and src/common/condWaitUntil.h, capture unbuffered median-lateness/timing evidence and actual host timer/scheduler conditions, and distinguish host scheduling limits from implementation/fixture defects. Gate: reproduce the named assertion with measured values and a source-backed cause or bounded remaining hypotheses; propose a minimal follow-up. Keep thresholds/assertions unchanged in this diagnostic subtask; no other batch, GPU, packaging or P1. |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -55,7 +55,7 @@ Never change a phase to `DONE` without a command/test/log and its actual result.
 | Validation category | Current evidence in this fork |
 | --- | --- |
 | Compilation | PASS: unmodified Qt-free `kyty_emulator` linked, exit 0; GUI/install/package not run |
-| Unit tests | S-006 19 CPU PASS; S-003 20 CPU PASS; S-005 initial 15 CPU PASS/1 FAIL then isolated retry PASS outside sandbox. See batch evidence; full CPU baseline remains incomplete |
+| Unit tests | S-007 FAIL: six cases PASS, thread_service FAIL in batch and isolated retry. Prior passes/failures retained; baseline incomplete |
 | Shader compilation and SPIR-V validation | PASS (scoped): 38 existing build shaders generated; `spirv_local_arrays` synthetic assembly/validation for Vulkan 1.3 passed. S-003 also passed `spirv_cache_salt` synthetic Vulkan 1.3 assembly/validation. No independent validation of the full generated shader corpus; standalone `spirv-val` absent |
 | Vulkan integration tests | NOT RUN on either machine |
 | RDNA1 hardware tests | NOT RUN on RX 5700 XT |
@@ -166,7 +166,7 @@ Status: **IN_PROGRESS** — prior core build/S-003 22 passes retained; S-004 sou
 - P0.2: Record full `git rev-parse HEAD`, remotes, branch and submodule status, and verify license and original attribution.
 - P0.2a: Document two-machine roles, laptop memory policy, validation categories and future packaging/deployment/CI gates. **DONE in S-001 (docs only).** P0.1/P0.2 local evidence verified; remote fork/push state unchecked.
 - P0.3: **DONE (inventory, S-002):** Git/CMake/Ninja/x64 VS tools/LLVM/Python verified, explicit Qt-free choice, glslang provisioned locally; Qt and standalone SPIR-V CLI validator not located. Exact versions/evidence below. This is not a GUI build/toolchain gate.
-- P0.4: **IN_PROGRESS:** unmodified pinned renderer/source (documentation commits allowed) built successfully on laptop with Release/Ninja/clang-cl, no PGO/IPO, 2 jobs; 3 selected CPU/offline tests passed. S-003 completed a bounded 22-case lightweight CPU/offline batch and named all 425 registrations. S-004 resolves those 82 by source (37 CPU/offline, 31 CPU with host dependencies, 13 offline shader, 1 Vulkan-required), with no execution. S-005 built those 16 (PASS), initial CTest 15/16 PASS with live_switch rename FAIL then isolated outside-sandbox retry PASS. S-006 remaining 19 focused CPU cases PASS (67.74 s), clean generated identity outside sandbox. Next run seven host timer/thread cases; later other CPU/offline runs and per-branch review of the 317-case conservative mixed-harness exclusion are still required before calling the baseline stable (D-011/D-012). Record shader and Vulkan categories independently; hardware success is a separate gate.
+- P0.4: **IN_PROGRESS:** unmodified pinned renderer/source (documentation commits allowed) built successfully on laptop with Release/Ninja/clang-cl, no PGO/IPO, 2 jobs; 3 selected CPU/offline tests passed. S-003 completed a bounded 22-case lightweight CPU/offline batch and named all 425 registrations. S-004 resolves those 82 by source (37 CPU/offline, 31 CPU with host dependencies, 13 offline shader, 1 Vulkan-required), with no execution. S-005 built those 16 (PASS), initial CTest 15/16 PASS with live_switch rename FAIL then isolated outside-sandbox retry PASS. S-006 remaining 19 focused CPU cases PASS (67.74 s), clean generated identity outside sandbox. S-007 host batch built (PASS), CTest 6/7 PASS and thread_service FAIL twice; next diagnose that timing failure; later other CPU/offline runs and per-branch review of the 317-case conservative mixed-harness exclusion are still required before calling the baseline stable (D-011/D-012). Record shader and Vulkan categories independently; hardware success is a separate gate.
 - P0.4a (after P0.4): Implement Windows x64 packaging and verify desktop deployment/rollback per section 2.3, independently of rendering validation.
 - P0.5 (after deployment): On RX 5700 XT verify GPU/driver, reproduce expected mesh-draw failure or record any different result; capture logs/screenshots/available metrics in an experiment. No gameplay success claimed.
 - P0.6 (future, after local recipe validation): Integrate GitHub Actions per section 2.4 as its own subtask; manual hardware baseline does not depend on hosted CI.
@@ -277,6 +277,7 @@ Status: **NOT_STARTED**
 | D-011 | 2026-10-27 | Split P0.4 into bounded source-audit/build batches; retain full baseline gate | 425 registrations include 317 branches of one large Vulkan/mixed executable and full-emulator-linked CPU tests. S-003 validates 22 lightweight cases; 82 unresolved dispositions and one confirmed CPU full-emulator build remain. A named inventory is not complete execution/classification | Remaining source/dispatch audit and CPU/offline runs |
 | D-012 | 2026-10-27 | Use source dispatch/initialization to classify the 82 deferred cases; next run 16 focused CPU targets | Kernel file-system main requires Vulkan despite its name; shader CFG is offline (validator helper Vulkan 1.2); CPU placement may internally skip. Linkage and test labels alone are insufficient. Audit completes classification only; 317 mixed-harness registrations remain conservatively excluded | New source/dispatch change or runtime contradiction |
 | D-013 | 2026-10-27 | Retain initial sandbox failure and isolated outside-sandbox pass separately; retain generated dirty/unknown label | S-005 source checked clean outside sandbox but version helper suppresses Git errors; live_switch temp rename failed only in sandbox attempt. Environment-specific causation is inferred, not proven. No source patch or clean-package claim | Repeated failure outside sandbox or future packaging/provenance work |
+| D-014 | 2026-10-27 | Diagnose thread_service before another baseline batch; do not weaken timing assertion | S-007 fails the precise-wait median threshold in batch and one isolated outside-sandbox retry; actual median/host timer conditions unavailable, so no cause established | Measured diagnostic evidence |
 
 ## 5. Experiments and evidence
 
@@ -290,6 +291,7 @@ Status: **NOT_STARTED**
 | E-005 | 2026-10-27; clean audit source `226ea5adb896fcd610b82d8e34b1657e0392b16c`; no GPU/driver selected | Read-only P0.4 source/dispatch classification of 82 deferred registrations | PASS static gate: all 82 resolved with main/branch/init evidence and CTest properties; next 16-case focused CPU batch selected. No build/test/validator/runtime execution | `docs/RDNA1_BASELINE_SOURCE_AUDIT.md`, updated 425-case inventory; ignored `_Build/p0-s004/` audit/verification data. Performance/screenshots N/A |
 | E-006 | 2026-10-27; build/test source `073eefecbc4f708d289439c6e3591d5a39d7a367`; no GPU selected | 16 focused CPU targets, Release/x64 LLVM 19.1.5, 2 jobs, serial CTest | Build PASS exit 0, 46.57 s. Initial 15/16 PASS, live_switch rename FAIL (0xc0000409), exit 8, 6.55 s, 0 skipped; isolated outside-sandbox retry PASS, exit 0, 1.58 s. Generated version label discrepancy retained | `docs/RDNA1_BASELINE_BATCH_S005.md`, ignored `_Build/p0-s005/` command logs, XML, hashes and provenance; no driver/ICD or performance data applicable |
 | E-007 | 2026-10-27; clean `4ead9cbe9143d4ebb59f6c688e7ffcef5e965091`; development host, no GPU selected | 19 focused CPU cases, Release/x64 LLVM 19.1.5, outside sandbox, 2 build jobs/serial tests | Build exit 0, 131.95 s; CTest 19/19 PASS, 0 failed/skipped, exit 0, 67.74 s; no retries; clean generated version | `docs/RDNA1_BASELINE_BATCH_S006.md`, ignored `_Build/p0-s006/` logs/XML/hashes/provenance; device/driver/performance N/A |
+| E-008 | 2026-10-27; clean `40626837f0f76d99096862a6337cf84e4ad28295`; no GPU selected | Five targets/seven host timer-thread cases, 2 build jobs, serial tests outside sandbox | Build PASS 20.80 s; CTest 6/7 PASS, thread_service FAIL, exit 8, 7.83 s; isolated retry FAIL, 2.19 s; 0 skips. Root cause pending | `docs/RDNA1_BASELINE_BATCH_S007.md`, ignored `_Build/p0-s007/`; no hardware/performance evidence |
 
 New experiments MUST include real date, commit SHA, driver, device, exact command/config, time budget, result (PASS/FAIL/INCONCLUSIVE), and logs/artifact location. Hardware tests must also follow section 2.5 for package identity, screenshots and metrics (or explicit unavailability reasons). Avoid adding game code/assets to git.
 
@@ -445,7 +447,19 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(devi
 - **Plan/status:** revision 0.7, no scope revision; continue D-011/D-013 bounded batches, P0/P0.4 IN_PROGRESS. Documentation names/counts/UTF-8/fences and git diff --check verified before commit. No blocker to next bounded attempt; mixed harness, other CPU/offline, Qt/validator, packaging/hardware/remote gates pending.
 - **Next single task/gate:** seven host timer/thread cases in batch document, five focused targets, 2/1-job memory policy, serial tests, retain existing CTest properties (watchdog fire/fatal timeout 15 s). Gate selection 7, build exit 0, all named results/internal skips/failures/duration/provenance documented; commit and stop. No memory/JIT/topology/GPU/full-emulator/package/P1 scope.
 
-### Template for S-007 onward
+### Session S-007 — 2026-10-27 — P0.4 seven host timer/thread cases
+
+- **Branch/input:** `feature/rdna1-mesh-fallback`, `40626837f0f76d99096862a6337cf84e4ad28295` → containing documentation commit. Git status/log/branch, 14 recursive submodules, pinned source diff/ancestry PASS; source clean before/after execution. No merge/rebase/push.
+- **One subtask/files:** five focused targets/seven host cases only. New batch S-007 evidence includes exact commands, named results and failure; updated AGENTS/plan/inventory. No source/renderer/CMake change, game run, packaging or P1.
+- **Build:** x64 VS 17.14.42, LLVM/LLD 19.1.5, CMake 3.31.6-msvc6, Ninja 1.12.1, headers 14.44.35207/SDK 10.0.26100.0. Cached Release/no PGO/no IPO/empty MARCH, two jobs, outside sandbox. PASS exit 0, 20.801 s, start UTC 2026-10-27T19:30:39.8499760Z, 20 actions. Nonfatal warnings retained; no memory failure/retry. Full generated SHA and clean label match input; emulator remains S-002.
+- **Actual tests/failure:** exact selection seven; serial CTest 120 s cap with watchdog fire/fatal existing 15 s property retained. Initial exit 8, 6/7 PASS, thread_service FAIL (0xc0000409), 0 skips, 7.83 s. Retained initial log/XML/detail before isolated unchanged-binary retry outside sandbox: FAIL at same assertion, exit 8, 2.19 s. No third retry. No internal skip markers in initial detail. No threshold/assertion/source workaround.
+- **Source diagnosis/limits:** tests/ThreadServiceTests.cpp:220 and 245–252 measure median lateness across 25 five-ms waits, allowing three attempts below 400 us. Failed message identifies precise timed-wait deadline assertion. Buffered output lacks medians; host load/timer resolution/power conditions unmeasured. Cause unknown; cannot label this a harmless scheduling fluctuation. D-014 makes diagnosis the next single task.
+- **Evidence:** ignored `_Build/p0-s007/` retains full before/after Git/submodule/diff/untracked provenance, toolchain/cache/build commands/log/timing, correct generated header, environment/selection, initial/retry logs/XML/details and five executable SHA-256s. No binaries/private assets committed. Driver/device/ICD/screenshots/performance N/A.
+- **Six categories:** Compilation PASS; Unit tests FAIL (six pass, thread_service fails twice); Shader compilation/SPIR-V validation NOT RUN; Vulkan integration NOT RUN; RDNA1 hardware NOT RUN; Astro Bot compatibility NOT RUN. 63 distinct cases with passing executions, one failed-only, 361 never run; prior S-005 failure retained.
+- **Status/verification:** P0/P0.4 IN_PROGRESS; timing failure blocks declaring this baseline stable. Revision 0.8/D-014 records next diagnosis, not new implementation scope. Exact registration/name preservation, result counts, UTF-8/fences and git diff --check verified before commit.
+- **Next exact single task/gate:** thread_service timing diagnosis only, source paths in batch document. Capture unbuffered actual median lateness and host timer/scheduler evidence; reproduce and identify source-backed cause or bounded remaining hypotheses plus minimal follow-up. Leave thresholds unchanged, no next test batch/renderer/GPU/package/P1; commit findings and stop.
+
+### Template for S-008 onward
 - **Date / who:**
 - **Branch / HEAD before → after:**
 - **Phase / one subtask:**
@@ -467,6 +481,7 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(devi
 | 2026-10-27 | 0.5 | 1, 3–5, 7–8; AGENTS; inventory and new source audit | S-004 resolves all 82 deferred source dispositions and identifies host/hidden Vulkan dependencies. D-012 chooses next 16-case focused CPU batch; no execution gate advanced |
 | 2026-10-27 | 0.6 | 1, 3–5, 7–8; AGENTS, inventory, audit follow-up, new batch evidence | S-005 selected build passed; retain 15/16 initial result and outside-sandbox failed-case retry pass plus version-label discrepancy. D-013 preserves environment/provenance limits; next 19-case CPU batch, baseline gate open |
 | 2026-10-27 | 0.7 | 1, 3, 5, 7–8; AGENTS/inventory/new batch | S-006 19/19 focused CPU passes and clean version generation outside sandbox; retain all prior failures. Next seven host timer/thread cases; broader gate open |
+| 2026-10-27 | 0.8 | 1, 3–5, 7–8; AGENTS/inventory/new batch | S-007 build passes, thread_service timing fails twice; retain six passes and both failures. D-014 prioritizes diagnosis over further batches |
 
 ## 9. Quick commands (reference; verify before running)
 

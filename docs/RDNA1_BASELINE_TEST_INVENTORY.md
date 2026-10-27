@@ -1,4 +1,4 @@
-# P0.4 regression inventory — S-006
+# P0.4 regression inventory — S-007
 
 Source: `53bd13f21416d2dd67af05814a7781e2dc4c05bd`, clean, pinned renderer unchanged. Generated root `CTestTestfile.cmake` contains 425 cases. Source registrations are in root `CMakeLists.txt`; names below retain CTest spelling. S-004 resolves the 82 formerly deferred registrations at source `226ea5adb896fcd610b82d8e34b1657e0392b16c`; see [source/dispatch evidence](RDNA1_BASELINE_SOURCE_AUDIT.md). S-005 adds the [16-case batch evidence](RDNA1_BASELINE_BATCH_S005.md): initial 15/16 PASS, live_switch FAIL, then isolated outside-sandbox retry PASS; S-003 results retained separately. The 317-case mixed executable still has a conservative exclusion, not a complete per-branch audit.
 
@@ -13,7 +13,9 @@ Source: `53bd13f21416d2dd67af05814a7781e2dc4c05bd`, clean, pinned renderer uncha
 | S-005 live_switch | 1 | Initial FAIL; isolated outside-sandbox retry PASS |
 | S-006 focused CPU | 19 | PASS; see RDNA1_BASELINE_BATCH_S006.md |
 | Remaining S-004 CPU offline | 2 | NOT RUN; full-emulator-linked |
-| S-004 CPU host-dependent | 31 | NOT RUN; source evidence only |
+| S-007 host CPU | 6 | PASS |
+| S-007 thread_service | 1 | FAIL initial and isolated retry |
+| Remaining S-004 CPU host-dependent | 24 | NOT RUN |
 | S-004 Offline shader | 13 | NOT RUN; source evidence only |
 | S-004 Vulkan required | 1 | NOT RUN; source evidence only |
 
@@ -119,9 +121,9 @@ S-004 replaces all 82 deferred dispositions with source-audited requirements (de
 | `avplayer_file` | `avplayer_file_tests` | `(none)` | CPU PASS S-006 | `CMakeLists.txt:1234` |
 | `vdecsw` | `vdecsw_tests` | `(none)` | CPU PASS S-006 | `CMakeLists.txt:1235` |
 | `bit_array` | `bit_array_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1236` |
-| `hang_watchdog` | `hang_watchdog_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1237` |
-| `hang_watchdog_fire` | `hang_watchdog_tests` | `"--fire"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1238` |
-| `hang_watchdog_fatal_shutdown` | `hang_watchdog_tests` | `"--fatal-shutdown"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1239` |
+| `hang_watchdog` | `hang_watchdog_tests` | `(none)` | CPU PASS S-007 | `CMakeLists.txt:1237` |
+| `hang_watchdog_fire` | `hang_watchdog_tests` | `"--fire"` | CPU PASS S-007 | `CMakeLists.txt:1238` |
+| `hang_watchdog_fatal_shutdown` | `hang_watchdog_tests` | `"--fatal-shutdown"` | CPU PASS S-007 | `CMakeLists.txt:1239` |
 | `profiler_counters` | `profiler_counter_tests` | `(none)` | CPU PASS S-006 | `CMakeLists.txt:1241` |
 | `cpu_placement` | `cpu_placement_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1242` |
 | `cpu_placement_recorder` | `cpu_placement_tests` | `"--mode" "cp+recorder"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1243` |
@@ -170,11 +172,11 @@ S-004 replaces all 82 deferred dispositions with source-audited requirements (de
 | `shader_vertex_metadata` | `shader_vertex_metadata_tests` | `(none)` | CPU PASS S-005 | `CMakeLists.txt:1348` |
 | `resource_materialization` | `resource_materialization_tests` | `(none)` | CPU PASS S-006 | `CMakeLists.txt:1349` |
 | `resource_tracking` | `resource_tracking_tests` | `(none)` | CPU PASS S-006 | `CMakeLists.txt:1350` |
-| `event_queue_lifetime` | `event_queue_lifetime_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1351` |
-| `event_queue_semantics` | `event_queue_semantics_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1352` |
-| `thread_service` | `thread_service_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1353` |
+| `event_queue_lifetime` | `event_queue_lifetime_tests` | `(none)` | CPU PASS S-007 | `CMakeLists.txt:1351` |
+| `event_queue_semantics` | `event_queue_semantics_tests` | `(none)` | CPU PASS S-007 | `CMakeLists.txt:1352` |
+| `thread_service` | `thread_service_tests` | `(none)` | CPU FAIL twice S-007 | `CMakeLists.txt:1353` |
 | `kernel_file_system` | `kernel_file_system_tests` | `(none)` | Vulkan required NOT RUN | `CMakeLists.txt:1354` |
-| `sync_on_address` | `sync_on_address_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1355` |
+| `sync_on_address` | `sync_on_address_tests` | `(none)` | CPU PASS S-007 | `CMakeLists.txt:1355` |
 | `audio_out2_port` | `audio_out2_port_tests` | `(none)` | CPU PASS S-006 | `CMakeLists.txt:1356` |
 | `audio_diag` | `audio_diag_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1357` |
 | `audio_mix` | `audio_mix_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1358` |
