@@ -1,6 +1,6 @@
-# P0.4 regression inventory — S-003
+# P0.4 regression inventory — S-004
 
-Source: `53bd13f21416d2dd67af05814a7781e2dc4c05bd`, clean, pinned renderer unchanged. Generated root `CTestTestfile.cmake` contains 425 cases. Source registrations are in root `CMakeLists.txt`; names below retain CTest spelling. This is a partial source audit, not a completed CPU-only classification or full-suite pass.
+Source: `53bd13f21416d2dd67af05814a7781e2dc4c05bd`, clean, pinned renderer unchanged. Generated root `CTestTestfile.cmake` contains 425 cases. Source registrations are in root `CMakeLists.txt`; names below retain CTest spelling. S-004 resolves the 82 formerly deferred registrations at source `226ea5adb896fcd610b82d8e34b1657e0392b16c`; see [source/dispatch evidence](RDNA1_BASELINE_SOURCE_AUDIT.md). Execution results below remain S-003; no new tests run. The 317-case mixed executable still has a conservative exclusion, not a complete per-branch audit.
 
 | Disposition | Count | Execution |
 | --- | ---: | --- |
@@ -9,9 +9,12 @@ Source: `53bd13f21416d2dd67af05814a7781e2dc4c05bd`, clean, pinned renderer uncha
 | Vulkan/mixed executable | 318 | Excluded, NOT RUN |
 | Confirmed CPU, full-emulator target deferred | 1 | NOT RUN: `null_texture_desc` |
 | Harness/setup | 2 | Excluded, NOT RUN |
-| Deferred source/argument-dispatch audit | 82 | NOT RUN; may contain additional CPU/offline cases |
+| S-004 CPU offline | 37 | NOT RUN; source evidence only |
+| S-004 CPU host-dependent | 31 | NOT RUN; source evidence only |
+| S-004 Offline shader | 13 | NOT RUN; source evidence only |
+| S-004 Vulkan required | 1 | NOT RUN; source evidence only |
 
-The 318-case exclusion is conservative at executable level: 317 registrations use `ShaderRecompilerComputeTests.cpp` (a Vulkan harness with many argument branches), and one `SparseResidencyStressTests.cpp`. It does not assert every branch requires a GPU. Source/dispatch inspection may later move individual cases into an offline batch. `null_texture_desc` was checked separately: its main calls descriptor helpers and creates no Vulkan device, but CMake compiles the full emulator source set for its target; it is deferred to a separate build batch. The two CMake commands clean a journal and check failure-message matching; do not count them as unit or GPU validation.
+The original 318-case exclusion is conservative at executable level: 317 registrations use `ShaderRecompilerComputeTests.cpp` (a Vulkan harness with many argument branches), and one `SparseResidencyStressTests.cpp`. It does not assert every branch requires a GPU. Source/dispatch inspection may later move individual cases into an offline batch. `null_texture_desc` was checked separately: its main calls descriptor helpers and creates no Vulkan device, but CMake compiles the full emulator source set for its target; it is deferred to a separate build batch. The two CMake commands clean a journal and check failure-message matching; do not count them as unit or GPU validation.
 
 ## Confirmed batch and evidence
 
@@ -58,77 +61,77 @@ Local ignored evidence: `_Build/p0-s003/` contains build/toolchain scripts and l
 
 ## All named registrations
 
-`Deferred` means unverified execution requirements, not a skip or a pass. Commands preserve arguments but omit local executable paths; CMake registration lines trace to root source.
+S-004 replaces all 82 deferred dispositions with source-audited requirements (details and environment in the linked audit). NOT RUN is not a skip or pass. Commands preserve arguments but omit local executable paths; CMake registration lines trace to root source.
 
 | Case | Executable/command | Arguments | Disposition | Registration |
 | --- | --- | --- | --- | --- |
-| `occlusion_reset` | `occlusion_reset_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1082` |
+| `occlusion_reset` | `occlusion_reset_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1082` |
 | `occlusion_pairs` | `occlusion_pairs_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1086` |
 | `occlusion_query_state` | `occlusion_query_state_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1092` |
-| `emulator_user_name_cli` | `kyty_emulator` | `"--help" "--user-name" "1234567890123456"` | Deferred source/dispatch audit | `CMakeLists.txt:1165` |
-| `emulator_user_name_too_long` | `kyty_emulator` | `"--help" "--user-name" "12345678901234567"` | Deferred source/dispatch audit | `CMakeLists.txt:1167` |
-| `emulator_present_mode_cli` | `kyty_emulator` | `"--help" "--present-mode" "Immediate"` | Deferred source/dispatch audit | `CMakeLists.txt:1170` |
-| `emulator_present_mode_invalid` | `kyty_emulator` | `"--help" "--present-mode" "Invalid"` | Deferred source/dispatch audit | `CMakeLists.txt:1172` |
-| `ime_dialog` | `ime_dialog_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1175` |
-| `upsync2_shader_ir` | `shader_cfg_tests` | `"--upsync2-only"` | Deferred source/dispatch audit | `CMakeLists.txt:1176` |
-| `upsync2_shader_ir_linear_uses` | `shader_cfg_tests` | `"--upsync2-only"` | Deferred source/dispatch audit | `CMakeLists.txt:1179` |
-| `wave_reductions_linear_uses` | `shader_cfg_tests` | `"--wave-reduction-only"` | Deferred source/dispatch audit | `CMakeLists.txt:1182` |
-| `isa_accuracy_linear_uses` | `shader_cfg_tests` | `"--isa-accuracy-only"` | Deferred source/dispatch audit | `CMakeLists.txt:1185` |
+| `emulator_user_name_cli` | `kyty_emulator` | `"--help" "--user-name" "1234567890123456"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1165` |
+| `emulator_user_name_too_long` | `kyty_emulator` | `"--help" "--user-name" "12345678901234567"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1167` |
+| `emulator_present_mode_cli` | `kyty_emulator` | `"--help" "--present-mode" "Immediate"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1170` |
+| `emulator_present_mode_invalid` | `kyty_emulator` | `"--help" "--present-mode" "Invalid"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1172` |
+| `ime_dialog` | `ime_dialog_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1175` |
+| `upsync2_shader_ir` | `shader_cfg_tests` | `"--upsync2-only"` | Offline shader NOT RUN | `CMakeLists.txt:1176` |
+| `upsync2_shader_ir_linear_uses` | `shader_cfg_tests` | `"--upsync2-only"` | Offline shader NOT RUN | `CMakeLists.txt:1179` |
+| `wave_reductions_linear_uses` | `shader_cfg_tests` | `"--wave-reduction-only"` | Offline shader NOT RUN | `CMakeLists.txt:1182` |
+| `isa_accuracy_linear_uses` | `shader_cfg_tests` | `"--isa-accuracy-only"` | Offline shader NOT RUN | `CMakeLists.txt:1185` |
 | `upsync2_opcodes` | `shader_recompiler_compute_tests` | `"--new-opcodes-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1188` |
-| `shader_cfg` | `shader_cfg_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1189` |
-| `shader_cfg_cb_shader_mask_exports` | `shader_cfg_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1191` |
+| `shader_cfg` | `shader_cfg_tests` | `(none)` | Offline shader NOT RUN | `CMakeLists.txt:1189` |
+| `shader_cfg_cb_shader_mask_exports` | `shader_cfg_tests` | `(none)` | Offline shader NOT RUN | `CMakeLists.txt:1191` |
 | `null_texture_desc` | `null_texture_desc_tests` | `(none)` | CPU confirmed; full-emulator build deferred | `CMakeLists.txt:1193` |
 | `sparse_residency_stress` | `sparse_residency_stress_tests` | `"--iterations" "400"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1195` |
-| `unused_pixel_inputs` | `shader_cfg_tests` | `"--unused-pixel-inputs-only"` | Deferred source/dispatch audit | `CMakeLists.txt:1196` |
-| `pixel_interface` | `shader_cfg_tests` | `"--pixel-interface-only"` | Deferred source/dispatch audit | `CMakeLists.txt:1197` |
-| `registered_shader_code_on` | `shader_cfg_tests` | `"--registered-shader-code-only"` | Deferred source/dispatch audit | `CMakeLists.txt:1198` |
-| `registered_shader_code_off` | `shader_cfg_tests` | `"--registered-shader-code-only"` | Deferred source/dispatch audit | `CMakeLists.txt:1200` |
+| `unused_pixel_inputs` | `shader_cfg_tests` | `"--unused-pixel-inputs-only"` | Offline shader NOT RUN | `CMakeLists.txt:1196` |
+| `pixel_interface` | `shader_cfg_tests` | `"--pixel-interface-only"` | Offline shader NOT RUN | `CMakeLists.txt:1197` |
+| `registered_shader_code_on` | `shader_cfg_tests` | `"--registered-shader-code-only"` | Offline shader NOT RUN | `CMakeLists.txt:1198` |
+| `registered_shader_code_off` | `shader_cfg_tests` | `"--registered-shader-code-only"` | Offline shader NOT RUN | `CMakeLists.txt:1200` |
 | `registered_shader_code_cert` | `shader_recompiler_compute_tests` | `"--draw-prep-code-cert-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1202` |
-| `scalar_provenance` | `scalar_provenance_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1204` |
-| `lane_local` | `lane_local_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1205` |
-| `image_page_table` | `image_page_table_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1206` |
-| `texel_image_lookup` | `texel_image_lookup_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1207` |
-| `texture_set_cache` | `texture_set_cache_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1208` |
+| `scalar_provenance` | `scalar_provenance_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1204` |
+| `lane_local` | `lane_local_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1205` |
+| `image_page_table` | `image_page_table_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1206` |
+| `texel_image_lookup` | `texel_image_lookup_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1207` |
+| `texture_set_cache` | `texture_set_cache_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1208` |
 | `image_cache_gc_policy` | `image_cache_gc_policy_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1209` |
 | `image_clear_range` | `image_clear_range_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1210` |
 | `image_gpu_keep` | `image_gpu_keep_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1211` |
-| `clear_register_decode` | `clear_register_decode_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1212` |
+| `clear_register_decode` | `clear_register_decode_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1212` |
 | `ampr_counter_bank` | `ampr_counter_bank_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1213` |
-| `draw_prep` | `draw_prep_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1214` |
-| `eop_timestamp` | `eop_timestamp_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1215` |
+| `draw_prep` | `draw_prep_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1214` |
+| `eop_timestamp` | `eop_timestamp_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1215` |
 | `host_input_pulse` | `host_input_pulse_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1216` |
-| `repeat_trace` | `repeat_trace_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1217` |
-| `binding_path` | `binding_path_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1218` |
-| `cp_recorder` | `cp_recorder_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1219` |
-| `cp_sequencer` | `cp_sequencer_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1220` |
+| `repeat_trace` | `repeat_trace_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1217` |
+| `binding_path` | `binding_path_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1218` |
+| `cp_recorder` | `cp_recorder_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1219` |
+| `cp_sequencer` | `cp_sequencer_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1220` |
 | `image_exact_lookup` | `shader_recompiler_compute_tests` | `"--image-exact-lookup-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1221` |
 | `image_pressure_retirement` | `shader_recompiler_compute_tests` | `"--image-pressure-retirement-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1223` |
 | `present_box_downscale` | `shader_recompiler_compute_tests` | `"--present-box-downscale-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1225` |
 | `range_set` | `range_set_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1227` |
 | `image_gpu_keep_device` | `shader_recompiler_compute_tests` | `"--gpu-keep-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1228` |
-| `memory_tracker` | `memory_tracker_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1230` |
-| `page_manager` | `page_manager_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1231` |
-| `archive_file` | `archive_file_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1232` |
-| `trophy_system` | `trophy_system_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1233` |
-| `avplayer_file` | `avplayer_file_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1234` |
-| `vdecsw` | `vdecsw_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1235` |
+| `memory_tracker` | `memory_tracker_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1230` |
+| `page_manager` | `page_manager_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1231` |
+| `archive_file` | `archive_file_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1232` |
+| `trophy_system` | `trophy_system_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1233` |
+| `avplayer_file` | `avplayer_file_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1234` |
+| `vdecsw` | `vdecsw_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1235` |
 | `bit_array` | `bit_array_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1236` |
-| `hang_watchdog` | `hang_watchdog_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1237` |
-| `hang_watchdog_fire` | `hang_watchdog_tests` | `"--fire"` | Deferred source/dispatch audit | `CMakeLists.txt:1238` |
-| `hang_watchdog_fatal_shutdown` | `hang_watchdog_tests` | `"--fatal-shutdown"` | Deferred source/dispatch audit | `CMakeLists.txt:1239` |
-| `profiler_counters` | `profiler_counter_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1241` |
-| `cpu_placement` | `cpu_placement_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1242` |
-| `cpu_placement_recorder` | `cpu_placement_tests` | `"--mode" "cp+recorder"` | Deferred source/dispatch audit | `CMakeLists.txt:1243` |
-| `cpu_placement_vcache_sets` | `cpu_placement_tests` | `"--vcache" "sets"` | Deferred source/dispatch audit | `CMakeLists.txt:1244` |
-| `cpu_placement_vcache_affinity` | `cpu_placement_tests` | `"--vcache" "affinity"` | Deferred source/dispatch audit | `CMakeLists.txt:1245` |
-| `cpu_placement_vcache_pending` | `cpu_placement_tests` | `"--vcache" "pending"` | Deferred source/dispatch audit | `CMakeLists.txt:1247` |
-| `live_switch` | `live_switch_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1249` |
-| `guest_probe_retire` | `guest_probe_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1250` |
-| `guest_probe_shared` | `guest_probe_tests` | `"--shared"` | Deferred source/dispatch audit | `CMakeLists.txt:1251` |
-| `guest_probe_equals` | `guest_probe_tests` | `"--equals"` | Deferred source/dispatch audit | `CMakeLists.txt:1252` |
+| `hang_watchdog` | `hang_watchdog_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1237` |
+| `hang_watchdog_fire` | `hang_watchdog_tests` | `"--fire"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1238` |
+| `hang_watchdog_fatal_shutdown` | `hang_watchdog_tests` | `"--fatal-shutdown"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1239` |
+| `profiler_counters` | `profiler_counter_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1241` |
+| `cpu_placement` | `cpu_placement_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1242` |
+| `cpu_placement_recorder` | `cpu_placement_tests` | `"--mode" "cp+recorder"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1243` |
+| `cpu_placement_vcache_sets` | `cpu_placement_tests` | `"--vcache" "sets"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1244` |
+| `cpu_placement_vcache_affinity` | `cpu_placement_tests` | `"--vcache" "affinity"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1245` |
+| `cpu_placement_vcache_pending` | `cpu_placement_tests` | `"--vcache" "pending"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1247` |
+| `live_switch` | `live_switch_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1249` |
+| `guest_probe_retire` | `guest_probe_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1250` |
+| `guest_probe_shared` | `guest_probe_tests` | `"--shared"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1251` |
+| `guest_probe_equals` | `guest_probe_tests` | `"--equals"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1252` |
 | `lod_stats_report` | `lod_stats_report_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1254` |
 | `game_patch_filter` | `game_patch_filter_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1255` |
-| `u59_preset` | `u59_preset_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1256` |
+| `u59_preset` | `u59_preset_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1256` |
 | `shader_codegen` | `shader_recompiler_compute_tests` | `"--codegen-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1257` |
 | `lod_stats_codegen` | `shader_recompiler_compute_tests` | `"--lod-stats-codegen-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1259` |
 | `gi_probe_codegen` | `shader_recompiler_compute_tests` | `"--gi-probe-codegen-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1261` |
@@ -147,10 +150,10 @@ Local ignored evidence: `_Build/p0-s003/` contains build/toolchain scripts and l
 | `spirv_cache_salt` | `spirv_cache_salt_tests` | `(none)` | Offline SPIR-V PASS | `CMakeLists.txt:1298` |
 | `pipeline_compile_queue` | `pipeline_compile_queue_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1299` |
 | `shader_code_snapshot` | `shader_code_snapshot_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1300` |
-| `shader_precompile` | `shader_precompile_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1301` |
+| `shader_precompile` | `shader_precompile_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1301` |
 | `pipeline_fast_first` | `pipeline_fast_first_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1304` |
-| `pipeline_list` | `pipeline_list_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1306` |
-| `pipeline_snapshot` | `pipeline_snapshot_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1308` |
+| `pipeline_list` | `pipeline_list_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1306` |
+| `pipeline_snapshot` | `pipeline_snapshot_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1308` |
 | `pipeline_journal_clean` | `cmake` | `"-E" "rm" "-f" "pipeline-journal-test.pipelines" "pipeline-journal-test.shaders"` | Harness/setup excluded | `CMakeLists.txt:1313` |
 | `pipeline_journal_record` | `shader_recompiler_compute_tests` | `"--draw-prep-engine-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1317` |
 | `pipeline_journal_replay` | `shader_recompiler_compute_tests` | `"--draw-prep-engine-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1321` |
@@ -161,29 +164,29 @@ Local ignored evidence: `_Build/p0-s003/` contains build/toolchain scripts and l
 | `pipeline_prefetch_draw_run` | `shader_recompiler_compute_tests` | `"--draw-run-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1342` |
 | `vram_budget` | `vram_budget_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1346` |
 | `device_compat` | `device_compat_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1347` |
-| `shader_vertex_metadata` | `shader_vertex_metadata_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1348` |
-| `resource_materialization` | `resource_materialization_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1349` |
-| `resource_tracking` | `resource_tracking_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1350` |
-| `event_queue_lifetime` | `event_queue_lifetime_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1351` |
-| `event_queue_semantics` | `event_queue_semantics_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1352` |
-| `thread_service` | `thread_service_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1353` |
-| `kernel_file_system` | `kernel_file_system_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1354` |
-| `sync_on_address` | `sync_on_address_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1355` |
-| `audio_out2_port` | `audio_out2_port_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1356` |
+| `shader_vertex_metadata` | `shader_vertex_metadata_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1348` |
+| `resource_materialization` | `resource_materialization_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1349` |
+| `resource_tracking` | `resource_tracking_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1350` |
+| `event_queue_lifetime` | `event_queue_lifetime_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1351` |
+| `event_queue_semantics` | `event_queue_semantics_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1352` |
+| `thread_service` | `thread_service_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1353` |
+| `kernel_file_system` | `kernel_file_system_tests` | `(none)` | Vulkan required NOT RUN | `CMakeLists.txt:1354` |
+| `sync_on_address` | `sync_on_address_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1355` |
+| `audio_out2_port` | `audio_out2_port_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1356` |
 | `audio_diag` | `audio_diag_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1357` |
 | `audio_mix` | `audio_mix_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1358` |
-| `audio_out_timing` | `audio_out_timing_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1359` |
-| `ngs2_sampler` | `ngs2_sampler_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1360` |
-| `audio_propagation` | `audio_propagation_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1361` |
+| `audio_out_timing` | `audio_out_timing_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1359` |
+| `ngs2_sampler` | `ngs2_sampler_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1360` |
+| `audio_propagation` | `audio_propagation_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1361` |
 | `unresolved_import_log` | `unresolved_import_log_tests` | `(none)` | CPU PASS | `CMakeLists.txt:1362` |
-| `pad_haptics` | `pad_haptics_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1363` |
-| `controller_settings` | `controller_settings_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1364` |
-| `host_input` | `host_input_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1365` |
-| `save_data_memory` | `save_data_memory_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1366` |
-| `png_enc` | `png_enc_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1367` |
-| `ces` | `ces_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1368` |
-| `save_data_dialog` | `save_data_dialog_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1369` |
-| `http_uri_parse` | `http_uri_parse_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1370` |
+| `pad_haptics` | `pad_haptics_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1363` |
+| `controller_settings` | `controller_settings_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1364` |
+| `host_input` | `host_input_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1365` |
+| `save_data_memory` | `save_data_memory_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1366` |
+| `png_enc` | `png_enc_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1367` |
+| `ces` | `ces_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1368` |
+| `save_data_dialog` | `save_data_dialog_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1369` |
+| `http_uri_parse` | `http_uri_parse_tests` | `(none)` | CPU offline NOT RUN | `CMakeLists.txt:1370` |
 | `shader_recompiler_compute` | `shader_recompiler_compute_tests` | `(none)` | Vulkan/mixed executable excluded | `CMakeLists.txt:1371` |
 | `shader_recompiler_tessellation` | `shader_recompiler_compute_tests` | `"--tessellation-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1372` |
 | `shader_recompiler_alignbyte` | `shader_recompiler_compute_tests` | `"--alignbyte-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1374` |
@@ -191,13 +194,13 @@ Local ignored evidence: `_Build/p0-s003/` contains build/toolchain scripts and l
 | `graphics_pipeline_rasterization_skip_inactive_ps` | `shader_recompiler_compute_tests` | `"--polygon-mode-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1379` |
 | `graphics_pipeline_rasterization_blend_alpha_remap` | `shader_recompiler_compute_tests` | `"--polygon-mode-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1385` |
 | `graphics_draw_offsets` | `shader_recompiler_compute_tests` | `"--draw-offset-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1389` |
-| `guest_stack_exit` | `virtual_memory_allocation_tests` | `"--guest-stack-exit-only"` | Deferred source/dispatch audit | `CMakeLists.txt:1391` |
-| `virtual_memory_allocation` | `virtual_memory_allocation_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1393` |
-| `virtual_memory_allocation_lazy_backing` | `virtual_memory_allocation_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1396` |
-| `virtual_memory_allocation_lazy_zero` | `virtual_memory_allocation_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1400` |
-| `virtual_memory_allocation_clamp_memo_verify` | `virtual_memory_allocation_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1406` |
-| `virtual_memory_allocation_clamp_memo_off` | `virtual_memory_allocation_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:1410` |
-| `guest_red_zone_patcher` | `virtual_memory_allocation_tests` | `"--red-zone-patcher-only"` | Deferred source/dispatch audit | `CMakeLists.txt:1414` |
+| `guest_stack_exit` | `virtual_memory_allocation_tests` | `"--guest-stack-exit-only"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1391` |
+| `virtual_memory_allocation` | `virtual_memory_allocation_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1393` |
+| `virtual_memory_allocation_lazy_backing` | `virtual_memory_allocation_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1396` |
+| `virtual_memory_allocation_lazy_zero` | `virtual_memory_allocation_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1400` |
+| `virtual_memory_allocation_clamp_memo_verify` | `virtual_memory_allocation_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1406` |
+| `virtual_memory_allocation_clamp_memo_off` | `virtual_memory_allocation_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:1410` |
+| `guest_red_zone_patcher` | `virtual_memory_allocation_tests` | `"--red-zone-patcher-only"` | CPU host-dependent NOT RUN | `CMakeLists.txt:1414` |
 | `command_scheduler_timeline` | `shader_recompiler_compute_tests` | `"--scheduler-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1416` |
 | `command_scheduler_ready_ops_wait` | `shader_recompiler_compute_tests` | `"--scheduler-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1419` |
 | `gpu_op_profiler_stamps` | `shader_recompiler_compute_tests` | `"--gpu-op-profile-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1424` |
@@ -271,10 +274,10 @@ Local ignored evidence: `_Build/p0-s003/` contains build/toolchain scripts and l
 | `mesh_indirect_verify` | `shader_recompiler_compute_tests` | `"--mesh-indirect-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1657` |
 | `mesh_indirect_on` | `shader_recompiler_compute_tests` | `"--mesh-indirect-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1661` |
 | `mesh_indirect_off` | `shader_recompiler_compute_tests` | `"--mesh-indirect-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1665` |
-| `mesh_indirect_codegen` | `shader_cfg_tests` | `"--mesh-indirect-only"` | Deferred source/dispatch audit | `CMakeLists.txt:1669` |
-| `wave_row_reduction_codegen` | `shader_cfg_tests` | `"--wave-reduction-only"` | Deferred source/dispatch audit | `CMakeLists.txt:1673` |
+| `mesh_indirect_codegen` | `shader_cfg_tests` | `"--mesh-indirect-only"` | Offline shader NOT RUN | `CMakeLists.txt:1669` |
+| `wave_row_reduction_codegen` | `shader_cfg_tests` | `"--wave-reduction-only"` | Offline shader NOT RUN | `CMakeLists.txt:1673` |
 | `wave_reductions` | `shader_recompiler_compute_tests` | `"--wave-reductions-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1675` |
-| `fold_lane_masks_codegen` | `shader_cfg_tests` | `"--fold-lane-masks-only"` | Deferred source/dispatch audit | `CMakeLists.txt:1679` |
+| `fold_lane_masks_codegen` | `shader_cfg_tests` | `"--fold-lane-masks-only"` | Offline shader NOT RUN | `CMakeLists.txt:1679` |
 | `wave_reductions_fold_lane_masks` | `shader_recompiler_compute_tests` | `"--wave-reductions-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1682` |
 | `sampler_memo` | `shader_recompiler_compute_tests` | `"--sampler-memo-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1687` |
 | `set_reuse_fresh` | `shader_recompiler_compute_tests` | `"--set-reuse-fresh-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:1689` |
@@ -486,4 +489,4 @@ Local ignored evidence: `_Build/p0-s003/` contains build/toolchain scripts and l
 | `buffer_cache_ranges_cp_recorder` | `shader_recompiler_compute_tests` | `"--buffer-cache-range-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:2361` |
 | `buffer_cache_ranges_cp_recorder_inline` | `shader_recompiler_compute_tests` | `"--buffer-cache-range-only"` | Vulkan/mixed executable excluded | `CMakeLists.txt:2364` |
 | `failure_message_fails_test` | `cmake` | `"-E" "echo" "SelfTests: failed: a check failed, the process exited 0"` | Harness/setup excluded | `CMakeLists.txt:2444` |
-| `amd_cpu_emulation` | `amd_cpu_emulation_tests` | `(none)` | Deferred source/dispatch audit | `CMakeLists.txt:2538` |
+| `amd_cpu_emulation` | `amd_cpu_emulation_tests` | `(none)` | CPU host-dependent NOT RUN | `CMakeLists.txt:2538` |
