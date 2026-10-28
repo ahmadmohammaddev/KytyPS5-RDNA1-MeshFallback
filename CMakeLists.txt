@@ -851,6 +851,46 @@ add_executable(mesh_output_contract_tests EXCLUDE_FROM_ALL
 )
 target_include_directories(mesh_output_contract_tests PRIVATE ${inc_headers})
 
+# P4.1 synthetic Vulkan compute prototype of the mesh-output contract (S-013): the same
+# constants stay in tests/MeshOutputContract.h; the authored compute shader is compiled
+# twice by the pinned glslang, once for vulkan1.3 and once for vulkan1.2, and both
+# modules are offline-validated for their target environments. --run requires a
+# Vulkan 1.3 device; --run-vulkan12 is separate auxiliary evidence. Intel or software
+# ICD results are never RDNA1 evidence. Missing required validation facilities or
+# a qualifying device is a skip; API/validation/comparison failures are failures.
+set(mesh_proto_shader_source "${KYTY_TESTS_DIR}/shaders/mesh_output_proto.comp")
+set(mesh_proto_generated_dir "${PROJECT_BINARY_DIR}/gpu_mesh_proto_shaders")
+add_custom_command(
+	OUTPUT "${mesh_proto_generated_dir}/mesh_output_proto_vk13.spv"
+	COMMAND ${CMAKE_COMMAND} -E make_directory "${mesh_proto_generated_dir}"
+	COMMAND "${KYTY_GLSLANG_VALIDATOR}" -V --target-env vulkan1.3
+	        -o "${mesh_proto_generated_dir}/mesh_output_proto_vk13.spv" "${mesh_proto_shader_source}"
+	DEPENDS "${mesh_proto_shader_source}"
+	VERBATIM
+)
+add_custom_command(
+	OUTPUT "${mesh_proto_generated_dir}/mesh_output_proto_vk12.spv"
+	COMMAND ${CMAKE_COMMAND} -E make_directory "${mesh_proto_generated_dir}"
+	COMMAND "${KYTY_GLSLANG_VALIDATOR}" -V --target-env vulkan1.2
+	        -o "${mesh_proto_generated_dir}/mesh_output_proto_vk12.spv" "${mesh_proto_shader_source}"
+	DEPENDS "${mesh_proto_shader_source}"
+	VERBATIM
+)
+add_custom_target(mesh_compute_proto_shaders
+	DEPENDS "${mesh_proto_generated_dir}/mesh_output_proto_vk13.spv"
+	        "${mesh_proto_generated_dir}/mesh_output_proto_vk12.spv"
+)
+add_executable(mesh_compute_proto_tests EXCLUDE_FROM_ALL
+	"${KYTY_TESTS_DIR}/MeshComputePrototypeTests.cpp"
+)
+add_dependencies(mesh_compute_proto_tests mesh_compute_proto_shaders)
+target_link_libraries(mesh_compute_proto_tests spirv-tools Vulkan::Headers ${CMAKE_DL_LIBS})
+target_include_directories(mesh_compute_proto_tests PRIVATE ${inc_headers})
+target_compile_definitions(mesh_compute_proto_tests PRIVATE VK_NO_PROTOTYPES
+	"KYTY_MESH_PROTO_SPV_VULKAN_1_3=\"${PROJECT_BINARY_DIR}/gpu_mesh_proto_shaders/mesh_output_proto_vk13.spv\""
+	"KYTY_MESH_PROTO_SPV_VULKAN_1_2=\"${PROJECT_BINARY_DIR}/gpu_mesh_proto_shaders/mesh_output_proto_vk12.spv\""
+)
+
 add_executable(ime_dialog_tests EXCLUDE_FROM_ALL
 	"${KYTY_TESTS_DIR}/ImeDialogTests.cpp"
 	"${KYTY_SOURCE_DIR}/libs/imeCommon.cpp"
@@ -1355,6 +1395,20 @@ if(BUILD_TESTING)
 	add_test(NAME vram_budget COMMAND $<TARGET_FILE:vram_budget_tests>)
 	add_test(NAME device_compat COMMAND $<TARGET_FILE:device_compat_tests>)
 	add_test(NAME mesh_output_contract COMMAND $<TARGET_FILE:mesh_output_contract_tests>)
+	add_test(NAME mesh_proto_spirv COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --validate-spirv)
+	set_tests_properties(mesh_proto_spirv PROPERTIES TIMEOUT 120)
+	add_test(NAME mesh_proto_host_fixtures COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --check-host-fixtures)
+	add_test(NAME mesh_proto_reject_shape COMMAND ${CMAKE_COMMAND}
+		"-DTEST_EXE=$<TARGET_FILE:mesh_compute_proto_tests>"
+		"-DSHADER_SOURCE=${mesh_proto_shader_source}"
+		"-DGLSLANG=${KYTY_GLSLANG_VALIDATOR}"
+		"-DWORK_DIR=${mesh_proto_generated_dir}/negative-fixture"
+		-P "${KYTY_TESTS_DIR}/MeshPrototypeNegativeCheck.cmake")
+	set_tests_properties(mesh_proto_host_fixtures mesh_proto_reject_shape PROPERTIES TIMEOUT 120)
+	add_test(NAME mesh_compute_proto COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --run)
+	set_tests_properties(mesh_compute_proto PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 41)
+	add_test(NAME mesh_compute_proto_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --run-vulkan12)
+	set_tests_properties(mesh_compute_proto_vk12 PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 41)
 	add_test(NAME shader_vertex_metadata COMMAND $<TARGET_FILE:shader_vertex_metadata_tests>)
 	add_test(NAME resource_materialization COMMAND $<TARGET_FILE:resource_materialization_tests>)
 	add_test(NAME resource_tracking COMMAND $<TARGET_FILE:resource_tracking_tests>)
@@ -2489,6 +2543,7 @@ if(BUILD_TESTING)
 		vram_budget_tests
 		device_compat_tests
 		mesh_output_contract_tests
+		mesh_compute_proto_tests
 		shader_precompile_tests
 		shader_vertex_metadata_tests
 		resource_materialization_tests

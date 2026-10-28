@@ -1,5 +1,7 @@
 # P4.1 interrupted-work review — S-013, 2026-10-28
 
+Follow-up: all eight findings were repaired in S-014. See [the S-014 results](RDNA1_P41_RESULTS_S014.md) for code changes, five passing tests, the honest Vulkan 1.3 skip and successful auxiliary Intel Vulkan 1.2 dispatch/readback with zero validation errors including cleanup. The original review below remains historical evidence.
+
 ## Assessment
 
 Useful partial implementation; P4.1 is not complete and the Vulkan harness is not ready to accept. Preserve and repair this work rather than restart it. The authored shader, shared host contract, offline validator, CMake registrations and provenance snapshot are useful. No production renderer source changed.

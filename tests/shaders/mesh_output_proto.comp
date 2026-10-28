@@ -1,0 +1,75 @@
+#version 460
+
+// Public-domain synthetic compute prototype for the P4.1 mesh-fallback output-contract
+// experiment (docs/RDNA1_MESH_FALLBACK_PLAN.md, session S-013). Authored for this
+// repository; no game content, upstream code or recompiler output.
+//
+// It is a faithful compute-side mirror of the host contract in tests/MeshOutputContract.h
+// and reproduces the hardened sequence the host test checks for: guarded fixed layout,
+// capacity rejection with only the status word written, positions -> indices -> counts ->
+// committed-Ok ordering, and zero output that writes no payload. A P4.1 dispatch passes
+// vertex_count/primitive_count as push constants and the exact payload in two std430
+// storage buffers, so the full host scenarios (zero, prototype, exact capacity, the three
+// overflows and two actual same-buffer recoveries) can run as nine scenarios on
+// the device and be compared word-for-word. Vulkan dependencies and fenced host
+// readback are supplied by the harness, not by polling the status word.
+//
+// Layout constants (uint32 words), identical to tests/MeshOutputContract.h and the
+// static_asserts there: positions 0..255, guard 256..257, indices 258..449, guard
+// 450..451, counts 452..454, guard 455..456, status 457, guard 458..459. Total 460 words.
+// Guard rows are never written: the shader must preserve them exactly.
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(push_constant) uniform ProtoPushConstants {
+	uint vertex_count;
+	uint primitive_count;
+} proto_push_constants;
+
+layout(std430, set = 0, binding = 0) readonly buffer PayloadBuffer {
+	uint payload_positions[256];
+	uint payload_indices[192];
+};
+
+layout(std430, set = 0, binding = 1) writeonly buffer OutputBuffer {
+	uint out_words[460];
+};
+
+const uint K_MAX_VERTICES        = 64u;
+const uint K_MAX_PRIMITIVES      = 64u;
+const uint K_INDICES_PER_PRIMITIVE = 3u;
+const uint K_POSITION_WORDS      = 256u;
+const uint K_INDICES_START_WORD  = 258u;
+const uint K_COUNTS_START_WORD   = 452u;
+const uint K_STATUS_OK           = 0u;
+const uint K_STATUS_OVERFLOW_VERTICES = 1u;
+const uint K_STATUS_OVERFLOW_INDICES  = 2u;
+
+void main() {
+	// Capacity checks first, in the host contract's order (D-017): vertex capacity is
+	// checked before primitive capacity, so a combined overflow reports the vertex
+	// status deterministically. A rejection writes nothing but the status word: the
+	// existing data, counts and guard rows stay exactly as the uploader placed them.
+	if (proto_push_constants.vertex_count > K_MAX_VERTICES) {
+		out_words[457] = K_STATUS_OVERFLOW_VERTICES;
+		return;
+	}
+	if (proto_push_constants.primitive_count > K_MAX_PRIMITIVES) {
+		out_words[457] = K_STATUS_OVERFLOW_INDICES;
+		return;
+	}
+	// Accepted request: copy the payload starting at the exact region offsets, then
+	// fill the counts region (zero-output writes none of the payload), then commit
+	// the Ok status last. Rejected buffers keep their data; storage is reused in
+	// sequential retries exactly like the host contract.
+	for (uint i = 0u; i < proto_push_constants.vertex_count * 4u; ++i) {
+		out_words[i] = payload_positions[i];
+	}
+	for (uint i = 0u; i < proto_push_constants.primitive_count * K_INDICES_PER_PRIMITIVE; ++i) {
+		out_words[K_INDICES_START_WORD + i] = payload_indices[i];
+	}
+	out_words[K_COUNTS_START_WORD + 0u] = proto_push_constants.vertex_count;
+	out_words[K_COUNTS_START_WORD + 1u] = proto_push_constants.primitive_count;
+	out_words[K_COUNTS_START_WORD + 2u] = 0u;
+	out_words[457]                      = K_STATUS_OK;
+}
