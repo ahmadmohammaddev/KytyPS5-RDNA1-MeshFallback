@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 2.9. **Overall status:** S-029 native RX strict Vulkan 1.3 executes generated add and wrap modules with exact buffers and zero validation errors/warnings through cleanup. P3.3 restricted arithmetic gate DONE; broader P3 and emulator/game integration remain open.
+> **Last edited:** 2026-10-29. **Plan revision:** 3.0. **Overall status:** S-029 native RX strict Vulkan 1.3 executes generated add and wrap modules with exact buffers and zero validation errors/warnings through cleanup. P3.3 restricted arithmetic gate DONE; broader P3 and emulator/game integration remain open.
 
 ## 0. Mission and boundaries
 
@@ -122,6 +122,14 @@ Every checkpoint/test report must give a separate result for each category: PASS
 | Astro Bot compatibility tests | **RX 5700 XT desktop only**, local installation | Record title/version, package identity, settings, duration and separate app-start/splash/new-frame/title/menu/gameplay outcomes, logs and screenshots. Synthetic RDNA1 success does not imply game compatibility. |
 
 Hardware-dependent gates in P0.5 and P3–P8 remain incomplete until required tests run on RX 5700 XT. Generic Intel Vulkan integration is independent evidence. No RDNA1 milestone can be completed from laptop tests alone.
+
+### RX test cadence (D-028, supersedes per-subtask transfer expectations)
+
+Develop and validate a coherent group of related changes locally before requesting a desktop transfer. Do not package or request an RX rerun for every small patch or opcode. Keep individual changes reviewable and testable, with focused builds, CPU/offline/SPIR-V checks and available Intel Vulkan tests.
+
+Request native RX testing when a defined milestone acceptance gate is ready, when changed behavior depends on AMD/device/driver characteristics, or when a regression cannot be resolved locally. A pending RX gate does not block further related development that can be validated locally; mark it pending and keep the accumulated scope explicit. Before transfer, consolidate the relevant regressions in one clean committed-source package with manifest/checksums and relocation verification.
+
+Intel Vulkan 1.2 and native RX strict Vulkan 1.3 evidence remain distinct. Never mark an RX gate complete from local results. Report PASS, FAIL, SKIPPED and NOT RUN accurately, retain failures and all provenance requirements. The one-selected-subtask rule still bounds each development session; it does not require a hardware handoff after every session.
 
 ### 2.3 Build identity, future packaging and reproducible PC deployment
 
@@ -309,6 +317,8 @@ Status: **NOT_STARTED**
 | D-026 | 2026-10-29 | After P3.2 native RX acceptance, select a bounded offline `IAdd32` lane-expression expansion as P3.3 | The generated-module pipeline is now proven for three restricted fixtures, but arithmetic is explicitly rejected and limits realistic IR; maintain finite safety proofs and fail-closed behavior | Offline positive/negative safety and SPIR-V tests; runtime and RX validation remain separate |
 
 | D-027 | 2026-10-29 | After P3.3 arithmetic RX acceptance, connect restricted IR-generated geometry to the existing standalone indexed draw | Generated IR compute and authored compute-to-draw were proven separately; their combined path needs explicit consumer synchronization and independent image checks before production integration | Offline validation and focused tests, then independent strict native RX execution |
+
+| D-028 | 2026-10-29 | Batch related local development and validation; request RX runs at milestone gates, AMD-dependent changes or unresolved hardware regressions | User explicitly approved reducing desktop transfer overhead; supersedes earlier per-subtask RX handoff expectations while preserving independent hardware evidence and clean-source packaging | Milestone acceptance or a concrete hardware-dependent uncertainty |
 
 ## 5. Experiments and evidence
 
@@ -744,6 +754,13 @@ Next task: transfer ZIP and sidecar, verify hash/extract fresh, run `Run-IR-Add.
 - Compilation and shader compilation NOT RUN on desktop; host unit/offline SPIR-V validation PASS; scoped Vulkan and RDNA1 PASS. Desktop Vulkan 1.2 and Astro Bot NOT RUN; Intel auxiliary remains separate. Coherent buffers only; GPU metrics, ICD path and OS details absent. P3.3 restricted arithmetic gate DONE; broader IR, emulator and game work remain open.
 - Next single task (D-027): connect the restricted generated IR triangle to the existing isolated conventional indexed offscreen draw; require independently specified full output buffers and all pixels, compute-to-vertex/index dependencies, SPIR-V validation, focused regressions and zero errors through cleanup; preserve native path and request separate RX strict execution. No next task started in this evidence review.
 
+### Session S-030 — 2026-10-29 — Consolidate RX testing cadence
+
+- User explicitly approved batching related changes before RX testing. Input `86163206f184498aec6d7a1c247a3e5274d13bce`, clean branch and all 14 matching submodules checked. Documentation-only update to plan and AGENTS; prior evidence and failures retained.
+- D-028 supersedes automatic RX handoff after each small subtask. Continue focused local checks and related development while hardware gates are pending; consolidate clean transferable evidence at milestone gates or when AMD-specific behavior/regressions require it. One bounded subtask per session remains.
+- Validation: documentation diff checked; compilation, unit, shader/SPIR-V, Vulkan, RDNA1 and Astro Bot tests NOT RUN this session because no code changed. No blockers or push.
+- Next single task unchanged: connect restricted IR-generated output to the standalone indexed draw, validate full image/buffer and synchronization locally; schedule RX transfer when the coherent draw milestone and its local regressions are ready.
+
 ## 8. Change history (append-only)
 
 | Date | Plan revision | Sections | Reason / evidence |
@@ -781,6 +798,8 @@ Next task: transfer ZIP and sidecar, verify hash/extract fresh, run `Run-IR-Add.
 | 2026-10-29 | 2.4 | 1,3–5,7–8; AGENTS; RX IR report | S-024 records native RX P3.2 restricted generated-module acceptance; D-026 selects bounded offline arithmetic expansion next |
 
 | 2026-10-29 | 2.9 | checkpoint, decisions, experiments, handoff | S-029 records strict RX generated arithmetic/wrap acceptance; D-027 selects standalone generated-IR draw |
+
+| 2026-10-29 | 3.0 | operating protocol, decision register, session handoff; AGENTS | D-028 records user-approved batched RX cadence; no per-patch hardware transfer requirement |
 
 ## 9. Quick commands (reference; verify before running)
 

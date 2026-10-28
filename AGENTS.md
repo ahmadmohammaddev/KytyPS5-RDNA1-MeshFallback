@@ -43,7 +43,18 @@ You MAY reprioritize, split, merge, or remove future milestones based on evidenc
 4. In your response state branch, SHA, files changed, commands/tests + actual results, blockers, and next step.
 5. **Stop** after the selected subtask; do not start the next phase automatically.
 
-## Current next task (checkpoint S-029)
+### RX test cadence (D-028, supersedes per-subtask transfer expectations)
+
+Develop and validate a coherent group of related changes locally before requesting a desktop transfer. Do not package or request an RX rerun for every small patch or opcode. Keep individual changes reviewable and testable, with focused builds, CPU/offline/SPIR-V checks and available Intel Vulkan tests.
+
+Request native RX testing when a defined milestone acceptance gate is ready, when changed behavior depends on AMD/device/driver characteristics, or when a regression cannot be resolved locally. A pending RX gate does not block further related development that can be validated locally; mark it pending and keep the accumulated scope explicit. Before transfer, consolidate the relevant regressions in one clean committed-source package with manifest/checksums and relocation verification.
+
+Intel Vulkan 1.2 and native RX strict Vulkan 1.3 evidence remain distinct. Never mark an RX gate complete from local results. Report PASS, FAIL, SKIPPED and NOT RUN accurately, retain failures and all provenance requirements. The one-selected-subtask rule still bounds each development session; it does not require a hardware handoff after every session.
+
+## Current next task (checkpoint S-030)
+S-030 documentation-only decision: apply D-028 batched RX cadence. Next development subtask remains the standalone generated-IR indexed draw, tested locally before scheduling a consolidated milestone RX package.
+
+## Retained checkpoint S-029
 Restricted IR arithmetic and wrap PASS on native RX 5700 XT strict Vulkan 1.3: full 460-word buffers, zero errors/warnings through cleanup; six stages PASS. Source `3fd0fdd507a91759a0ca41be4150dff94d5e6485`, build `20261028T215237152Z`. Raw evidence `_Build/p3-s029/`, report `docs/RDNA1_RX_ADD_S029.md`. No game or emulator integration claim.
 
 Next single task: connect restricted IR-generated triangle to the existing isolated conventional indexed offscreen draw. Require independent full-buffer and complete pixel expectations, correct compute-to-vertex/index synchronization, offline SPIR-V validation, focused regression tests and zero validation errors including cleanup. Strict RX execution is a separate hardware gate; preserve native/default path, capture dirty-source builds, commit and stop. No push.
