@@ -45,11 +45,16 @@ constexpr uint32_t kMaxPrimitives      = 64u;  // primitive records
 constexpr uint32_t kIndicesPerPrimitive = 3u;  // uint32 indices per primitive record
 constexpr uint32_t kMaxIndices         = kMaxPrimitives * kIndicesPerPrimitive; // 192
 
-// Status word values. Written once, last, as the commit marker; readers must
-// check it before trusting counts.
+// Pending distinguishes initialized storage from a completed write, even for
+// zero output. A final status is written last; readers must check it before
+// trusting counts. This host test does not establish GPU memory visibility:
+// P4.1 must use explicit synchronization and fenced readback, not status polling.
+constexpr uint32_t kStatusPending          = 0xFFFFFFFFu;
 constexpr uint32_t kStatusOk               = 0u;
 constexpr uint32_t kStatusOverflowVertices = 1u;
 constexpr uint32_t kStatusOverflowIndices  = 2u;
+static_assert(kStatusPending != kStatusOk && kStatusPending != kStatusOverflowVertices &&
+              kStatusPending != kStatusOverflowIndices, "Pending is not a completed status");
 
 // Region sizes in uint32 words.
 constexpr size_t kPositionWords = size_t{kMaxVertices} * 4u;                  // 256
@@ -105,12 +110,13 @@ static_assert(kCountsStartWord == 452, "counts region word offset");
 static_assert(kGuardAfterCountsWord == 455, "guard row after counts");
 static_assert(kStatusWord == 457, "status word offset");
 
-// One output blob. Zero-initialized except the guard rows.
+// One output blob. Zero-initialized except the guard rows and Pending status.
 struct MeshOutputBlob {
 	std::array<uint32_t, kTotalWords> words;
 
 	void Init() {
 		words.fill(0);
+		words[kStatusWord] = kStatusPending;
 		for (size_t w: kGuardWordIndexes) {
 			words[w] = kGuardWord;
 		}
@@ -118,8 +124,9 @@ struct MeshOutputBlob {
 };
 
 // Host mirror of the planned compute-shader write sequence: positions, then
-// indices, then counts, then the Ok status word. Every caller must set up a
-// fresh blob (Init) so the untouched-on-error contract below is observable.
+// indices, then counts, then the Ok status word. Initialize before first use;
+// a rejected request preserves existing data, including on reuse. Sequential
+// retries are supported; concurrent readers/writers are outside this host test.
 //
 // Insufficient capacity must never write: the blob keeps everything except the
 // status word, which records the specific overflow. Vertex overflow is checked
@@ -155,7 +162,8 @@ uint32_t WriteOutput(MeshOutputBlob& blob, const MeshOutputWrite& write) {
 	return kStatusOk;
 }
 
-// Reader-side contract: the status word is the commit marker checked first.
+// Host inspection helper. Callers must check status before trusting counts;
+// counts may contain preserved data when status is Pending or an error.
 struct MeshOutputRead {
 	uint32_t status;
 	uint32_t vertex_count;
@@ -195,6 +203,32 @@ bool RegionUnwritten(const MeshOutputBlob& blob, size_t start_word, size_t word_
 // Guard-row integrity only; written regions legitimately hold data.
 void CheckGuards(const MeshOutputBlob& blob, const char* what) {
 	Expect(GuardsIntact(blob), what);
+}
+
+// Give every non-status word a nonzero value before rejected requests, so even
+// unintended zero stores are observable. Preserve the actual guard sentinels.
+void InitOverflowSnapshot(MeshOutputBlob& blob) {
+	blob.Init();
+	for (size_t i = 0; i < blob.words.size(); ++i) {
+		if (i != kStatusWord) {
+			blob.words[i] = 0xA5000000u + uint32_t(i);
+		}
+	}
+	for (size_t w: kGuardWordIndexes) {
+		blob.words[w] = kGuardWord;
+	}
+}
+
+void CheckOnlyStatusChanged(const MeshOutputBlob& before, const MeshOutputBlob& after,
+                            const char* what) {
+	for (size_t i = 0; i < before.words.size(); ++i) {
+		if (i != kStatusWord && before.words[i] != after.words[i]) {
+			std::printf("MeshOutputContractTests: changed word %zu: %08X -> %08X\n", i,
+			            before.words[i], after.words[i]);
+			Expect(false, what);
+			return;
+		}
+	}
 }
 
 // The planned three-position/three-index prototype payload: three float4
@@ -254,7 +288,7 @@ void TestGuardInit() {
 	Expect(RegionUnwritten(blob, 0, kPositionWords), "positions region zero-initialized");
 	Expect(RegionUnwritten(blob, kIndicesStartWord, kIndexWords), "indices region zero-initialized");
 	Expect(RegionUnwritten(blob, kCountsStartWord, kCountWords), "counts region zero-initialized");
-	Expect(blob.words[kStatusWord] == 0, "status zero-initialized");
+	Expect(ReadOutput(blob).status == kStatusPending, "initialized output is Pending, not Ok");
 	std::printf("guard-init: %zu guard words hold the sentinel\n", kGuardWordIndexes.size());
 }
 
@@ -329,6 +363,7 @@ void TestExactCapacity() {
 	const uint32_t        status = WriteOutput(blob, write);
 	Expect(status == kStatusOk, "exact-capacity write succeeds");
 	const MeshOutputRead read = ReadOutput(blob);
+	Expect(read.status == kStatusOk, "exact-capacity write commits stored Ok");
 	Expect(read.vertex_count == kMaxVertices, "full vertex count");
 	Expect(read.primitive_count == kMaxPrimitives, "full primitive count");
 
@@ -346,7 +381,8 @@ void TestOverflowVertices() {
 	// One position past capacity: reject with the explicit overflow status and
 	// write nothing but the status word.
 	MeshOutputBlob blob;
-	blob.Init();
+	InitOverflowSnapshot(blob);
+	const MeshOutputBlob before = blob;
 	std::array<uint32_t, (kMaxVertices + 1) * 4> positions;
 	positions.fill(0x55555555u);
 	const std::array<uint32_t, 3> indices = {0, 1, 2};
@@ -356,11 +392,7 @@ void TestOverflowVertices() {
 	Expect(status == kStatusOverflowVertices, "vertex overflow reports its status");
 	const MeshOutputRead read = ReadOutput(blob);
 	Expect(read.status == kStatusOverflowVertices, "committed status is the overflow status");
-	Expect(read.vertex_count == 0, "vertex count not written on overflow");
-	Expect(read.primitive_count == 0, "primitive count not written on overflow");
-	Expect(RegionUnwritten(blob, 0, kPositionWords), "no position written on overflow");
-	Expect(RegionUnwritten(blob, kIndicesStartWord, kIndexWords), "no index written on overflow");
-	Expect(RegionUnwritten(blob, kCountsStartWord, kCountWords), "counts not written on overflow");
+	CheckOnlyStatusChanged(before, blob, "vertex overflow preserves every non-status word");
 	CheckGuards(blob, "guards intact after vertex overflow");
 	std::printf("overflow-vertices: status=%u requested=%u capacity=%u\n", read.status,
 	            kMaxVertices + 1, kMaxVertices);
@@ -371,7 +403,8 @@ void TestOverflowIndices() {
 	// write nothing but the status word. The valid-capacity positions of this
 	// request stay unwritten too.
 	MeshOutputBlob blob;
-	blob.Init();
+	InitOverflowSnapshot(blob);
+	const MeshOutputBlob before = blob;
 	const std::array<uint32_t, 12> positions = MakePrototypePositions();
 	std::array<uint32_t, (kMaxPrimitives + 1) * kIndicesPerPrimitive> indices;
 	indices.fill(0x55555555u);
@@ -381,11 +414,7 @@ void TestOverflowIndices() {
 	Expect(status == kStatusOverflowIndices, "index overflow reports its status");
 	const MeshOutputRead read = ReadOutput(blob);
 	Expect(read.status == kStatusOverflowIndices, "committed status is the overflow status");
-	Expect(read.vertex_count == 0, "vertex count not written on overflow");
-	Expect(read.primitive_count == 0, "primitive count not written on overflow");
-	Expect(RegionUnwritten(blob, 0, kPositionWords), "no position written on overflow");
-	Expect(RegionUnwritten(blob, kIndicesStartWord, kIndexWords), "no index written on overflow");
-	Expect(RegionUnwritten(blob, kCountsStartWord, kCountWords), "counts not written on overflow");
+	CheckOnlyStatusChanged(before, blob, "index overflow preserves every non-status word");
 	CheckGuards(blob, "guards intact after index overflow");
 	std::printf("overflow-indices: status=%u requested_primitives=%u capacity=%u\n", read.status,
 	            kMaxPrimitives + 1, kMaxPrimitives);
@@ -395,7 +424,8 @@ void TestOverflowCombined() {
 	// Both capacities exceeded: the vertex check runs first, so the status is the
 	// vertex overflow status and nothing beside the status word is written.
 	MeshOutputBlob blob;
-	blob.Init();
+	InitOverflowSnapshot(blob);
+	const MeshOutputBlob before = blob;
 	const std::array<uint32_t, (kMaxVertices + 1) * 4> positions{};
 	const std::array<uint32_t, (kMaxPrimitives + 1) * kIndicesPerPrimitive> indices{};
 	const MeshOutputWrite write = {
@@ -405,9 +435,7 @@ void TestOverflowCombined() {
 	Expect(status == kStatusOverflowVertices, "combined overflow reports the vertex status first");
 	const MeshOutputRead read = ReadOutput(blob);
 	Expect(read.status == kStatusOverflowVertices, "committed status is the vertex overflow status");
-	Expect(RegionUnwritten(blob, 0, kPositionWords), "no position written on combined overflow");
-	Expect(RegionUnwritten(blob, kIndicesStartWord, kIndexWords), "no index written on combined overflow");
-	Expect(RegionUnwritten(blob, kCountsStartWord, kCountWords), "counts not written on combined overflow");
+	CheckOnlyStatusChanged(before, blob, "combined overflow preserves every non-status word");
 	CheckGuards(blob, "guards intact after combined overflow");
 	std::printf("overflow-combined: status=%u\n", read.status);
 }
@@ -416,10 +444,13 @@ void TestOverflowIgnoresFullCapacity() {
 	// The writer must still accept the maximum itself after a rejected
 	// over-capacity request: capacity checks are comparisons, not sticky state.
 	MeshOutputBlob blob;
-	blob.Init();
+	InitOverflowSnapshot(blob);
+	const MeshOutputBlob before = blob;
 	const std::array<uint32_t, 12> overflow_positions = {};
 	const MeshOutputWrite overflow = {kMaxVertices + 1, overflow_positions.data(), 0, nullptr};
 	Expect(WriteOutput(blob, overflow) == kStatusOverflowVertices, "rejected request");
+	Expect(ReadOutput(blob).status == kStatusOverflowVertices, "rejected request commits stored error");
+	CheckOnlyStatusChanged(before, blob, "rejected request preserves every non-status word before retry");
 
 	std::array<uint32_t, kMaxVertices * 4> positions;
 	positions.fill(0x12345678u);
@@ -429,6 +460,8 @@ void TestOverflowIgnoresFullCapacity() {
 	const uint32_t        status = WriteOutput(blob, exact);
 	Expect(status == kStatusOk, "maximum-capacity request still succeeds afterwards");
 	const MeshOutputRead read = ReadOutput(blob);
+	Expect(read.status == kStatusOk, "overflow recovery commits stored Ok over the previous error");
+	Expect(blob.words[kCountsStartWord + 2] == 0, "recovery clears the reserved count word");
 	Expect(read.vertex_count == kMaxVertices && read.primitive_count == kMaxPrimitives,
 	       "maximum counts after the rejected request");
 	Expect(std::memcmp(&blob.words[0], positions.data(), positions.size() * sizeof(uint32_t)) == 0,
