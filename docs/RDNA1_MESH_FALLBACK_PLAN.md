@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-27. **Plan revision:** 1.0. **Overall status:** P1 static investigation complete (S-009); P0 baseline remains incomplete with known timing failure. Generic inventory expansion and timer fixes deferred under D-016. No fallback implemented; P2.1 targeted output-contract test next.
+> **Last edited:** 2026-10-28. **Plan revision:** 1.1. **Overall status:** P2.1 fixed output-contract test complete (S-010); the synthetic P4.1 compute prototype is next. P0 baseline remains incomplete with known timing failure; timer fixes and generic inventory expansion stay deferred under D-016. No fallback implemented; no GPU or Astro Bot milestone complete.
 
 ## 0. Mission and boundaries
 
@@ -35,17 +35,17 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 
 | Field | Current value |
 | --- | --- |
-| Current phase | **P1 — native mesh source investigation complete; P2.1 next** |
-| Current subtask | S-009 strategic review and P1 static architecture mapping complete |
-| Status | P1 DONE (static evidence); P0/P0.4 incomplete and deferred, hardware gates open |
-| Last verified git commit | S-009 input `57348577135f7ae12ed01d7fefad15856be9b92e`; clean source, 14 matching submodules; documentation commit is not a rebuilt binary |
+| Current phase | **P2.1 output-contract test DONE (S-010); P4.1 synthetic compute prototype next** |
+| Current subtask | S-010 offline synthetic output-contract test complete and passing |
+| Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
+| Last verified git commit | P2.1 code built/executed at input `925ee16e635110b3d295a3f704ccfc5fa1520c47` plus uncommitted new test/CMake edits (dirty build, identity retained); the containing commit updates this field |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
-| Checkout evidence | S-009 clean status, recent eight commits, branch, pinned ancestry and 14 matching submodules verified; only source/test difference from pin is one unbuffered stdout line |
-| Build status | Qt-free Release/Ninja/clang-cl core configure PASS; `kyty_emulator` build PASS (1089.09 s, 2 jobs, no PGO/IPO); GUI/install/package not attempted |
+| Checkout evidence | S-010 clean status at input, branch, pinned ancestry (exit 0, tag `744705e`) and 14 matching recursive submodules verified; only source difference from pin remains the retained one-line S-008 thread_service stdout diagnostic |
+| Build status | Focused `mesh_output_contract_tests` Release/Ninja/clang-cl build PASS (2 jobs, 2 incremental actions + regen, no PGO/IPO); prior S-002 core baseline retained; CLI/GUI not rebuilt |
 | Native RDNA1 smoke test | Not run in this fork |
-| Passing tests | S-007 6/7 PASS, thread_service FAIL twice; prior evidence retained. 63 distinct passing cases, 1 failed-only, 361 never run |
-| Known blockers / limits | CondWaitUntil failure retained as known baseline issue, no evidence blocking static renderer research. Early-signal check unreached; no stable full-suite or hardware claim |
-| Next single actionable task | P2.1 offline synthetic output-contract test only: fixed positions/indices/count/status layout, alignment/capacity/zero-output/overflow/guards; focused 2-job build and serial CPU pass with provenance. No dispatch, renderer wiring, guest translation or timer change; commit and stop. |
+| Passing tests | S-010 `mesh_output_contract` 1/1 PASS serial (0.06 s). 64 distinct passing cases, 1 failed-only, 361 never run, 426 registered |
+| Known blockers / limits | CondWaitUntil failure retained as known baseline issue (D-016), not blocking. Contract is a synthetic host prototype only; no GPU dispatch, renderer wiring, guest translation or timer change |
+| Next single actionable task | P4.1 synthetic Vulkan compute prototype of this exact contract: authored public-domain compute shader writes positions/indices/counts/status into the fixed layout, SPIR-V validated for Vulkan 1.3, dispatched on an available Vulkan device with layers, host readback compares every contract expectation exactly. Intel/software-ICD results are Intel only; unavailable Vulkan is a skip, never a pass. No emulator/renderer wiring; commit and stop. |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -54,8 +54,8 @@ Never change a phase to `DONE` without a command/test/log and its actual result.
 
 | Validation category | Current evidence in this fork |
 | --- | --- |
-| Compilation | PASS: unmodified Qt-free `kyty_emulator` linked, exit 0; GUI/install/package not run |
-| Unit tests | S-007 FAIL: six cases PASS, thread_service FAIL in batch and isolated retry. Prior passes/failures retained; baseline incomplete |
+| Compilation | PASS: unmodified Qt-free `kyty_emulator` linked, exit 0 (S-002); S-010 added focused `mesh_output_contract_tests` target build PASS, exit 0 (2 jobs). GUI/install/package not run |
+| Unit tests | S-010 `mesh_output_contract` PASS, serial CTest 1/1, exit 0 (0.06 s), after the initial run caught my own incorrect zero-region/guard-row checker assertions (both original and passing runs retained). Prior S-007 six-case host batch: thread_service FAIL unchanged; 64 distinct passing cases total, 1 failed-only |
 | Shader compilation and SPIR-V validation | PASS (scoped): 38 existing build shaders generated; `spirv_local_arrays` synthetic assembly/validation for Vulkan 1.3 passed. S-003 also passed `spirv_cache_salt` synthetic Vulkan 1.3 assembly/validation. No independent validation of the full generated shader corpus; standalone `spirv-val` absent |
 | Vulkan integration tests | NOT RUN on either machine |
 | RDNA1 hardware tests | NOT RUN on RX 5700 XT |
@@ -184,9 +184,9 @@ Status: **DONE (static investigation S-009)** — `docs/rdna1-mesh-architecture.
 **Gate:** Source-backed architecture note maps guest detection and ABI, front/back translation, IR exports/allocation, native SPIR-V and pipeline creation, capability checks, direct/indirect draw and recorder paths, I/O, wave/LDS and synchronization assumptions, risks and minimal compute prototype with explicit limits. Agent source review complete; no runtime behavior change, independent review pending.
 
 ### P2 — Output contract, feature detection, traceability and negative test
-Status: **NOT_STARTED**
+Status: **IN_PROGRESS** — P2.1 DONE (S-010); selection-logic test, RDNA1 diagnostics and flag-gated mode selection remain.
 
-- P2.1 next: focused CPU/offline fixed output-contract test as specified in the architecture report. No Vulkan dispatch or guest lowering in this task.
+- P2.1 **DONE (S-010):** `tests/MeshOutputContractTests.cpp` defines and tests the host-side fixed output blob for the synthetic prototype: positions (64 float4, byte 0), indices (192 uint32 = 3 per primitive for 64 primitives, byte 1032), counts (vertex/primitive/reserved, byte 1808), and a status word written last (byte 1828, total 1840 bytes), separated by eight sentinel guard words. Covers exact offsets/alignment, capacity arithmetic, zero output, the three-position/three-index prototype payload, exact-capacity writes, vertex/indices/combined overflow rejects without any write beside the status word, and non-sticky capacity checks. CPU only; registered as CTest case `mesh_output_contract`; no Vulkan dispatch, renderer wiring, guest translation or timer change.
 - Native extension AND feature checks already exist (S-009); extend selection diagnostics/tests only where evidence requires. Keep Barycentric and other independent capabilities separate.
 - Add targeted diagnostics on RDNA1 for a failed mesh draw, including safe shader/pipeline identifiers and capability reasons, without repeated log spam.
 - Add a feature-mocked/synthetic test that exercises selection logic; native supported devices must keep their existing path.
@@ -205,8 +205,9 @@ Status: **NOT_STARTED**
 **Gate:** Synthetic test demonstrates compute processing on the **real AMD GPU** with correct positions/indices; no illegal SPIR-V or undisclosed fallback to CPU renderer.
 
 ### P4 — GPU output-buffer and traditional draw prototype
-Status: **NOT_STARTED**
+Status: **NOT_STARTED** — P4.1 is the next single task: dispatch the S-010 contract on an available Vulkan device.
 
+- P4.1: authored public synthetic Vulkan 1.3 compute shader writes the fixed positions/indices/counts/status blob exactly per `tests/MeshOutputContractTests.cpp` (three float4 positions, indices 0/1/2, counts 3/1, Ok status last); validate SPIR-V offline, dispatch one workgroup with synchronization layers, host readback and compare every expectation exactly, guards included. Intel/software-ICD evidence stays Intel only; unavailable Vulkan is a skip, never a pass.
 - Use device-local scratch buffers for mesh output (vertex, primitive/index, relevant varyings), with explicit capacities and bounds checks.
 - Compute dispatch generates geometry; Vulkan barriers make writes visible to vertex/index consumers; draw with conventional vertex/fragment stages.
 - Avoid CPU readback in the hot path where feasible; design safe overflow/fallback behavior.
@@ -281,6 +282,7 @@ Status: **NOT_STARTED**
 | D-014 | 2026-10-27 | Diagnose thread_service before another baseline batch; do not weaken timing assertion | S-007 fails the precise-wait median threshold in batch and one isolated outside-sandbox retry; actual median/host timer conditions unavailable, so no cause established | Measured diagnostic evidence |
 | D-015 | 2026-10-27 | Fix precise-wait coarse-phase assumption next; retain thresholds | S-008 measures cv.wait_for(2500 us) at 15959 us, exceeding whole 5 ms deadline; fine phase cannot recover. Keep unbuffered test diagnostics, no global timer-policy workaround | Focused fix evidence |
 | D-016 | 2026-10-27 | Supersede D-014/D-015 next-action priority: defer CondWaitUntil fix and generic test expansion; allow P1 static review and bounded synthetic feasibility before full P0 closure | User strategic review; core build and 63 distinct passes suffice for source analysis, no evidence timer failure blocks mesh development. P0 remains incomplete, no thresholds changed | Direct renderer/prototype dependence on timing failure, or integration regression gate |
+| D-017 | 2026-10-28 | The synthetic prototype contract rejects insufficient capacity with an explicit status and no write beside the status word; this deliberately differs from the native `OpSetMeshOutputsEXT` guard mode that clamps counts and redirects invalid indices/culls (`spirvEmitterMesh.cpp:97` onward) | Synthetic minus-contract testing demands deterministic no-partial-write behavior first; a later GPU integration may need native-style guard/clamp modes and must then re-derive the contract tests | Edge between P4/P5 prototype evidence and integrated native-mesh semantics |
 
 ## 5. Experiments and evidence
 
@@ -297,6 +299,7 @@ Status: **NOT_STARTED**
 | E-008 | 2026-10-27; clean `40626837f0f76d99096862a6337cf84e4ad28295`; no GPU selected | Five targets/seven host timer-thread cases, 2 build jobs, serial tests outside sandbox | Build PASS 20.80 s; CTest 6/7 PASS, thread_service FAIL, exit 8, 7.83 s; isolated retry FAIL, 2.19 s; 0 skips. Root cause pending | `docs/RDNA1_BASELINE_BATCH_S007.md`, ignored `_Build/p0-s007/`; no hardware/performance evidence |
 | E-009 | 2026-10-27; dirty diagnostic variants at `3e7e5bb3175a4a9484b6c32ed73c347a5c4ca116`; laptop Windows build 26300 | Capture median lateness and component wait latency, two target builds/runs | Builds PASS; tests FAIL twice unchanged threshold; precise late 10449–10994 us, coarse 2500 us wait elapsed 15959 us, fine 500 us sleep elapsed 1116 us | `docs/RDNA1_THREAD_SERVICE_DIAGNOSIS.md`, ignored `_Build/p0-s008/` source diffs/logs/host snapshots/hash; no GPU |
 | E-010 | 2026-10-27; clean source `57348577135f7ae12ed01d7fefad15856be9b92e`; no device/driver selected | Static P1 source investigation using rg/Get-Content and Git provenance checks | PASS static mapping; baseline sufficient for investigation only, known timing failure retained. No build/test/dispatch executed | `docs/rdna1-mesh-architecture.md`; S-009. No runtime duration/FPS/screenshots or hardware metrics applicable |
+| E-011 | 2026-10-28; input `925ee16e635110b3d295a3f704ccfc5fa1520c47` + uncommitted new test/CMake edits (generated identity `925ee16-dirty`); laptop, no GPU/driver selected | P2.1 offline output-contract: new `tests/MeshOutputContractTests.cpp` + CMake registration; focused 2-job build then serial CPU CTest | Build PASS exit 0 (clang-cl 19.1.5, 2 jobs, no memory retry). Initial serial run FAIL exit 8: the test caught two incorrect checker assertions in the test file itself (already-written regions were expected to remain zero, and guard rows were checked as zero instead of the sentinel); checker helpers corrected, contract unchanged. Rebuild PASS; serial CTest 1/1 PASS exit 0, 0.06 s; CTest inventory now 426 registrations. Executable SHA-256 `D74BBB14…C09234`, 19,456 bytes | `tests/MeshOutputContractTests.cpp`; `CMakeLists.txt`; ignored `_Build/p0-s010/` build/run logs and provenance (`build.log`/`build3.log`, `test-run.log` initial fail, `test-run2.log` pass, `provenance*.txt`). No GPU, driver, FPS or screenshots applicable; CPU-only synthetic contract, not mesh/GPU compatibility evidence |
 
 New experiments MUST include real date, commit SHA, driver, device, exact command/config, time budget, result (PASS/FAIL/INCONCLUSIVE), and logs/artifact location. Hardware tests must also follow section 2.5 for package identity, screenshots and metrics (or explicit unavailability reasons). Avoid adding game code/assets to git.
 
@@ -485,7 +488,23 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(devi
 - **Decision/revision:** D-016/revision 1.0; P1 static exit met, independent review pending. P0 incomplete/deferred; package/CI/hardware gates retained. No fallback implementation. End this session after committing docs.
 - **Next exact single task/gate:** P2.1 offline synthetic output-contract test only: fixed positions/indices/count/status layout, alignment/capacity/zero-output/overflow/guards; focused 2-job build and serial CPU pass with provenance. No dispatch, renderer wiring, guest translation or timer change; commit and stop.
 
-### Template for S-010 onward
+### Session S-010 — 2026-10-28 — P2.1 offline synthetic output-contract test (Codex)
+
+- **Branch / HEAD before → after:** `feature/rdna1-mesh-fallback`, input `925ee16e635110b3d295a3f704ccfc5fa1520c47` (verified: clean status, branch, pinned ancestry exit 0 with tag `744705e`, 14 recursive submodules at recorded SHAs) → documentation commit containing code, registration and this entry. The focused binary was built from the input commit plus uncommitted P2.1 edits; generated identity refreshed with the standard generator reported `u59-windows-20261024-int21-10-g925ee16e-dirty` while the working tree was dirty. No merge/rebase/push.
+- **Phase / one subtask:** P2.1 only, per checkpoint S-009 and architecture-report next task. Fixed positions/indices/count/status blob layout with exact offsets/alignment, capacity arithmetic, zero output, the three-position/three-index prototype payload, exact-capacity writes, overflow rejects and guard rows. No Vulkan dispatch, no renderer wiring, no guest shader translation, no timer change, no unrelated tests.
+- **What changed (files/commit):** new `tests/MeshOutputContractTests.cpp` (contract constants + static_asserts, `MeshOutputBlob`/`WriteOutput`/`ReadOutput` host mirror of the planned compute write sequence, nine cases: layout, guard init, zero output, prototype triangle, exact capacity, vertex/index/combined overflow, rejected-then-maximum sequence); `CMakeLists.txt` adds `mesh_output_contract_tests` target (EXCLUDE_FROM_ALL), CTest case `mesh_output_contract` inside the BUILD_TESTING block, and membership in the `kyty_tests` aggregate; plan revision 1.1 and AGENTS checkpoint. No production source touched; the contract lives in the test file to avoid dead headers until the P4.1 prototype promotes the exact same numbers.
+- **Commands executed and actual PASS/FAIL:**
+  - x64 VS 2022 developer shell (17.14.42), clang-cl/LLVM+LLD 19.1.5, CMake 3.31.6-msvc6, Ninja 1.12.1, local glslang PATH: `cmake --build _Build/windows-core --target mesh_output_contract_tests --parallel 2` → build 01 FAIL exit 1 (4 clang-cl errors: I had default-initialized `const std::array` and then called non-const `fill`; fixed to non-const locals), build 02 PASS exit 0 (3 Ninja actions including CMake glob regen), build 03 (checker fixes) PASS exit 0. 2 jobs throughout, no memory exhaustion, no 1-job retry.
+  - `ctest -N -R '^mesh_output_contract$'` → exactly 1 registered (full inventory now 426, was 425).
+  - `ctest --output-on-failure --parallel 1 -R '^mesh_output_contract$'` → run 01 FAIL exit 8 (0.09 s): 11 failed checks proved the shared checker wrongly expected written regions to stay zero and two exact-capacity checks compared guards against zero instead of the sentinel. Checker helpers fixed (`CheckGuards`; explicit zero-region checks only on no-write paths); contract values unchanged. Retained run 02 PASS exit 0, 0.06 s suite / 0.15 s CTest, 0 failed, 0 skipped, 0 retries.
+- **Contract recorded (must be reproduced by the P4.1 GPU prototype exactly):** positions 64 float4 at byte 0 (16-byte aligned); indices 192 uint32 (3 per primitive ≤ 64 primitives) at byte 1032; counts vertex/primitive/reserved at byte 1808; status word at byte 1828; total 1840 bytes (16-byte multiple); eight guard words `0xC0DEFEED` at word indexes 256/257/450/451/455/456/458/459. Write order positions → indices → counts → status-Ok (commit marker checked first by readers). Over-capacity (vertices first, then indices) writes only the status word (`1` overflow_vertices, `2` overflow_indices) and leaves regions, counts and guards untouched — a deliberate divergence from the native `OpSetMeshOutputsEXT` clamp/guard mode, recorded as D-017.
+- **Evidence / log paths (sanitized):** ignored `_Build/p0-s010/`: `build.cmd`/`test.cmd`/`provenance*.ps1`/`*.cmd`, `build.log` (failed compile 01), `build2.log`/`build3.log` (passing), `test-run.log` (initial CTest FAIL), `test-run2.log` (passing CTest), `provenance.txt`, `provenance-toolchain.txt`, `provenance-cont.txt`. `mesh_output_contract_tests.exe` SHA-256 `D74BBB143F7D1D54A5CEAFE7C59053C7BE632199E54D2CE4922DED27CAC09234`, 19,456 bytes; source diff from pin still only the retained S-008 thread_service stdout line (`tests/ThreadServiceTests.cpp` +1); CMake cache confirmed Release/BUILD_TESTING ON/launcher OFF/PGO generate OFF/use empty/IPO OFF/MARCH empty.
+- **Unexpected findings / known limits:** the shared generated `kytyGitVersion.h` was stale at S-008's state (`3e7e5bb3-dirty`) because standalone test targets do not depend on `KytyGitVersion`; refreshed it with the standard generator (build-only artifact, ignored). The `3/3+19+6`-style prior batch commands remain untouched; nothing else rebuilt. This test validates a synthetic host contract only: it is not GPU evidence, not SPIR-V evidence, not mesh-emulation, and cannot contradict or confirm native RX 5700 XT behavior.
+- **Six categories this session:** Compilation PASS (focused test target, 2 jobs; prior S-002 core baseline retained); Unit tests PASS (`mesh_output_contract` 1/1 serial; initial fail retained; 64 distinct passing cases, 1 failed-only, 361 never run, 426 registered); Shader compilation and SPIR-V validation NOT RUN (prior scoped passes retained); Vulkan integration tests NOT RUN; RDNA1 hardware tests NOT RUN; Astro Bot compatibility tests NOT RUN.
+- **Decisions / plan revisions:** D-017, revision 1.1. P2 IN_PROGRESS with P2.1 DONE; P4.1 defined as the next single task.
+- **Next single task:** P4.1 — synthetic Vulkan compute prototype of this exact contract. Author a public-domain synthetic compute shader mirroring `WriteOutput` (three float4 positions, indices 0/1/2, vertex_count=3 primitive_count=1, Ok status last, guards preserved), validate its SPIR-V offline for Vulkan 1.3 with SPIRV-Tools, dispatch one workgroup on an available Vulkan device with core + synchronization validation layered on, wait/fence, invalidate mapped readback, and compare every contract expectation exactly (counts, all three positions/indices, untouched regions, unchanged guards, status). Record device/driver/ICD identity; Intel Iris Xe or software-ICD results are Intel only; no Vulkan → skip, never pass. No emulator or renderer source changes, no guest translation; commit and stop.
+
+### Template for S-011 onward
 - **Date / who:**
 - **Branch / HEAD before → after:**
 - **Phase / one subtask:**
@@ -510,6 +529,7 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(devi
 | 2026-10-27 | 0.8 | 1, 3–5, 7–8; AGENTS/inventory/new batch | S-007 build passes, thread_service timing fails twice; retain six passes and both failures. D-014 prioritizes diagnosis over further batches |
 | 2026-10-27 | 0.9 | 1,4–5,7–8; AGENTS/diagnosis/test stdout | S-008 measured coarse-phase oversleep, retains assertion failures and diagnostic-only change; D-015 selects focused wait fix |
 | 2026-10-27 | 1.0 | 1,3–5,7–8; AGENTS; architecture/diagnosis | S-009 user strategic review defers timer repair/generic inventory, completes P1 static map, defines bounded prototype and P2.1 contract gate; no implementation or runtime claims |
+| 2026-10-28 | 1.1 | 1,3 (P2/P4),4–5,7–8; AGENTS; tests/CMake | S-010 adds and passes the P2.1 offline output-contract test (426 registrations), retains the initial failing checker run and a stale generated-header finding, records the synthetic_contract decision D-017 and defines P4.1; no GPU, renderer or timer change |
 
 ## 9. Quick commands (reference; verify before running)
 

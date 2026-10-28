@@ -842,6 +842,15 @@ add_executable(device_compat_tests EXCLUDE_FROM_ALL "${KYTY_TESTS_DIR}/DeviceCom
 target_link_libraries(device_compat_tests Vulkan::Headers)
 target_include_directories(device_compat_tests PRIVATE ${inc_headers})
 
+# P2.1 RDNA1 fallback research: the host-side output-buffer contract for the planned synthetic
+# mesh-output compute prototype (tests/MeshOutputContractTests.cpp): fixed positions/indices/
+# count/status layout, guard rows, capacity arithmetic, zero-output and overflow cases.
+# CPU only; no Vulkan device, dispatch or renderer wiring.
+add_executable(mesh_output_contract_tests EXCLUDE_FROM_ALL
+	"${KYTY_TESTS_DIR}/MeshOutputContractTests.cpp"
+)
+target_include_directories(mesh_output_contract_tests PRIVATE ${inc_headers})
+
 add_executable(ime_dialog_tests EXCLUDE_FROM_ALL
 	"${KYTY_TESTS_DIR}/ImeDialogTests.cpp"
 	"${KYTY_SOURCE_DIR}/libs/imeCommon.cpp"
@@ -1345,6 +1354,7 @@ if(BUILD_TESTING)
 		TIMEOUT 180)
 	add_test(NAME vram_budget COMMAND $<TARGET_FILE:vram_budget_tests>)
 	add_test(NAME device_compat COMMAND $<TARGET_FILE:device_compat_tests>)
+	add_test(NAME mesh_output_contract COMMAND $<TARGET_FILE:mesh_output_contract_tests>)
 	add_test(NAME shader_vertex_metadata COMMAND $<TARGET_FILE:shader_vertex_metadata_tests>)
 	add_test(NAME resource_materialization COMMAND $<TARGET_FILE:resource_materialization_tests>)
 	add_test(NAME resource_tracking COMMAND $<TARGET_FILE:resource_tracking_tests>)
@@ -2478,6 +2488,7 @@ if(BUILD_TESTING)
 		pipeline_list_tests
 		vram_budget_tests
 		device_compat_tests
+		mesh_output_contract_tests
 		shader_precompile_tests
 		shader_vertex_metadata_tests
 		resource_materialization_tests
