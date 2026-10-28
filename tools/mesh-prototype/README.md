@@ -1,4 +1,4 @@
-# Kyty standalone mesh-compute prototype â€” Windows x64
+# Kyty standalone mesh-compute prototype — Windows x64
 
 This package is a synthetic GPU-buffer correctness test, **not an emulator or an Astro Bot patch**. It uploads public synthetic data, runs compute and checks every word of a fixed 1840-byte output blob. No game files, firmware, keys or proprietary shaders are required or accessed.
 
