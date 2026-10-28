@@ -83,3 +83,28 @@ Strict unavailable Vulkan remains SKIPPED, never silently downgraded. Offline dr
 preflight: `Run-Prototype.ps1 -Mode Offline -Draw`. This fixture is untextured and
 synthetic, with no guest shader translation or emulator integration. It does not
 complete the broader textured-mesh or Astro Bot gate.
+
+## P4.3 textured triangle
+
+Run `Run-Textured.cmd -IsolateImplicitLayers` on the RX desktop (normal user).
+Strict Vulkan 1.3 and RX identity remain required. This explicit mode preserves
+all nine P4.1 cases and the P4.2 untextured control/draw, then checks a clear
+control and textured triangle using separately compute-generated UVs. A tiny
+public authored 2x2 RGBA8 texture (red/green/blue/yellow) uses nearest sampling and
+clamp-to-edge. No game assets or emulator integration.
+
+The original 1840-byte blob is unchanged. A separate 544-byte UV output contains
+64 float2 slots, six guard words, count and Pending/Ok/overflow status; every word
+is compared after readback. Extra actual UV dispatches test zero, capacity 64,
+reject 65 without partial writes, and same-buffer recovery. UV and position
+compute work feeds vertex attributes directly in the draw submission. Every
+RGBA pixel must match, including opaque background and all four texture colors.
+
+Results outside the package include `triangle.ppm` (textured), `untextured.ppm`
+(reference mode), each with a SHA-256 in result.json, plus `texture-fixtures.log`
+and `texture-spirv.log` and the earlier preflight/runtime logs. Return all result
+files; retain failures/skips. No window opens. Offline preflight uses `-Mode
+Offline -Texture`; laptop-only auxiliary rendering uses `-Mode Vulkan12 -Texture`.
+These do not certify native RX strict execution. Existing `Run-Strict.cmd` and
+`Run-Draw.cmd` retain their previous compute/untextured behavior. Texture work does
+not implement guest mesh translation or game compatibility.

@@ -74,6 +74,8 @@ bool ValidateDrawShaders() {
 	return g_failures == 0;
 }
 
+#include "MeshTextureProbe.h"
+
 struct DrawScopeExit {
 	std::function<void()> cleanup;
 	~DrawScopeExit() { cleanup(); }
@@ -83,7 +85,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
                       const VkPhysicalDeviceMemoryProperties& memory, bool api13,
                       VkQueue queue, VkCommandBuffer cmd, VkFence fence,
                       VkPipeline compute, VkPipelineLayout compute_layout, VkDescriptorSet set,
-                      GpuBuffer& output, GpuBuffer& payload, const std::filesystem::path& image_path) {
+                      GpuBuffer& output, GpuBuffer& payload, const std::filesystem::path& image_path, bool textured = false) {
 	// Resolve every entry point, including teardown, before creating any draw objects.
 #define DRAW_PROC(name) auto name = reinterpret_cast<PFN_vk##name>(proc(device, "vk" #name)); \
 	if (name == nullptr) { Expect(false, "draw entry point vk" #name); return false; }
@@ -113,6 +115,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 	VkPipeline graphics = VK_NULL_HANDLE;
 	VkShaderModule modules[2] = {};
 	GpuBuffer readback;
+	TextureProbe texture(device, proc, memory);
 	DrawScopeExit scope{[&]() {
 		CheckVk(DeviceWaitIdle(device), "draw idle before cleanup");
 		if (graphics) { DestroyPipeline(device, graphics, nullptr); }
@@ -127,6 +130,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		if (readback.buffer) { DestroyBuffer(device, readback.buffer, nullptr); }
 		if (readback.memory) { FreeMemory(device, readback.memory, nullptr); }
 	}};
+	if (textured && !texture.Initialize(api13)) { return false; }
 	VkImageCreateInfo image_info = {};
 	image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	image_info.imageType = VK_IMAGE_TYPE_2D;
@@ -185,7 +189,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 	if (!CheckVk(CreateFramebuffer(device, &fb, nullptr, &framebuffer), "offscreen framebuffer")) { return false; }
 	VkPipelineShaderStageCreateInfo stages[2] = {};
 	for (size_t i = 0; i < 2; ++i) {
-		const auto words = LoadSpirvFile(DrawModulePath(api13, i == 0 ? "vert" : "frag"), "draw-runtime");
+		const auto words = LoadSpirvFile(textured ? TextureModulePath(api13, i == 0 ? "vert" : "frag") : DrawModulePath(api13, i == 0 ? "vert" : "frag"), "draw-runtime");
 		if (words.empty()) { return false; }
 		VkShaderModuleCreateInfo sm = {};
 		sm.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -199,14 +203,15 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 	}
 	VkPipelineLayoutCreateInfo layout_info = {};
 	layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	if (textured) { layout_info.setLayoutCount = 1; layout_info.pSetLayouts = &texture.sampled_layout; }
 	if (!CheckVk(CreatePipelineLayout(device, &layout_info, nullptr, &layout), "draw pipeline layout")) { return false; }
-	VkVertexInputBindingDescription binding = {0, 16, VK_VERTEX_INPUT_RATE_VERTEX};
-	VkVertexInputAttributeDescription attribute = {0, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 0};
+	VkVertexInputBindingDescription bindings[2] = {{0, 16, VK_VERTEX_INPUT_RATE_VERTEX}, {1, 8, VK_VERTEX_INPUT_RATE_VERTEX}};
+	VkVertexInputAttributeDescription attributes[2] = {{0, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 0}, {1, 1, VK_FORMAT_R32G32_SFLOAT, 0}};
 	VkPipelineVertexInputStateCreateInfo vertex = {};
 	vertex.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertex.vertexBindingDescriptionCount = vertex.vertexAttributeDescriptionCount = 1;
-	vertex.pVertexBindingDescriptions = &binding;
-	vertex.pVertexAttributeDescriptions = &attribute;
+	vertex.vertexBindingDescriptionCount = vertex.vertexAttributeDescriptionCount = textured ? 2 : 1;
+	vertex.pVertexBindingDescriptions = bindings;
+	vertex.pVertexAttributeDescriptions = attributes;
 	VkPipelineInputAssemblyStateCreateInfo assembly = {};
 	assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -251,6 +256,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 	// Two sequential GPU submissions: clear-only control, then freshly dispatched
 	// geometry consumed directly by the draw in the SAME submission (no CPU gate).
 	for (bool draw: {false, true}) {
+		if (textured && !texture.Upload()) { return false; }
 		Scenario scenario;
 		scenario.name = "offscreen-triangle";
 		scenario.vertex_count = 3;
@@ -284,7 +290,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		VkMemoryBarrier upload = {};
 		upload.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
 		upload.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-		upload.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+		upload.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT | VK_ACCESS_TRANSFER_READ_BIT;
 		CmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_HOST_BIT,
 		                   VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_TRANSFER_BIT,
 		                   0, 1, &upload, 0, nullptr, 0, nullptr);
@@ -304,6 +310,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 			CmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
 			                   0, 0, nullptr, 1, &geometry, 0, nullptr);
 		}
+		if (textured && draw) { texture.Record(cmd); }
 		VkImageMemoryBarrier image_barrier = {};
 		image_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		image_barrier.oldLayout = draw ? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
@@ -327,8 +334,10 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		CmdBeginRenderPass(cmd, &render, VK_SUBPASS_CONTENTS_INLINE);
 		if (draw) {
 			CmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics);
-			const VkDeviceSize offset = kPositionsOffsetBytes;
-			CmdBindVertexBuffers(cmd, 0, 1, &output.buffer, &offset);
+			const VkDeviceSize offsets[2] = {kPositionsOffsetBytes, 8};
+			const VkBuffer buffers[2] = {output.buffer, texture.uv.buffer};
+			CmdBindVertexBuffers(cmd, 0, textured ? 2 : 1, buffers, offsets);
+			if (textured) { CmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, &texture.sampled_set, 0, nullptr); }
 			CmdBindIndexBuffer(cmd, output.buffer, kIndicesOffsetBytes, VK_INDEX_TYPE_UINT32);
 			CmdDrawIndexed(cmd, 3, 1, 0, 0, 0);
 		}
@@ -369,9 +378,11 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		MeshOutputBlob actual;
 		std::memcpy(actual.words.data(), output.mapped, kTotalBytes);
 		CompareBlobWords(actual, draw ? scenario.expected : scenario.initial, "draw exact full output blob including guards");
-		const size_t mismatches = PixelMismatches(static_cast<const uint8_t*>(readback.mapped), draw);
+		if (textured && !texture.Check(draw)) { return false; }
+		const size_t mismatches = textured ? TextureMismatches(static_cast<const uint8_t*>(readback.mapped), draw)
+		                                    : PixelMismatches(static_cast<const uint8_t*>(readback.mapped), draw);
 		PrintLine1("offscreen %s: 64x64 RGBA pixels mismatched=%zu/4096; full blob checked",
-		           draw ? "compute-indexed-triangle" : "clear-only-control", mismatches);
+		           draw ? (textured ? "textured-compute-indexed-triangle" : "compute-indexed-triangle") : "clear-only-control", mismatches);
 		Expect(mismatches == 0, "all 4096 offscreen RGBA pixels match");
 		if (draw && !image_path.empty()) {
 			std::ofstream file(image_path, std::ios::binary | std::ios::trunc);
@@ -385,5 +396,6 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		}
 		if (g_failures != 0 || g_validation_errors != 0) { return false; }
 	}
+	if (textured && !texture.CheckBoundaries(cmd, queue, fence)) { return false; }
 	return true; // scope cleanup runs before caller's final validation summary
 }

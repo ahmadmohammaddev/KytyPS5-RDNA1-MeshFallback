@@ -1,0 +1,14 @@
+#version 460
+// Public-domain P4.3 bounded UV generator. Separate from the P4.1 position blob.
+layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
+layout(set=0,binding=0,std430) buffer UvOutput { uint words[136]; };
+layout(push_constant) uniform Counts { uint vertex_count; } counts;
+void main() {
+    if (counts.vertex_count > 64u) { words[133]=1u; return; }
+    for (uint i=0u;i<counts.vertex_count;++i) {
+        words[2u+2u*i]=floatBitsToUint(0.25+(i%3u==1u ? 1.0 : 0.0));
+        words[3u+2u*i]=floatBitsToUint(0.25+(i%3u==2u ? 1.0 : 0.0));
+    }
+    words[132]=counts.vertex_count;
+    words[133]=0u; // publish success after data/count
+}

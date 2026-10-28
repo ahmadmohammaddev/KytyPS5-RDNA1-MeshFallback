@@ -105,11 +105,11 @@ try {
         $env:VK_LAYER_PATH = $layer
     }
     $env:VK_INSTANCE_LAYERS = $null # the harness explicitly enables its required layer
-    $selection = '^(mesh_output_contract|mesh_proto_spirv|mesh_proto_host_fixtures|mesh_proto_reject_shape|mesh_compute_proto|mesh_compute_proto_vk12|mesh_draw_oracle|mesh_draw_spirv|mesh_offscreen_draw|mesh_offscreen_draw_vk12)$'
+    $selection = '^(mesh_output_contract|mesh_proto_spirv|mesh_proto_host_fixtures|mesh_proto_reject_shape|mesh_compute_proto|mesh_compute_proto_vk12|mesh_draw_oracle|mesh_draw_spirv|mesh_offscreen_draw|mesh_offscreen_draw_vk12|mesh_texture_fixtures|mesh_texture_spirv|mesh_textured_draw|mesh_textured_draw_vk12)$'
     Native -Exe $ctest -Arguments @('--test-dir',$build,'--output-on-failure','--parallel','1','-V',
         '--output-junit',"$evidence/ctest.xml",'-R',$selection) -Log "$evidence/ctest.log" | Out-Null
     [xml]$junit = Get-Content -Raw -LiteralPath "$evidence/ctest.xml"
-    if ([int]$junit.testsuite.tests -ne 10 -or [int]$junit.testsuite.failures -ne 0) { throw 'Unexpected test inventory/results' }
+    if ([int]$junit.testsuite.tests -ne 14 -or [int]$junit.testsuite.failures -ne 0) { throw 'Unexpected test inventory/results' }
     $testResults = @($junit.testsuite.testcase | ForEach-Object {
         [ordered]@{name=$_.name; status=$(if ($_.skipped) { 'SKIPPED' } else { 'PASS' })}
     })
@@ -120,17 +120,23 @@ try {
     foreach ($file in @('mesh_output_proto_vk12.spv','mesh_output_proto_vk13.spv','mesh_draw_vert_vk12.spv','mesh_draw_frag_vk12.spv','mesh_draw_vert_vk13.spv','mesh_draw_frag_vk13.spv')) {
         CopyPayload "$build/gpu_mesh_proto_shaders/$file" "gpu_mesh_proto_shaders/$file"
     }
-    foreach ($file in @('Run-Prototype.ps1','Run-Strict.cmd','Run-Draw.cmd','README.md','THIRD_PARTY_NOTICES.md')) {
+    foreach ($api in @('12','13')) {
+        foreach ($stageName in @('comp','vert','frag')) {
+            $file = "mesh_texture_${stageName}_vk${api}.spv"
+            CopyPayload "$build/gpu_mesh_proto_shaders/$file" "gpu_mesh_proto_shaders/$file"
+        }
+    }
+    foreach ($file in @('Run-Prototype.ps1','Run-Strict.cmd','Run-Draw.cmd','Run-Textured.cmd','README.md','THIRD_PARTY_NOTICES.md')) {
         CopyPayload "$PSScriptRoot/$file" $file
     }
     CopyPayload "$repo/LICENSE" 'LICENSE'
     CopyPayload "$repo/LICENSES/Kyty-MIT.txt" 'LICENSES/Kyty-MIT.txt'
     CopyPayload "$repo/3rdparty/SPIRV-Tools/LICENSE" 'LICENSES/SPIRV-Tools.txt'
     CopyPayload "$repo/3rdparty/SPIRV-Headers/LICENSE" 'LICENSES/SPIRV-Headers.txt'
-    foreach ($file in @('MeshComputePrototypeTests.cpp','MeshOutputContractTests.cpp','MeshOutputContract.h','MeshOffscreenDraw.h')) {
+    foreach ($file in @('MeshComputePrototypeTests.cpp','MeshOutputContractTests.cpp','MeshOutputContract.h','MeshOffscreenDraw.h','MeshTextureProbe.h')) {
         CopyPayload "$repo/tests/$file" "source/$file"
     }
-    foreach ($shader in @('mesh_output_proto.comp','mesh_draw.vert','mesh_draw.frag')) {
+    foreach ($shader in @('mesh_output_proto.comp','mesh_draw.vert','mesh_draw.frag','mesh_uv.comp','mesh_texture.vert','mesh_texture.frag')) {
         CopyPayload "$repo/tests/shaders/$shader" "source/$shader"
     }
     $imports = @()

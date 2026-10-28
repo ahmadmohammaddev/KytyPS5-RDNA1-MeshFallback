@@ -1,0 +1,40 @@
+# S-020 — P4.3 authored texture and compute-generated UVs
+
+## Scope / contract
+
+Extend the existing opt-in standalone harness; preserve all P4.1 compute and P4.2 untextured modes and the original 1840-byte blob. No emulator/guest/game/timer/driver changes. New `--texture` requires strict Vulkan 1.3; `--texture-vulkan12` is explicit auxiliary evidence. Textured mode retains the original nine scenarios and plain clear/triangle before adding textured clear/triangle and UV boundary dispatches.
+
+`tests/MeshTextureProbe.h` defines a separate **544-byte / 136-word UV blob**: guards at words 0/1; 64 float2 slots at 2..129 (vertex offset 8/stride 8); guards 130/131; count 132; status 133; guards 134/135. Initial data `0xA5A5A5A5`, guards `0xC0DEFEED`, count 0, Pending `0xFFFFFFFF`. Accepted requests generate UVs, count, then stored Ok=0. Counts above 64 write only status 1, preserving the complete nonzero prior snapshot. Static layout checks, exact IEEE float-bit checks, zero/exact/overflow/recovery host tests and full-buffer GPU comparisons cover the contract. This synthetic layout is not a native guest ABI or concurrent publication guarantee.
+
+A new public authored compute shader generates cyclic UVs (.25,.25), (1.25,.25), (.25,1.25). The float2 vertex attribute comes directly from that storage/vertex buffer, with no intermediate CPU readback. Vertex-to-fragment smooth interpolation uses the existing triangle's w=1 (affine case only). A 2x2 RGBA8 authored texture has red/green/blue/yellow texels, nearest sampling and clamp-to-edge. Fixed geometry/sample boundaries avoid pixel-center edge/texel ambiguities.
+
+Every RGBA byte is compared against a deterministic oracle: 64 red, 156 green, 156 blue, 120 yellow, 3600 opaque black background. The original 460-word blob and all 136 UV words (guards/count/status/unused slots) are checked after clear and draw. Additional actual UV dispatches run count 0, 64, 65 rejection, then same-buffer count-3 recovery, checking the full evolving buffer after each. New UV resources have explicit teardown and noncopyable ownership.
+
+Dependencies retain P4.2 barriers and add host-to-transfer read for texture staging, compute-to-vertex-attribute read for UV output, transfer-write to fragment sampled-read/image layout transitions, and fenced host readback/whole-allocation flush+invalidate when noncoherent. Final validation counters include texture, graphics, device and instance cleanup. See [Khronos synchronization examples](https://docs.vulkan.org/guide/latest/synchronization_examples.html). Resource/format/function failures remain FAIL; missing validation/device/format prerequisites remain SKIPPED 41. No silent API downgrade.
+
+## Development execution / provenance
+
+Input `a32afc09f938df5baa8a03d50998784cf8968d2a`, branch `feature/rdna1-mesh-fallback`; clean input, pinned ancestry and all 14 matching submodules checked. Same x64 VS 17.14.42/clang-cl+LLD 19.1.5/CMake 3.31.6-msvc6/Ninja 1.12.1/glslang 16.6.0 setup, Release/testing ON/launcher OFF/no PGO/use empty/no IPO, **2 build jobs**, serial CTest. No memory exhaustion or one-job retry. No core/GUI build.
+
+Complete source diff/staged patch/raw changed and untracked contents/hashes/cache/submodules retained before both builds in ignored `_Build/p4-s020/pre-build-01/` and `pre-build-02/`, with reverse-patch checks. Build 1 PASS, new compute/vertex/fragment variants generated for Vulkan 1.3 and auxiliary 1.2. Build 2 PASS after explicit UV reference-bit checks and noncopyable resource ownership; no warnings/failures reported. All 12 prototype modules validate offline with pinned SPIRV-Tools. Scripts/commands/logs/XML/image/hashes retained under `_Build/p4-s020/`.
+
+`build.cmd` refreshes KytyGitVersion then builds `mesh_output_contract_tests mesh_compute_proto_tests --parallel 2`. `test.cmd` executes fourteen exact cases with `ctest --output-on-failure --parallel 1 -V --output-junit`. First suite **11 PASS / 3 SKIPPED / 0 FAIL**, 1.76 s; final suite same counts, **1.51 s**, exit 0. Skips are three strict 1.3 compute/untextured/textured runtimes on the Intel API 1.2.172 device; they do not contradict the earlier native RX P4.1/P4.2 passes. Total registrations 439: 76 with passing executions, 1 failed-only deferred timer, 1 skipped-only new strict texture runtime, 361 never run. Private mutation probes are not new CTest registrations.
+
+| Category | Actual this development session |
+| --- | --- |
+| Compilation | PASS scoped focused builds at two jobs |
+| Unit tests | PASS original contracts/fixtures and new guarded UV/texture-oracle checks |
+| Shader compilation and SPIR-V validation | PASS six new UV/texture variants plus earlier modules; explicit target environments preserved |
+| Vulkan integration | PASS native Intel Iris Xe/API 1.2.172 auxiliary: original cases, plain/textured clear and indexed draws, full RGBA/blobs, UV zero/capacity/overflow/recovery. Zero validation errors/warnings after cleanup. Strict 1.3 SKIPPED locally |
+| RDNA1 hardware | P4.3 NOT RUN; prior native P4.1/P4.2 evidence retained separately |
+| Astro Bot compatibility | NOT RUN |
+
+Independent saved PPM inspection used floating-point barycentric UVs and explicit clamped texel lookup, different from the harness integer pixel thresholds. All 4096 RGB pixels match: 64/156/156/120 colored pixels plus 3600 black. PPM SHA-256 `E613B75B2BBA9047B64F21CB35E919E90376872D13E1105BE811F6E504ECA424`, 64x64, 12,301 bytes; rendered PNG visually inspected. PPM has no alpha; RGBA evidence is from runtime. GPU timestamps/utilization/FPS/peak VRAM not collected; all mapped allocations selected coherent memory. Noncoherent runtime, device-local-only geometry storage, perspective-varying cases, filtering/mipmaps, guest translation and game/rollback remain open.
+
+Three isolated GPU mutations compile to valid auxiliary SPIR-V and correctly exit **1**, with zero validation errors including cleanup: texture red/blue swizzle produces 340 pixel mismatches; missing final UV success store fails full UV comparison; illegal UV write during overflow fails count-65 full snapshot after earlier draw/count-0/count-64 passes. Original source/modules untouched. Missing validation layer probe correctly SKIPS 41. Logs/sources/exit records retained in `mutations/` and `no-layer.*`; no hidden test failure or weakened checker.
+
+## Package handoff within the selected task
+
+Extend existing packager to fourteen cases and all twelve modules plus new public sources/header and `Run-Textured.cmd`. Runner `-Texture` implies draw, adds two preflights, logs texture/UV evidence, saves/hashes `triangle.ppm` (textured) and `untextured.ppm`. Plain launchers/default behavior retained. Existing process-local `-IsolateImplicitLayers` remains explicit, recorded and restored; core/sync validation required. PowerShell parser checks PASS. No added runtime DLL dependency intended; clean package import audit verifies it.
+
+Commit tested source/checkpoint, then build from clean committed source and verify extracted Unicode-path runner/integrity/image evidence before stopping. Append final outcome below. Next hardware task: normal-user `Run-Textured.cmd -IsolateImplicitLayers` on RX with fresh verified ZIP. Gate: native RX strict 1.3, all old scenarios/plain controls plus textured pixels, full guarded blobs, four UV boundary cases, zero validation errors through cleanup, retained result/logs/both PPM images and package/device identity. P4.3 remains IN_PROGRESS until native evidence; no next development phase or push.

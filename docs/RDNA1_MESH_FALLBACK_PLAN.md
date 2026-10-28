@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-28. **Plan revision:** 1.9. **Overall status:** S-019 native RX 5700 XT strict Vulkan 1.3 offscreen draw PASS: original nine blobs plus clear/triangle all RGBA pixels exact, zero validation errors/warnings after cleanup, supplied image independently verified. P4.1 and P4.2 DONE; broader P4 IN_PROGRESS. Next P4.3 textured triangle/UV varying fixture NOT_STARTED; no game/guest-translation milestone complete.
+> **Last edited:** 2026-10-28. **Plan revision:** 2.0. **Overall status:** S-020 implements P4.3 opt-in authored textured triangle with guarded compute-generated UVs. Intel/Vulkan 1.2 auxiliary full-image/buffer/boundary checks PASS, zero validation errors/warnings; strict 1.3 texture SKIPPED locally. P4.1/P4.2 DONE; P4.3 IN_PROGRESS pending clean package handoff/native RX texture. No guest/game milestone complete.
 
 ## 0. Mission and boundaries
 
@@ -35,17 +35,17 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 
 | Field | Current value |
 | --- | --- |
-| Current phase | **P4 IN_PROGRESS; P4.1 and P4.2 DONE with native RX evidence; P4.3 textured/UV fixture NOT_STARTED** |
-| Current subtask | S-019 review of native RX strict offscreen draw DONE; `docs/RDNA1_RX_DRAW_S019.md` |
+| Current phase | **P4 IN_PROGRESS; P4.1/P4.2 DONE; P4.3 implemented/Intel-auxiliary-tested, native strict texture pending** |
+| Current subtask | S-020 authored texture/guarded UV fixture; tested locally, clean package handoff follows source commit. See `docs/RDNA1_P43_RESULTS_S020.md` |
 | Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
-| Last verified git commit | RX package source `ea829bfb8a353f1912ef65d8856d63e7f4e2df99`, build `20261028T195020234Z`; review input `aad5e2b11234ecbc3aa4c9b2c2636be49c3e8e80`. Containing handoff commit is documentation only; no new build |
+| Last verified git commit | Development input `a32afc09f938df5baa8a03d50998784cf8968d2a` plus complete pre-build source snapshots; clean transfer identity follows source commit. Prior RX package `ea829bfb` retained |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | S-019 input clean, pinned ancestry/all 14 recursive submodules verified matching. Source/package provenance retained from S-018; no production renderer changes |
-| Build status | S-018 two focused dirty-snapshot builds PASS; clean incremental package source `ea829bfb` verified with 2 jobs/no PGO/IPO. Both compute and four graphics modules compile/validate; no core/GUI rebuild |
+| Build status | S-020 focused 2-job builds PASS/no PGO/IPO; six new UV/texture modules compile and all twelve prototype modules validate. No core/GUI rebuild |
 | Native RDNA1 smoke test | PASS scoped P4.1 + P4.2 on RX 5700 XT/API 1.4.308/AMD 25.6.1: nine blobs and compute-generated indexed triangle, exact pixels/guards, zero errors/warnings through cleanup. No textured/game evidence |
-| Passing tests | S-019 six desktop runner stages PASS, no FAIL/SKIP; independent PPM hash/all 4096 RGB pixels match. 435 registrations: 73 with passing executions, 1 failed-only deferred timer, 361 never run; historical Intel strict skips retained. No new registrations/full-suite claim |
-| Known blockers / limits | No remaining P4.2 blocker. P4.3 texture/UVs, P3 guest translation, noncoherent runtime, broader device-local scratch/measurement, game and rollback unverified. Laptop strict skips remain device-specific; timer deferred D-016 |
-| Next single actionable task | P4.3 public synthetic textured triangle with compute-generated bounded UV varying buffer; preserve P4.1 layout/plain modes. Gate: deterministic full-image/buffer/guard checks, offline shader validation, proper dependencies, clean package and native RX strict Vulkan 1.3 zero errors through cleanup. NOT_STARTED; no game/guest/emulator wiring |
+| Passing tests | S-020 final fourteen-case serial suite 11 PASS/3 strict 1.3 SKIP/0 FAIL, 1.51 s; 3 valid-SPIR-V GPU mutants correctly FAIL, missing layer correctly SKIPS. 439 registrations: 76 passing cases, 1 failed-only timer, 1 skipped-only strict texture, 361 never run |
+| Known blockers / limits | Laptop API 1.2.172 cannot execute strict texture; P4.3 RX NOT RUN. Noncoherent runtime, device-local-only geometry, perspective UVs/filtering, P3 guest translation/game/rollback open; timer deferred D-016 |
+| Next single actionable task | Finish clean-source textured package/relocation verification, then native RX `Run-Textured.cmd -IsolateImplicitLayers`. Require strict 1.3 original/plain/textured exact pixels/blobs, all UV boundary cases and zero errors through cleanup with logs/two PPM images/identity. No next phase |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -54,10 +54,10 @@ Never change a phase to `DONE` without a command/test/log and its actual result.
 
 | Validation category | Current evidence in this fork |
 | --- | --- |
-| Compilation | S-019 NOT RUN; prior S-018 focused two-job builds/clean standalone package PASS; prior Qt-free core baseline retained. GUI/general emulator packaging not verified |
-| Unit tests | PASS: host contract and new host-fixture regression. Prior mutation evidence and deferred thread_service failure retained; no full-suite claim |
-| Shader compilation and SPIR-V validation | S-019 offline PASS for both compute and four graphics modules; no shader recompilation this attempt. Prior S-018 generation/negative checker evidence retained |
-| Vulkan integration tests | PASS native RX strict Vulkan 1.3 S-019: nine blobs plus clear/indexed triangle exact, zero errors/warnings after cleanup. Auxiliary Intel 1.2 remains separate; desktop 1.2 runtime NOT RUN |
+| Compilation | S-020 focused two-job build PASS; prior core/package evidence retained; no GUI/general emulator packaging claim |
+| Unit tests | S-020 original contracts/fixtures + guarded UV exact float bits/capacities/recovery/pixel oracle PASS; prior timer failure retained |
+| Shader compilation and SPIR-V validation | S-020 six UV/texture variants generated/validated for 1.3/1.2 plus six prior modules PASS. Three valid-but-wrong shader mutations rejected by runtime checks |
+| Vulkan integration tests | S-020 Intel/API 1.2.172 auxiliary texture/UV/pixels/bounds PASS with zero errors/warnings after cleanup. Strict 1.3 skips locally; prior native RX P4.1/P4.2 passes remain separate |
 | RDNA1 hardware tests | PASS scoped P4.1 compute + P4.2 untextured conventional draw (E-017/E-019). Textured rendering, guest shaders and game gates remain open |
 | Astro Bot compatibility tests | NOT RUN on RX 5700 XT; pre-fork observations retained separately |
 
@@ -114,10 +114,10 @@ Every checkpoint/test report must give a separate result for each category: PASS
 
 | Category | Where / method | Acceptance evidence |
 | --- | --- | --- |
-| Compilation | S-019 NOT RUN; prior S-018 focused two-job builds/clean standalone package PASS; prior Qt-free core baseline retained. GUI/general emulator packaging not verified |
-| Unit tests | Laptop / future CI, verified CPU-only subset | Inventory with `ctest --test-dir <build-dir> -N`; inspect registrations/source before selecting cases; run with `--output-on-failure --parallel 1`, record named tests/counts/failures/skips. S-003 confirms a 20-case CPU helper batch; broader selection remains incomplete. |
-| Shader compilation and SPIR-V validation | S-019 offline PASS for both compute and four graphics modules; no shader recompilation this attempt. Prior S-018 generation/negative checker evidence retained |
-| Vulkan integration tests | PASS native RX strict Vulkan 1.3 S-019: nine blobs plus clear/indexed triangle exact, zero errors/warnings after cleanup. Auxiliary Intel 1.2 remains separate; desktop 1.2 runtime NOT RUN |
+| Compilation | S-020 focused two-job build PASS; prior core/package evidence retained; no GUI/general emulator packaging claim |
+| Unit tests | S-020 original contracts/fixtures + guarded UV exact float bits/capacities/recovery/pixel oracle PASS; prior timer failure retained |
+| Shader compilation and SPIR-V validation | S-020 six UV/texture variants generated/validated for 1.3/1.2 plus six prior modules PASS. Three valid-but-wrong shader mutations rejected by runtime checks |
+| Vulkan integration tests | S-020 Intel/API 1.2.172 auxiliary texture/UV/pixels/bounds PASS with zero errors/warnings after cleanup. Strict 1.3 skips locally; prior native RX P4.1/P4.2 passes remain separate |
 | RDNA1 hardware tests | PASS scoped P4.1 compute + P4.2 untextured conventional draw (E-017/E-019). Textured rendering, guest shaders and game gates remain open |
 | Astro Bot compatibility tests | **RX 5700 XT desktop only**, local installation | Record title/version, package identity, settings, duration and separate app-start/splash/new-frame/title/menu/gameplay outcomes, logs and screenshots. Synthetic RDNA1 success does not imply game compatibility. |
 
@@ -212,7 +212,7 @@ Status: **IN_PROGRESS** — P4.1 and P4.2 **DONE (native strict RX evidence S-01
 - S-014 implements strict `mesh_compute_proto` (`--run`, requires Vulkan 1.3) separately from auxiliary `mesh_compute_proto_vk12` (`--run-vulkan12`). Both require core/sync validation and an error collector. Nine scenarios include two genuine same-buffer overflow recoveries. Auxiliary support does not relax the original Vulkan 1.3 acceptance gate (D-019).
 - P4.1a standalone transfer preparation **DONE locally (S-015, D-020):** executable-relative shader lookup; clean commit-named allowlisted Windows x64 ZIP; source identity, dependency/license notices, per-file/ZIP hashes and verified logging launcher. Eight expected relocation/integrity results include actual auxiliary Intel readback after space/Unicode relocation and missing-module no-fallback rejection. External GPU driver, v14 x64 runtime and validation layers remain prerequisites. Local extraction checks do not complete desktop deployment/rollback or broad P0.4a emulator packaging.
 - P4.2 **DONE (S-019/E-019)**: opt-in conventional untextured indexed triangle from compute output into 64x64 RGBA8 image. Native RX strict Vulkan 1.3 clear/triangle controls match all pixels/full guarded blobs, zero validation errors/warnings after cleanup; supplied PPM independently matches reference hash and 496 white/3600 black pixels. Prior Intel auxiliary/package evidence retained. Does not close the broader textured-mesh gate.
-- P4.3 **NOT_STARTED (D-022)**: public synthetic textured triangle with compute-generated UVs in a separately specified/tested bounded varying buffer, preserving P4.1 layout. Vertex-to-fragment interpolation/sampling, exact image/buffer/guard checks, explicit dependencies, offline validation, portable provenance and strict native RX zero-error evidence. No guest translation/emulator integration.
+- P4.3 **IN_PROGRESS (S-020/E-020, D-023)**: authored 2x2 RGBA8 texture, nearest/clamp sampling and separate guarded 544-byte compute-generated UV buffer. All pixels/blobs checked, actual UV 0/64/65/recovery dispatches. Intel auxiliary and negative probes pass; clean handoff/native strict RX texture pending. P4.1 blob and plain modes preserved.
 - Use device-local scratch buffers for mesh output (vertex, primitive/index, relevant varyings), with explicit capacities and bounds checks.
 - Compute dispatch generates geometry; Vulkan barriers make writes visible to vertex/index consumers; draw with conventional vertex/fragment stages.
 - Avoid CPU readback in the hot path where feasible; design safe overflow/fallback behavior.
@@ -296,6 +296,8 @@ Status: **NOT_STARTED**
 
 | D-022 | 2026-10-28 | After native P4.2 acceptance, select bounded P4.3 textured triangle/compute-generated UV fixture as the next part of the existing P4 textured-mesh gate | S-019 proves untextured conventional drawing and full pixel/buffer correctness on RX, with independent image verification; texture sampling and varying transport remain untested. Preserve P4.1 layout/plain modes and keep P3/guest integration separate | Native textured fixture evidence; broader memory/measurement and P3/P5 gates remain open |
 
+| D-023 | 2026-10-28 | Specify synthetic UV output separately: 544 bytes, 64 float2 slots, six guards, count and Pending/Ok/overflow status; tiny nearest/clamp authored texture | D-022 user-selected P4.3 needs compute-to-fragment varying transport without changing the proven P4.1 blob. Full nonzero snapshots and actual UV zero/capacity/overflow/recovery dispatches keep bounded semantics testable; not a native guest ABI | Native RX strict texture acceptance; perspective/other varyings and device-local-only geometry remain later |
+
 ## 5. Experiments and evidence
 
 | ID | Environment / git SHA | Hypothesis and test | Actual observed result | Outcome / artifact |
@@ -323,6 +325,8 @@ Status: **NOT_STARTED**
 | E-018 | 2026-10-28; input `8f9859a95c84c17f76d06554d2a6b939ddc42aa3` plus complete dirty snapshots; Intel Iris Xe/API 1.2.172 | P4.2 focused two-job build, ten-case serial suite; exact 64x64 offscreen image/full output; separate corrupt-fragment/missing-layer probes | Builds PASS; suite 8 PASS/2 strict 1.3 SKIPPED/0 FAIL, 1.32 s. Intel auxiliary clear/draw pixels and blobs exact, zero validation errors/warnings after cleanup. Black-fragment mutant correctly FAILS 496 pixels; no-layer auxiliary SKIPS 41 | `docs/RDNA1_P42_RESULTS_S018.md`, ignored `_Build/p4-s018/` complete sources/logs/XML/hashes/PPM/preview. Native RX new draw/game NOT RUN. Clean source `26c85b13` package build `20261028T194438576Z`: 708,435-byte ZIP, SHA-256 `4E11DCD336C198DC98CAD8115369CEB9FCB0CC8AE9409A18570DCAEF650B1295`; ten-case suite 8 PASS/2 SKIP/0 FAIL (0.91 s), nine expected relocation/integrity outcomes. Unicode controller quoting error retained/fixed; no GPU performance/VRAM claim |
 
 | E-019 | 2026-10-28; package source `ea829bfb8a353f1912ef65d8856d63e7f4e2df99`, build `20261028T195020234Z`; RX 5700 XT/API 1.4.308/AMD proprietary 25.6.1; loader 1.4.309 | User strict required-RX draw, process-local implicit-layer isolation recorded; `--draw --image-output <results>/triangle.ppm` | Six stages PASS exit 0; runtime 0.1295435 s. Original nine blobs plus clear/indexed draw, zero RGBA mismatches, zero validation errors/warnings through cleanup. Supplied PPM independently verified all 4096 RGB pixels, 496 white/3600 black, hash identical to reference | `docs/RDNA1_RX_DRAW_S019.md`; ten raw inputs/hashes/verification/preview under ignored `_Build/p4-s019/`. P4.2 DONE; duplicate host log not new execution. No new build, desktop 1.2 runtime, textured/game/rollback or performance trace; no independent desktop ZIP rehash |
+
+| E-020 | 2026-10-28; input `a32afc09f938df5baa8a03d50998784cf8968d2a` plus complete dirty snapshots; native Intel Iris Xe/API 1.2.172 | P4.3 focused 2-job build, 14-case serial suite, authored texture/UV buffer, actual full-image/blobs/UV boundary readbacks | Builds PASS; final 11 PASS/3 strict SKIP/0 FAIL, 1.51 s. Auxiliary all pixels/guards/counts exact; zero validation errors/warnings through cleanup. Independent image check PASS; 3 valid shader mutants correctly FAIL (colors, success marker, overflow write); no-layer SKIPS 41 | `docs/RDNA1_P43_RESULTS_S020.md`; ignored `_Build/p4-s020/` source snapshots/logs/XML/mutations/images/hashes. Native RX texture/game NOT RUN; clean package outcome follows. No performance/noncoherent/perspective claim |
 
 New experiments MUST include real date, commit SHA, driver, device, exact command/config, time budget, result (PASS/FAIL/INCONCLUSIVE), and logs/artifact location. Hardware tests must also follow section 2.5 for package identity, screenshots and metrics (or explicit unavailability reasons). Avoid adding game code/assets to git.
 
@@ -624,7 +628,14 @@ Final replacement package source `ea829bfb8a353f1912ef65d8856d63e7f4e2df99`, bui
 - **Limits/status:** P4.2 DONE with evidence, overall P4 IN_PROGRESS; no textured/guest/game/performance/device-local-only/rollback claim. PPM has no alpha; RGBA evidence comes from runtime. No independent desktop ZIP rehash, ICD DLL audit, OS inventory or GPU timestamp/utilization/VRAM metrics. Prior failures/Intel skips retained. 73 registered cases now have passing executions, 1 failed-only timer, 361 never run, 435 total.
 - **Decision/next one task:** D-022/revision 1.9. P4.3 authored textured triangle with compute-generated bounded UV varying buffer, preserving P4.1 blob/plain modes. Acceptance: deterministic full-image/buffer/guard checks, proper dependencies, offline shader validation, clean portable source identity and native RX strict 1.3 with zero validation errors including cleanup and retained image/logs. NOT_STARTED; no guest/emulator/game work. Documentation/hash/JSON/fence checks before commit; stop after evidence commit.
 
-### Template for S-020 onward
+### Session S-020 — 2026-10-28 — Authored texture/guarded compute UV prototype
+
+- **Authorized task/input:** user selected P4.3; input `a32afc09f938df5baa8a03d50998784cf8968d2a`, correct branch, clean checkout, pinned ancestry/14 matching submodules verified. Existing harness extended, no emulator/guest/game/timer/driver changes or push.
+- **Implementation:** new `tests/MeshTextureProbe.h`, public UV compute/texture vertex/fragment shaders; existing offscreen/main/CMake and package runner/builder/readme/new textured launcher; result report/plan/AGENTS. Separate 544-byte guarded UV contract preserves original blob. Exact float bits/full snapshots, texture pixel oracle, actual UV zero/capacity/overflow/recovery GPU dispatches, explicit transfer/compute/vertex/sample/host dependencies, cleanup and both PPM image identities. Plain modes preserved.
+- **Verification/provenance:** complete pre-build-01/02 diffs/raw changed/untracked files/hashes/cache/submodules/reverse check. Two-job builds PASS; final 14-case suite 11 PASS/3 strict SKIP/0 FAIL, 1.51 s (first 1.76 s retained). Native Intel/API 1.2.172 auxiliary texture exact: four texel counts 64/156/156/120 and 3600 black, no validation errors/warnings including cleanup. Independent barycentric image check/visual inspection PASS; 3 isolated valid-SPIR-V mutations correctly FAIL intended checks; no-layer SKIPS 41. Six categories/commands/full limits in report; no new RX texture/game or performance claim.
+- **Checkpoint within subtask:** D-023/revision 2.0. Source checkpoint commit precedes clean transferable package build; complete Unicode relocation/integrity/legacy checks and append final evidence before handoff. P4.3 IN_PROGRESS pending independent strict RX texture readback. No next phase; retain older failures/packages and stop after final docs commit.
+
+### Template for S-021 onward
 - **Date / who:**
 - **Branch / HEAD before → after:**
 - **Phase / one subtask:**
@@ -660,6 +671,8 @@ Final replacement package source `ea829bfb8a353f1912ef65d8856d63e7f4e2df99`, bui
 | 2026-10-28 | 1.8 | 1,3–5,7–8; AGENTS; P4.2 code/tests/package/report | S-018 extends existing harness with opt-in conventional offscreen draw, exact pixels/guards and validated dependencies. Intel auxiliary passes; strict RX draw remains pending. No emulator/game integration |
 
 | 2026-10-28 | 1.9 | 1,3–5,7–8; AGENTS; RX draw report | S-019 closes P4.2 with actual native strict RX draw, zero errors/warnings and independently verified image; preserves earlier evidence. D-022 selects the remaining textured/UV P4 fixture, not guest/game integration |
+
+| 2026-10-28 | 2.0 | 1,3–5,7–8; AGENTS; P4.3 code/tests/package/report | S-020 implements isolated authored texture/guarded compute UV fixture; Intel auxiliary and corruption probes pass, strict RX texture pending. Original contract/plain modes retained |
 
 ## 9. Quick commands (reference; verify before running)
 

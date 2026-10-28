@@ -594,7 +594,7 @@ int CheckHostFixtures() {
 
 // Core-and-synchronization-validated dispatch at the explicitly requested API level.
 // A single registered skip code covers missing runtime prerequisites, never API failures.
-int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem::path& image_path = {}) {
+int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem::path& image_path = {}, bool textured = false) {
 	void* loader = LoadLoaderLibrary();
 	if (loader == nullptr) {
 		PrintLine1("SKIP: the vulkan-1 system loader cannot be loaded; the dispatch part cannot "
@@ -966,13 +966,20 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 		if (format_properties == nullptr) { Expect(false, "format query entry point"); close_instance(); return 1; }
 		VkFormatProperties format = {};
 		format_properties(selected, VK_FORMAT_R8G8B8A8_UNORM, &format);
-		const auto needed = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_TRANSFER_SRC_BIT;
+		const auto needed = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_TRANSFER_SRC_BIT |
+		                    (textured ? VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_TRANSFER_DST_BIT : 0);
 		if ((format.optimalTilingFeatures & needed) != needed) {
 			PrintLine1("SKIP: offscreen RGBA8 color/transfer format unavailable"); close_instance(); return kSkip;
 		}
 		format_properties(selected, VK_FORMAT_R32G32B32A32_SFLOAT, &format);
 		if ((format.bufferFeatures & VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT) == 0) {
 			PrintLine1("SKIP: float4 vertex format unavailable"); close_instance(); return kSkip;
+		}
+		if (textured) {
+			format_properties(selected, VK_FORMAT_R32G32_SFLOAT, &format);
+			if ((format.bufferFeatures & VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT) == 0) {
+				PrintLine1("SKIP: float2 UV vertex format unavailable"); close_instance(); return kSkip;
+			}
 		}
 		PrintLine1("draw-mode: conventional indexed offscreen triangle, graphics+compute queue, API %s", ApiString(required_api).c_str());
 	}
@@ -1478,7 +1485,12 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 	}
 	if (draw && !RunOffscreenDraw(device, get_device_proc, selected_memory, device_13_capable,
 	                              queue, command_buffer, submit_fence, pipeline, pipeline_layout,
-	                              descriptor_set, output_buffer, payload_buffer, image_path)) {
+	                              descriptor_set, output_buffer, payload_buffer, textured && !image_path.empty() ? image_path.parent_path() / "untextured.ppm" : image_path)) {
+		return fail_and_cleanup();
+	}
+	if (textured && !RunOffscreenDraw(device, get_device_proc, selected_memory, device_13_capable,
+	                                  queue, command_buffer, submit_fence, pipeline, pipeline_layout,
+	                                  descriptor_set, output_buffer, payload_buffer, image_path, true)) {
 		return fail_and_cleanup();
 	}
 	// Validation and comparison results decide the run result; warnings alone do
@@ -1504,22 +1516,25 @@ int RunMain(int argc, char** argv) {
 		return g_failures == 0 ? 0 : 1;
 	}
 	const std::string mode = argc >= 2 ? argv[1] : "";
-	const bool draw = mode == "--draw" || mode == "--draw-vulkan12";
+	const bool textured = mode == "--texture" || mode == "--texture-vulkan12";
+	const bool draw = textured || mode == "--draw" || mode == "--draw-vulkan12";
 	std::filesystem::path image_path;
 	if (draw && argc == 4 && std::strcmp(argv[2], "--image-output") == 0) {
 		image_path = std::filesystem::path(std::u8string(reinterpret_cast<const char8_t*>(argv[3])));
 	} else if (argc != 2) { PrintLine1("FAIL: unexpected command arguments"); return 1; }
+	if (mode == "--check-texture-fixtures") { return CheckTextureFixtures(); }
+	if (mode == "--validate-texture-spirv") { return ValidateTextureShaders() ? 0 : 1; }
 	if (mode == "--check-draw-oracle") { return CheckDrawOracle(); }
 	if (mode == "--validate-draw-spirv") { return ValidateDrawShaders() ? 0 : 1; }
 	if (mode == "--check-host-fixtures") { return CheckHostFixtures(); }
 	const bool validate_only = mode == "--validate-spirv";
-	const bool runtime13 = mode == "--run" || mode == "--draw";
-	const bool runtime12 = mode == "--run-vulkan12" || mode == "--draw-vulkan12";
+	const bool runtime13 = mode == "--run" || mode == "--draw" || mode == "--texture";
+	const bool runtime12 = mode == "--run-vulkan12" || mode == "--draw-vulkan12" || mode == "--texture-vulkan12";
 	if (!validate_only && !runtime13 && !runtime12) {
-		std::printf("[p41] usage: %s --validate-spirv | --run | --run-vulkan12 | --check-host-fixtures | --validate-module-vk13 FILE | --draw | --draw-vulkan12 [--image-output FILE] | --check-draw-oracle | --validate-draw-spirv\n", argv[0]);
+		std::printf("[p41] usage: %s --validate-spirv | --run | --run-vulkan12 | --check-host-fixtures | --validate-module-vk13 FILE | --draw | --draw-vulkan12 [--image-output FILE] | --check-draw-oracle | --validate-draw-spirv | --texture | --texture-vulkan12 [--image-output FILE] | --check-texture-fixtures | --validate-texture-spirv\n", argv[0]);
 		return 1;
 	}
-	if (!RunOfflineValidation() || (draw && !ValidateDrawShaders())) {
+	if (!RunOfflineValidation() || (draw && !ValidateDrawShaders()) || (textured && !ValidateTextureShaders())) {
 		PrintLine1("RESULT: FAIL (offline SPIR-V validation failed; the authored shader is "
 		           "not a valid prototype)");
 		return 1;
@@ -1529,7 +1544,7 @@ int RunMain(int argc, char** argv) {
 		return 0;
 	}
 	const uint32_t requested_api = runtime13 ? VK_API_VERSION_1_3 : VK_API_VERSION_1_2;
-	const int dispatch_result = RunPrototype(requested_api, draw, image_path);
+	const int dispatch_result = RunPrototype(requested_api, draw, image_path, textured);
 	// Setup/teardown errors must never be hidden by an otherwise legitimate skip.
 	if (g_failures != 0 || g_validation_errors != 0) {
 		PrintLine1("RESULT: FAIL (failures=%d validation-errors=%d including cleanup)",
@@ -1537,6 +1552,7 @@ int RunMain(int argc, char** argv) {
 		return 1;
 	}
 	if (dispatch_result == 0) {
+		if (textured) { PrintLine1("TEXTURE RESULT: PASS (sampled texture, compute UVs/guards/boundaries, exact RGBA, validation including cleanup)"); }
 		if (draw) { PrintLine1("DRAW RESULT: PASS (clear control + compute-generated indexed triangle, all pixels/full blob, validation including cleanup)"); }
 		PrintLine1("RESULT: PASS (Vulkan %s%s; nine full-blob scenarios; core + synchronization validation including cleanup)",
 		           runtime13 ? "1.3" : "1.2", runtime12 ? " AUXILIARY, not Vulkan 1.3 evidence" : "");

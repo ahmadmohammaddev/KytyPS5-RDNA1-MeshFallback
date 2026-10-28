@@ -7,9 +7,11 @@ param(
     [switch]$RequireRx5700Xt,
     [switch]$VerifyOnly,
     [switch]$Draw,
+    [switch]$Texture,
     [switch]$IsolateImplicitLayers
 )
 $ErrorActionPreference = 'Stop'
+if ($Texture) { $Draw = $true }
 $root = [IO.Path]::GetFullPath($PSScriptRoot)
 function FileHash([string]$Path) {
     $stream = [IO.File]::OpenRead($Path)
@@ -128,6 +130,13 @@ try {
             if ($run.record.exit -ne 0) { $preflightOk = $false; break }
         }
     }
+    if ($preflightOk -and $Texture) {
+        foreach ($argument in @('--check-texture-fixtures','--validate-texture-spirv')) {
+            $name = if ($argument -eq '--check-texture-fixtures') { 'texture-fixtures' } else { 'texture-spirv' }
+            $run = RunCheck -Name $name -Exe 'mesh_compute_proto_tests.exe' -Arguments @($argument)
+            if ($run.record.exit -ne 0) { $preflightOk = $false; break }
+        }
+    }
     $runtimeStatus = 'NOT RUN'
     $runtimeIdentity = @()
     $overall = if ($preflightOk) { 'PASS' } else { 'FAIL' }
@@ -136,11 +145,12 @@ try {
         $arguments = @($argument)
         if ($Draw) {
             $argument = if ($Mode -eq 'Strict') { '--draw' } else { '--draw-vulkan12' }
+            if ($Texture) { $argument = if ($Mode -eq 'Strict') { '--texture' } else { '--texture-vulkan12' } }
             $arguments = @($argument, '--image-output', (Join-Path $results 'triangle.ppm'))
         }
         $run = RunCheck -Name 'runtime' -Exe 'mesh_compute_proto_tests.exe' -Arguments $arguments
         $runtimeStatus = $run.record.status
-        $runtimeIdentity = @($run.lines | Where-Object { $_ -match 'physical-devices:|\[\d+\].*type=|selected:|selected-driver:|dispatch-module:|summary after cleanup:|offscreen.*pixels|DRAW RESULT:' })
+        $runtimeIdentity = @($run.lines | Where-Object { $_ -match 'physical-devices:|\[\d+\].*type=|selected:|selected-driver:|dispatch-module:|summary after cleanup:|offscreen.*pixels|DRAW RESULT:|TEXTURE RESULT:|UV boundary|UV full-buffer:' })
         $overall = $runtimeStatus
         if ($RequireRx5700Xt -and $runtimeStatus -eq 'PASS' -and
             -not (@($run.lines | Where-Object { $_ -match 'selected:.*RX\s*5700\s*XT' }).Count)) {
@@ -149,7 +159,7 @@ try {
         }
     }
     $summary = [ordered]@{schema=1; gitCommit=$manifest.gitCommit; buildId=$manifest.buildId;
-        mode=$Mode; draw=[bool]$Draw; isolateImplicitLayers=[bool]$IsolateImplicitLayers; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
+        mode=$Mode; draw=[bool]$Draw; texture=[bool]$Texture; isolateImplicitLayers=[bool]$IsolateImplicitLayers; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
         runs=@($runs.ToArray()); deviceEvidence=$runtimeIdentity;
         environment=@{VK_LAYER_PATH=$env:VK_LAYER_PATH; VK_INSTANCE_LAYERS=$env:VK_INSTANCE_LAYERS;
             VK_DRIVER_FILES=$env:VK_DRIVER_FILES; VK_ICD_FILENAMES=$env:VK_ICD_FILENAMES;
@@ -157,6 +167,9 @@ try {
         rdna1Evidence='Only a separately identified native RX 5700 XT strict run may qualify';
         image=$(if ($Draw -and (Test-Path -LiteralPath (Join-Path $results 'triangle.ppm'))) {
             @{file='triangle.ppm'; sha256=(FileHash (Join-Path $results 'triangle.ppm'))}
+        } else { $null });
+        untexturedImage=$(if ($Texture -and (Test-Path -LiteralPath (Join-Path $results 'untextured.ppm'))) {
+            @{file='untextured.ppm'; sha256=(FileHash (Join-Path $results 'untextured.ppm'))}
         } else { $null }); astroBot='NOT RUN'}
     $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $results 'result.json') -Encoding UTF8
     Write-Host "RESULT: $overall; runtime: $runtimeStatus; logs: $results"
