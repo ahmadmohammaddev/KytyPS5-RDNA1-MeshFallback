@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 3.0. **Overall status:** S-029 native RX strict Vulkan 1.3 executes generated add and wrap modules with exact buffers and zero validation errors/warnings through cleanup. P3.3 restricted arithmetic gate DONE; broader P3 and emulator/game integration remain open.
+> **Last edited:** 2026-10-29. **Plan revision:** 3.1. **Overall status:** S-031 connects restricted IR-generated geometry to conventional indexed drawing: Intel auxiliary exact buffers/images PASS with zero validation errors/warnings. Native RX draw gate pending under D-028 batching; broader translation and integration remain open.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P3 IN_PROGRESS: P3.1, P3.2 and restricted P3.3 arithmetic gates DONE; broader semantics remain open** |
-| Current subtask | S-029 review native RX arithmetic evidence; select standalone IR-generated indexed draw next |
+| Current subtask | S-031 standalone IR-generated indexed draw local gate DONE; strict RX gate pending |
 | Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
-| Last verified git commit | Clean package source `e74e19779f13e33cf3c3a30fcabb58acbf952ad1`, build `20261028T213608114Z`; final handoff commit documentation only |
+| Last verified git commit | S-031 input `50d7b75a21954c4fafb320b7ef75fdfc4d539741`; complete dirty snapshots before both focused builds |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
-| Checkout evidence | S-024 input clean, pinned ancestry/all fourteen matching submodules checked; no production renderer changes |
-| Build status | S-023 focused two-job build PASS/no PGO/IPO; both 1.3 and 1.2 modules assembled from repository IR; no core/GUI rebuild |
+| Checkout evidence | S-031 input clean, pinned ancestry and all 14 matching recursive submodules verified |
+| Build status | S-031 two focused 2-job builds PASS; no PGO/IPO, existing dependency warnings; no emulator/GUI rebuild |
 | Native RDNA1 smoke test | PASS P4.1/P4.2/P4.3: native RX 5700 XT/API 1.4.308/AMD 25.6.1, strict 1.3 compute/plain/textured draw, exact buffers/images/UV boundaries, zero errors/warnings after cleanup. No guest/game claim |
-| Passing tests | S-023 clean package 18 focused cases: 14 PASS/4 strict 1.3 SKIP/0 FAIL, 1.81 s; valid wrong generated module and missing strict module correctly FAIL. 443 registered: 80 passing, 1 skipped-only strict IR, 1 failed-only timer, 361 never run |
-| Known blockers / limits | Narrow IR subset still rejects NGG draw parameters, unresolved EXEC/M0, LDS/wave64/CFG/dynamic allocation/cull. Game/integration/noncoherent/timer remain open |
-| Next single actionable task | P3.3 restricted arithmetic RX gate DONE; next connect IR-generated output to the existing standalone indexed draw, with exact image and buffer checks |
+| Passing tests | S-031 final 22 focused cases: 16 PASS/6 strict SKIPPED/0 FAIL (2.92 s); valid wrong fragment and missing generated module correctly FAIL |
+| Known blockers / limits | New generated-IR draw RX gate pending; narrow IR lacks UV/NGG/CFG/LDS/dynamic allocation semantics. Noncoherent/game/integration/timer remain open |
+| Next single actionable task | P3.5 offline bounded per-vertex float2 UV parameter export into the separate guarded 544-byte UV ABI; independent layout/coverage/type/capacity tests and Vulkan 1.3 SPIR-V validation. Defer RX transfer until consolidated milestone |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -217,6 +217,8 @@ Status: **IN_PROGRESS** — P3.1 restricted offline proof DONE in S-022; P3.2 re
 
 **Gate:** Synthetic test demonstrates compute processing on the **real AMD GPU** with correct positions/indices; no illegal SPIR-V or undisclosed fallback to CPU renderer.
 
+- P3.4 local generated-IR indexed draw **DONE locally (S-031/E-031)**: actual generated triangle/permuted/zero dispatch followed by conventional draw in one submission, poisoned unused payload, exact full buffers/images, Intel auxiliary validation clean. Native strict RX draw gate pending under D-028; no dynamic indirect/guest integration.
+
 ### P4 — GPU output-buffer and traditional draw prototype
 Status: **IN_PROGRESS** overall; bounded P4.1/P4.2/P4.3 **DONE with native strict RX evidence** (S-017/S-019/S-021). Textured triangle and compute UVs, all guarded buffers/pixels/boundary recovery exact, zero validation errors/warnings. Broader memory/measurement/semantic coverage remains open; D-024 selects P3.1 offline translation feasibility next instead of further authored-shader extensions. See `docs/RDNA1_RX_TEXTURE_S021.md`.
 
@@ -320,6 +322,8 @@ Status: **NOT_STARTED**
 
 | D-028 | 2026-10-29 | Batch related local development and validation; request RX runs at milestone gates, AMD-dependent changes or unresolved hardware regressions | User explicitly approved reducing desktop transfer overhead; supersedes earlier per-subtask RX handoff expectations while preserving independent hardware evidence and clean-source packaging | Milestone acceptance or a concrete hardware-dependent uncertainty |
 
+| D-029 | 2026-10-29 | After local generated-IR indexed draw, next prove one per-vertex float2 UV export offline against the existing separate guarded UV ABI | IR geometry and rasterization now work together locally; authored textured drawing exists, but translated varying transport is still missing. Keep bounded validation and unsupported rejection before runtime wiring; batch RX under D-028 | Offline ABI/metadata/mask tests and SPIR-V validation, then generated textured runtime milestone |
+
 ## 5. Experiments and evidence
 
 | ID | Environment / git SHA | Hypothesis and test | Actual observed result | Outcome / artifact |
@@ -359,6 +363,8 @@ Status: **NOT_STARTED**
 | E-024 | Run UTC 2026-10-28T21:41:26Z; package source `e74e19779f13e33cf3c3a30fcabb58acbf952ad1`, build `20261028T213608114Z`; native RX 5700 XT/API 1.4.308/AMD 25.6.1/loader 1.4.309 | User package IR strict mode with RX required and process-local implicit isolation | Six stages PASS, runtime exit 0/0.2841633 s; three generated modules full 1840-byte comparison PASS, zero errors/warnings through all cleanups | `docs/RDNA1_RX_IR_S024.md`, ignored `_Build/p3-s024/` seven original copies/hashes. No raw readback, desktop ZIP rehash, GPU metrics, desktop 1.2 dispatch or game run |
 
 | E-029 | Run UTC 2026-10-28T21:57:30Z; package `3fd0fdd507a91759a0ca41be4150dff94d5e6485`, build `20261028T215237152Z`; RX 5700 XT, AMD 25.6.1, API 1.4.308, loader 1.4.309 | Strict required-RX arithmetic and wrap generated modules with implicit-layer isolation | Six stages PASS, runtime exit 0, 0.2373225 s; two exact full blobs and zero errors/warnings through cleanup | `docs/RDNA1_RX_ADD_S029.md`; seven copies and hashes under ignored `_Build/p3-s029/`; raw readback and independent desktop ZIP hash unavailable |
+
+| E-031 | 2026-10-29; input `50d7b75a21954c4fafb320b7ef75fdfc4d539741` plus complete snapshots; Intel Iris Xe API 1.2.172 | Actual generated triangle/permuted/zero compute followed by indexed draw, complete image/blob checks, two focused builds and 22 serial tests | 16 PASS/6 strict SKIP/0 FAIL (2.92 s); zero validation errors/warnings through cleanups, independent RGB images exact; valid wrong fragment FAILS 496 pixels, missing strict module FAILS before device discovery | `docs/RDNA1_IR_DRAW_S031.md`; ignored `_Build/p3-s031/` and `_Build/p0-s012/p3-s031-*`; new RX draw pending, no package/game run |
 
 New experiments MUST include real date, commit SHA, driver, device, exact command/config, time budget, result (PASS/FAIL/INCONCLUSIVE), and logs/artifact location. Hardware tests must also follow section 2.5 for package identity, screenshots and metrics (or explicit unavailability reasons). Avoid adding game code/assets to git.
 
@@ -761,6 +767,12 @@ Next task: transfer ZIP and sidecar, verify hash/extract fresh, run `Run-IR-Add.
 - Validation: documentation diff checked; compilation, unit, shader/SPIR-V, Vulkan, RDNA1 and Astro Bot tests NOT RUN this session because no code changed. No blockers or push.
 - Next single task unchanged: connect restricted IR-generated output to the standalone indexed draw, validate full image/buffer and synchronization locally; schedule RX transfer when the coherent draw milestone and its local regressions are ready.
 
+### Session S-031 — 2026-10-29 — IR-generated indexed draw
+
+- Input `50d7b75a21954c4fafb320b7ef75fdfc4d539741`, correct clean branch, pinned ancestry/14 submodules verified. Extend existing standalone harness and draw helper; add two API-specific CTests. Actual triangle/permuted/zero generated compute feeds a fresh same-submission draw, with full-buffer and pixel checks; poison host payload and preserve Unicode output paths.
+- Complete pre-build-01/02 dirty snapshots retained. Two 2-job builds PASS, existing warnings. Final serial focused suite 16 PASS/6 strict SKIPPED/0 FAIL, 2.92 s. Intel auxiliary three draws/clear controls full buffers/images exact, zero validation errors/warnings including cleanup. Independent RGB images match integer edge oracle; valid wrong fragment FAILS 496 pixels and missing strict module FAILS before device discovery. Detailed six-category results and commands in `docs/RDNA1_IR_DRAW_S031.md`.
+- New generated draw RX and Astro Bot NOT RUN; coherent memory only. No new package or request for desktop run under D-028. P3.4 local gate DONE, hardware gate pending; broader phases remain open. D-029 selects bounded offline UV parameter export next, with independent ABI/rejection/SPIR-V checks before runtime. Commit and stop; no push or next-task implementation.
+
 ## 8. Change history (append-only)
 
 | Date | Plan revision | Sections | Reason / evidence |
@@ -800,6 +812,8 @@ Next task: transfer ZIP and sidecar, verify hash/extract fresh, run `Run-IR-Add.
 | 2026-10-29 | 2.9 | checkpoint, decisions, experiments, handoff | S-029 records strict RX generated arithmetic/wrap acceptance; D-027 selects standalone generated-IR draw |
 
 | 2026-10-29 | 3.0 | operating protocol, decision register, session handoff; AGENTS | D-028 records user-approved batched RX cadence; no per-patch hardware transfer requirement |
+
+| 2026-10-29 | 3.1 | checkpoint, P3, decisions/experiments/handoff; code/tests/report; AGENTS | S-031 validates generated-IR geometry through indexed drawing locally; D-029 selects bounded offline UV export, RX remains batched |
 
 ## 9. Quick commands (reference; verify before running)
 

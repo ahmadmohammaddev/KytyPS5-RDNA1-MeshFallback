@@ -51,8 +51,13 @@ Request native RX testing when a defined milestone acceptance gate is ready, whe
 
 Intel Vulkan 1.2 and native RX strict Vulkan 1.3 evidence remain distinct. Never mark an RX gate complete from local results. Report PASS, FAIL, SKIPPED and NOT RUN accurately, retain failures and all provenance requirements. The one-selected-subtask rule still bounds each development session; it does not require a hardware handoff after every session.
 
-## Current next task (checkpoint S-030)
-S-030 documentation-only decision: apply D-028 batched RX cadence. Next development subtask remains the standalone generated-IR indexed draw, tested locally before scheduling a consolidated milestone RX package.
+## Current next task (checkpoint S-031)
+Generated-IR triangle/permuted/zero now feed conventional indexed drawing in the standalone harness. Intel Vulkan 1.2 auxiliary: all buffers/pixels exact, zero validation errors/warnings through cleanup; 22 focused cases 16 PASS/6 strict SKIPPED/0 FAIL (2.92 s). Valid wrong fragment correctly FAILS 496 pixels; missing strict module FAILS before device discovery. Report `docs/RDNA1_IR_DRAW_S031.md`; complete dirty build snapshots and logs retained. Native RX draw gate is pending and batched under D-028; no new transfer package or game evidence.
+
+Next single local task (D-029): offline lowering of one bounded per-vertex float2 UV parameter export into the existing separate 544-byte guarded UV ABI. Gate explicit metadata/type/mask/capacity rejection, independent layout/output coverage tests and Vulkan 1.3 SPIR-V validation; preserve the position/index ABI and native/default renderer. Runtime textured integration and consolidated strict RX verification follow as distinct gates. Commit and stop; no push.
+
+## Retained checkpoint S-030
+S-030 approved batching related development before RX tests (D-028); avoid per-patch hardware handoffs.
 
 ## Retained checkpoint S-029
 Restricted IR arithmetic and wrap PASS on native RX 5700 XT strict Vulkan 1.3: full 460-word buffers, zero errors/warnings through cleanup; six stages PASS. Source `3fd0fdd507a91759a0ca41be4150dff94d5e6485`, build `20261028T215237152Z`. Raw evidence `_Build/p3-s029/`, report `docs/RDNA1_RX_ADD_S029.md`. No game or emulator integration claim.

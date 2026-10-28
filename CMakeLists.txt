@@ -1464,7 +1464,11 @@ if(BUILD_TESTING)
 	add_test(NAME mesh_ir_runtime_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir-vulkan12)
 	add_test(NAME mesh_ir_add_runtime COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir-add)
 	add_test(NAME mesh_ir_add_runtime_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir-add-vulkan12)
-	set_tests_properties(mesh_ir_runtime mesh_ir_runtime_vk12 mesh_ir_add_runtime mesh_ir_add_runtime_vk12 PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 41)
+	add_test(NAME mesh_ir_draw COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir-draw
+		--image-output "${PROJECT_BINARY_DIR}/mesh-ir-draw-vk13.ppm")
+	add_test(NAME mesh_ir_draw_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir-draw-vulkan12
+		--image-output "${PROJECT_BINARY_DIR}/mesh-ir-draw-vk12.ppm")
+	set_tests_properties(mesh_ir_runtime mesh_ir_runtime_vk12 mesh_ir_add_runtime mesh_ir_add_runtime_vk12 mesh_ir_draw mesh_ir_draw_vk12 PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 41)
 	add_test(NAME mesh_proto_spirv COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --validate-spirv)
 	set_tests_properties(mesh_proto_spirv PROPERTIES TIMEOUT 120)
 	add_test(NAME mesh_proto_host_fixtures COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --check-host-fixtures)

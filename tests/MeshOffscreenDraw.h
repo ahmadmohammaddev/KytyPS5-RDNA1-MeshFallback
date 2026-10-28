@@ -85,7 +85,8 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
                       const VkPhysicalDeviceMemoryProperties& memory, bool api13,
                       VkQueue queue, VkCommandBuffer cmd, VkFence fence,
                       VkPipeline compute, VkPipelineLayout compute_layout, VkDescriptorSet set,
-                      GpuBuffer& output, GpuBuffer& payload, const std::filesystem::path& image_path, bool textured = false) {
+                      GpuBuffer& output, GpuBuffer& payload, const std::filesystem::path& image_path, bool textured = false,
+                      const Scenario* generated = nullptr) {
 	// Resolve every entry point, including teardown, before creating any draw objects.
 #define DRAW_PROC(name) auto name = reinterpret_cast<PFN_vk##name>(proc(device, "vk" #name)); \
 	if (name == nullptr) { Expect(false, "draw entry point vk" #name); return false; }
@@ -268,10 +269,14 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		std::memcpy(scenario.payload_positions.data(), positions, sizeof(positions));
 		scenario.payload_indices[0] = 2; scenario.payload_indices[1] = 0; scenario.payload_indices[2] = 1;
 		FinalizeScenario(scenario);
+		if (generated) { scenario = *generated; }
 		std::memcpy(output.mapped, scenario.initial.words.data(), kTotalBytes);
 		std::memcpy(payload.mapped, scenario.payload_positions.data(), kPositionWords * 4);
 		std::memcpy(static_cast<uint8_t*>(payload.mapped) + kPositionWords * 4,
 		            scenario.payload_indices.data(), kIndexWords * 4);
+		// IR-generated geometry must not be supplied by the host payload. Poison it
+		// independently of the expected output before the fresh draw dispatch.
+		if (generated) { std::memset(payload.mapped, 0xA5, (kPositionWords + kIndexWords) * 4); }
 		std::memset(readback.mapped, 0xA5, kDrawBytes);
 		for (auto* buffer: {&output, &payload, &readback}) {
 			if (buffer->noncoherent) {
@@ -297,7 +302,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		if (draw) {
 			CmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, compute);
 			CmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, compute_layout, 0, 1, &set, 0, nullptr);
-			const uint32_t counts[2] = {3, 1};
+			const uint32_t counts[2] = {scenario.vertex_count, scenario.primitive_count};
 			CmdPushConstants(cmd, compute_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(counts), counts);
 			CmdDispatch(cmd, 1, 1, 1);
 			VkBufferMemoryBarrier geometry = {};
@@ -339,7 +344,9 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 			CmdBindVertexBuffers(cmd, 0, textured ? 2 : 1, buffers, offsets);
 			if (textured) { CmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, &texture.sampled_set, 0, nullptr); }
 			CmdBindIndexBuffer(cmd, output.buffer, kIndicesOffsetBytes, VK_INDEX_TYPE_UINT32);
-			CmdDrawIndexed(cmd, 3, 1, 0, 0, 0);
+			// Fixture allocation is fixed before dispatch; no CPU geometry readback
+			// gates this draw. Zero-output fixtures issue a zero-index draw.
+			CmdDrawIndexed(cmd, scenario.primitive_count * 3, 1, 0, 0, 0);
 		}
 		CmdEndRenderPass(cmd);
 		image_barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -380,9 +387,9 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		CompareBlobWords(actual, draw ? scenario.expected : scenario.initial, "draw exact full output blob including guards");
 		if (textured && !texture.Check(draw)) { return false; }
 		const size_t mismatches = textured ? TextureMismatches(static_cast<const uint8_t*>(readback.mapped), draw)
-		                                    : PixelMismatches(static_cast<const uint8_t*>(readback.mapped), draw);
+		                                    : PixelMismatches(static_cast<const uint8_t*>(readback.mapped), draw && scenario.primitive_count != 0);
 		PrintLine1("offscreen %s: 64x64 RGBA pixels mismatched=%zu/4096; full blob checked",
-		           draw ? (textured ? "textured-compute-indexed-triangle" : "compute-indexed-triangle") : "clear-only-control", mismatches);
+		           draw ? (scenario.primitive_count == 0 ? "compute-zero-output" : (textured ? "textured-compute-indexed-triangle" : "compute-indexed-triangle")) : "clear-only-control", mismatches);
 		Expect(mismatches == 0, "all 4096 offscreen RGBA pixels match");
 		if (draw && !image_path.empty()) {
 			std::ofstream file(image_path, std::ios::binary | std::ios::trunc);

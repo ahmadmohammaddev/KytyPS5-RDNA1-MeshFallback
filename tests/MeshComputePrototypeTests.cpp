@@ -1498,7 +1498,7 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 	}
 	if (draw && !RunOffscreenDraw(device, get_device_proc, selected_memory, device_13_capable,
 	                              queue, command_buffer, submit_fence, pipeline, pipeline_layout,
-	                              descriptor_set, output_buffer, payload_buffer, textured && !image_path.empty() ? image_path.parent_path() / "untextured.ppm" : image_path)) {
+	                              descriptor_set, output_buffer, payload_buffer, textured && !image_path.empty() ? image_path.parent_path() / "untextured.ppm" : image_path, false, ir_variant ? &scenarios.front() : nullptr)) {
 		return fail_and_cleanup();
 	}
 	if (textured && !RunOffscreenDraw(device, get_device_proc, selected_memory, device_13_capable,
@@ -1529,11 +1529,12 @@ int RunMain(int argc, char** argv) {
 		return g_failures == 0 ? 0 : 1;
 	}
 	const std::string mode = argc >= 2 ? argv[1] : "";
+	const bool ir_draw = mode == "--ir-draw" || mode == "--ir-draw-vulkan12";
 	const bool ir_add = mode == "--ir-add" || mode == "--ir-add-vulkan12";
-	const bool ir_mode = ir_add || mode == "--ir" || mode == "--ir-vulkan12" || mode == "--ir-add-vulkan12";
+	const bool ir_mode = ir_draw || ir_add || mode == "--ir" || mode == "--ir-vulkan12";
 	const std::vector<const char*> ir_variants = ir_add ? std::vector<const char*>{"add", "wrap"} : std::vector<const char*>{"triangle", "permuted", "zero"};
 	const bool textured = mode == "--texture" || mode == "--texture-vulkan12";
-	const bool draw = textured || mode == "--draw" || mode == "--draw-vulkan12";
+	const bool draw = ir_draw || textured || mode == "--draw" || mode == "--draw-vulkan12";
 	std::filesystem::path image_path;
 	if (draw && argc == 4 && std::strcmp(argv[2], "--image-output") == 0) {
 		image_path = std::filesystem::path(std::u8string(reinterpret_cast<const char8_t*>(argv[3])));
@@ -1544,10 +1545,10 @@ int RunMain(int argc, char** argv) {
 	if (mode == "--validate-draw-spirv") { return ValidateDrawShaders() ? 0 : 1; }
 	if (mode == "--check-host-fixtures") { return CheckHostFixtures(); }
 	const bool validate_only = mode == "--validate-spirv";
-	const bool runtime13 = mode == "--run" || mode == "--draw" || mode == "--texture" || mode == "--ir" || mode == "--ir-add";
-	const bool runtime12 = mode == "--run-vulkan12" || mode == "--draw-vulkan12" || mode == "--texture-vulkan12" || mode == "--ir-vulkan12" || mode == "--ir-add-vulkan12";
+	const bool runtime13 = mode == "--run" || mode == "--draw" || mode == "--texture" || mode == "--ir" || mode == "--ir-add" || mode == "--ir-draw";
+	const bool runtime12 = mode == "--run-vulkan12" || mode == "--draw-vulkan12" || mode == "--texture-vulkan12" || mode == "--ir-vulkan12" || mode == "--ir-add-vulkan12" || mode == "--ir-draw-vulkan12";
 	if (!validate_only && !runtime13 && !runtime12) {
-		std::printf("[p41] usage: %s --validate-spirv | --run | --run-vulkan12 | --check-host-fixtures | --validate-module-vk13 FILE | --draw | --draw-vulkan12 [--image-output FILE] | --check-draw-oracle | --validate-draw-spirv | --texture | --texture-vulkan12 [--image-output FILE] | --check-texture-fixtures | --validate-texture-spirv\n", argv[0]);
+		std::printf("[p41] usage: %s --validate-spirv | --run | --run-vulkan12 | --check-host-fixtures | --validate-module-vk13 FILE | --draw | --draw-vulkan12 [--image-output FILE] | --check-draw-oracle | --validate-draw-spirv | --texture | --texture-vulkan12 [--image-output FILE] | --check-texture-fixtures | --validate-texture-spirv | --ir | --ir-vulkan12 | --ir-add | --ir-add-vulkan12 | --ir-draw | --ir-draw-vulkan12 [--image-output FILE]\n", argv[0]);
 		return 1;
 	}
 	if (!RunOfflineValidation() || (draw && !ValidateDrawShaders()) || (textured && !ValidateTextureShaders())) {
@@ -1578,7 +1579,14 @@ int RunMain(int argc, char** argv) {
 	if (ir_mode) {
 		for (const char* variant : ir_variants) {
 			PrintLine1("IR case: %s", variant);
-			dispatch_result = RunPrototype(requested_api, false, {}, false, variant);
+			auto variant_image = image_path;
+			if (ir_draw && !image_path.empty()) {
+				auto name = image_path.stem();
+				name += std::filesystem::path(std::string("-") + variant);
+				name += image_path.extension();
+				variant_image = image_path.parent_path() / name;
+			}
+			dispatch_result = RunPrototype(requested_api, ir_draw, variant_image, false, variant);
 			if (dispatch_result != 0 || g_failures != 0 || g_validation_errors != 0) { break; }
 		}
 	} else { dispatch_result = RunPrototype(requested_api, draw, image_path, textured); }
