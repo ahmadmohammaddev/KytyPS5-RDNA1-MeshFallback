@@ -1,4 +1,4 @@
-# Kyty standalone mesh-compute prototype — Windows x64
+# Kyty standalone mesh-compute prototype â€” Windows x64
 
 This package is a synthetic GPU-buffer correctness test, **not an emulator or an Astro Bot patch**. It uploads public synthetic data, runs compute and checks every word of a fixed 1840-byte output blob. No game files, firmware, keys or proprietary shaders are required or accessed.
 
@@ -30,7 +30,7 @@ The runner checks the package inventory and all file hashes first. Keep its cont
 - Other nonzero exit / FAIL: integrity, process startup, API, shader, comparison, validation or target-device check failed.
 - `NOT RUN` in the JSON: a runtime test was not requested or preflight failed.
 
-Retain `result.json` and all logs, including failures/skips. A successful strict test requires all nine full-buffer scenario comparisons and **zero validation errors after cleanup**. Nine scenarios contain eight actual one-workgroup dispatches and one no-dispatch Pending initialization check. No image/window/gameplay/FPS is expected. Results prove only this synthetic workload on the recorded device.
+Retain `result.json` and all logs, including failures/skips. A successful strict test requires all nine full-buffer scenario comparisons and **zero validation errors after cleanup**. Nine scenarios contain eight actual one-workgroup dispatches and one no-dispatch Pending initialization check. The compute-only mode produces no image/window/gameplay/FPS. Results prove only this synthetic workload on the recorded device.
 
 Other explicit modes:
 
@@ -53,3 +53,33 @@ tools\mesh-prototype\Build-Package.ps1 -ValidationLayerDirectory "<local-validat
 ```
 
 The default cached build is `_Build/windows-core`. Outputs go under ignored `_Build/mesh-prototype-packages`, named with full commit and UTC build ID. Two build jobs, serial focused tests, no PGO/IPO. Use `-Jobs 1` only after retaining an actual memory-failure log. Configure/build/import/test logs and full local cache stay in a separate evidence directory, not the transfer ZIP. The script refuses dirty source/submodules and does not delete existing outputs, push, publish or change the branch.
+
+## P4.2 offscreen triangle
+
+Run `Run-Draw.cmd` for strict Vulkan 1.3 plus native RX identity. It retains all nine
+P4.1 full-buffer cases, then runs a clear-only control and a compute-generated
+indexed draw. The same output buffer supplies float4 vertex positions and uint32
+indices at byte 1032, without an intervening CPU readback. All 4096 RGBA pixels
+must match exactly (496 white triangle pixels, remaining pixels black; alpha 255),
+alongside the full 1840-byte output including guards. Core/sync validation must
+report zero errors through cleanup. No window opens. `triangle.ppm` is saved outside
+the package alongside logs; its SHA-256 is recorded in result.json. Host oracle and
+all four vertex/fragment module validations are additional preflight checks.
+
+If the earlier missing Steam layer manifests recur, use normal, non-admin execution:
+
+```powershell
+.\Run-Draw.cmd -IsolateImplicitLayers
+```
+
+This explicit option temporarily points implicit-layer discovery at a new empty
+results subdirectory, records the override and restores it on return. Explicit
+Khronos validation remains mandatory. No registry/driver change occurs. Elevation
+can cause the Vulkan loader to ignore search-path overrides; errors still FAIL.
+The option is also available on the compute-only runner. Keep previous logs/packages.
+
+For laptop auxiliary evidence only: `Run-Prototype.ps1 -Mode Vulkan12 -Draw`.
+Strict unavailable Vulkan remains SKIPPED, never silently downgraded. Offline draw
+preflight: `Run-Prototype.ps1 -Mode Offline -Draw`. This fixture is untextured and
+synthetic, with no guest shader translation or emulator integration. It does not
+complete the broader textured-mesh or Astro Bot gate.

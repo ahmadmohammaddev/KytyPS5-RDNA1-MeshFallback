@@ -5,7 +5,9 @@ param(
     [string]$ValidationLayerDirectory,
     [string]$ResultsDirectory,
     [switch]$RequireRx5700Xt,
-    [switch]$VerifyOnly
+    [switch]$VerifyOnly,
+    [switch]$Draw,
+    [switch]$IsolateImplicitLayers
 )
 $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath($PSScriptRoot)
@@ -63,6 +65,7 @@ try {
 if ($VerifyOnly) { exit 0 }
 
 $oldLayerPath = $env:VK_LAYER_PATH
+$oldImplicitLayerPath = $env:VK_IMPLICIT_LAYER_PATH
 $exitCode = 1
 try {
     if ($ValidationLayerDirectory) {
@@ -84,6 +87,13 @@ try {
     }
     if (Test-Path -LiteralPath $results) { throw 'ResultsDirectory must be new; existing evidence is never overwritten' }
     New-Item -ItemType Directory -Path $results -Force | Out-Null
+    if ($IsolateImplicitLayers) {
+        # Ordinary-user process override only. Keep explicit Khronos validation;
+        # do not edit registry/ICD discovery. Elevation may ignore this override.
+        $implicitDirectory = Join-Path $results 'empty-implicit-layers'
+        New-Item -ItemType Directory -Path $implicitDirectory | Out-Null
+        $env:VK_IMPLICIT_LAYER_PATH = $implicitDirectory
+    }
     $runs = [Collections.Generic.List[object]]::new()
     function RunCheck([string]$Name, [string]$Exe, [string[]]$Arguments) {
         $started = [DateTime]::UtcNow
@@ -111,14 +121,26 @@ try {
         $run = RunCheck -Name $check.name -Exe $check.exe -Arguments $check.arguments
         if ($run.record.exit -ne 0) { $preflightOk = $false; break }
     }
+    if ($preflightOk -and $Draw) {
+        foreach ($argument in @('--check-draw-oracle','--validate-draw-spirv')) {
+            $name = if ($argument -eq '--check-draw-oracle') { 'draw-oracle' } else { 'draw-spirv' }
+            $run = RunCheck -Name $name -Exe 'mesh_compute_proto_tests.exe' -Arguments @($argument)
+            if ($run.record.exit -ne 0) { $preflightOk = $false; break }
+        }
+    }
     $runtimeStatus = 'NOT RUN'
     $runtimeIdentity = @()
     $overall = if ($preflightOk) { 'PASS' } else { 'FAIL' }
     if ($preflightOk -and $Mode -ne 'Offline') {
         $argument = if ($Mode -eq 'Strict') { '--run' } else { '--run-vulkan12' }
-        $run = RunCheck -Name 'runtime' -Exe 'mesh_compute_proto_tests.exe' -Arguments @($argument)
+        $arguments = @($argument)
+        if ($Draw) {
+            $argument = if ($Mode -eq 'Strict') { '--draw' } else { '--draw-vulkan12' }
+            $arguments = @($argument, '--image-output', (Join-Path $results 'triangle.ppm'))
+        }
+        $run = RunCheck -Name 'runtime' -Exe 'mesh_compute_proto_tests.exe' -Arguments $arguments
         $runtimeStatus = $run.record.status
-        $runtimeIdentity = @($run.lines | Where-Object { $_ -match 'physical-devices:|\[\d+\].*type=|selected:|selected-driver:|dispatch-module:|summary after cleanup:' })
+        $runtimeIdentity = @($run.lines | Where-Object { $_ -match 'physical-devices:|\[\d+\].*type=|selected:|selected-driver:|dispatch-module:|summary after cleanup:|offscreen.*pixels|DRAW RESULT:' })
         $overall = $runtimeStatus
         if ($RequireRx5700Xt -and $runtimeStatus -eq 'PASS' -and
             -not (@($run.lines | Where-Object { $_ -match 'selected:.*RX\s*5700\s*XT' }).Count)) {
@@ -127,17 +149,23 @@ try {
         }
     }
     $summary = [ordered]@{schema=1; gitCommit=$manifest.gitCommit; buildId=$manifest.buildId;
-        mode=$Mode; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
+        mode=$Mode; draw=[bool]$Draw; isolateImplicitLayers=[bool]$IsolateImplicitLayers; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
         runs=@($runs.ToArray()); deviceEvidence=$runtimeIdentity;
         environment=@{VK_LAYER_PATH=$env:VK_LAYER_PATH; VK_INSTANCE_LAYERS=$env:VK_INSTANCE_LAYERS;
-            VK_DRIVER_FILES=$env:VK_DRIVER_FILES; VK_ICD_FILENAMES=$env:VK_ICD_FILENAMES};
+            VK_DRIVER_FILES=$env:VK_DRIVER_FILES; VK_ICD_FILENAMES=$env:VK_ICD_FILENAMES;
+            VK_IMPLICIT_LAYER_PATH=$env:VK_IMPLICIT_LAYER_PATH; VK_ADD_IMPLICIT_LAYER_PATH=$env:VK_ADD_IMPLICIT_LAYER_PATH};
         rdna1Evidence='Only a separately identified native RX 5700 XT strict run may qualify';
-        astroBot='NOT RUN'}
+        image=$(if ($Draw -and (Test-Path -LiteralPath (Join-Path $results 'triangle.ppm'))) {
+            @{file='triangle.ppm'; sha256=(FileHash (Join-Path $results 'triangle.ppm'))}
+        } else { $null }); astroBot='NOT RUN'}
     $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $results 'result.json') -Encoding UTF8
     Write-Host "RESULT: $overall; runtime: $runtimeStatus; logs: $results"
     $exitCode = if ($overall -eq 'PASS') { 0 } elseif ($overall -eq 'SKIPPED') { 41 } else { 1 }
 } catch {
     Write-Host "FAIL: runner: $_"
     $exitCode = 1
-} finally { $env:VK_LAYER_PATH = $oldLayerPath }
+} finally {
+    $env:VK_LAYER_PATH = $oldLayerPath
+    $env:VK_IMPLICIT_LAYER_PATH = $oldImplicitLayerPath
+}
 exit $exitCode

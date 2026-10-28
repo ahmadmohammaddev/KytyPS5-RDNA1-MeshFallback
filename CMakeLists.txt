@@ -880,10 +880,29 @@ add_custom_target(mesh_compute_proto_shaders
 	DEPENDS "${mesh_proto_generated_dir}/mesh_output_proto_vk13.spv"
 	        "${mesh_proto_generated_dir}/mesh_output_proto_vk12.spv"
 )
+# P4.2 authored conventional stages; same explicit 1.3/auxiliary 1.2 split.
+set(mesh_draw_modules)
+foreach(api IN ITEMS 12 13)
+	if(api EQUAL 13)
+		set(mesh_draw_env vulkan1.3)
+	else()
+		set(mesh_draw_env vulkan1.2)
+	endif()
+	foreach(stage IN ITEMS vert frag)
+		set(module "${mesh_proto_generated_dir}/mesh_draw_${stage}_vk${api}.spv")
+		add_custom_command(OUTPUT "${module}"
+			COMMAND ${CMAKE_COMMAND} -E make_directory "${mesh_proto_generated_dir}"
+			COMMAND "${KYTY_GLSLANG_VALIDATOR}" -V --target-env ${mesh_draw_env}
+			        -o "${module}" "${KYTY_TESTS_DIR}/shaders/mesh_draw.${stage}"
+			DEPENDS "${KYTY_TESTS_DIR}/shaders/mesh_draw.${stage}" VERBATIM)
+		list(APPEND mesh_draw_modules "${module}")
+	endforeach()
+endforeach()
+add_custom_target(mesh_offscreen_shaders DEPENDS ${mesh_draw_modules})
 add_executable(mesh_compute_proto_tests EXCLUDE_FROM_ALL
 	"${KYTY_TESTS_DIR}/MeshComputePrototypeTests.cpp"
 )
-add_dependencies(mesh_compute_proto_tests mesh_compute_proto_shaders)
+add_dependencies(mesh_compute_proto_tests mesh_compute_proto_shaders mesh_offscreen_shaders)
 target_link_libraries(mesh_compute_proto_tests spirv-tools Vulkan::Headers ${CMAKE_DL_LIBS})
 target_include_directories(mesh_compute_proto_tests PRIVATE ${inc_headers})
 target_compile_definitions(mesh_compute_proto_tests PRIVATE VK_NO_PROTOTYPES)
@@ -1406,6 +1425,14 @@ if(BUILD_TESTING)
 	set_tests_properties(mesh_compute_proto PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 41)
 	add_test(NAME mesh_compute_proto_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --run-vulkan12)
 	set_tests_properties(mesh_compute_proto_vk12 PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 41)
+	add_test(NAME mesh_draw_oracle COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --check-draw-oracle)
+	add_test(NAME mesh_draw_spirv COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --validate-draw-spirv)
+	add_test(NAME mesh_offscreen_draw COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --draw
+		--image-output "${PROJECT_BINARY_DIR}/mesh-offscreen-vk13.ppm")
+	add_test(NAME mesh_offscreen_draw_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --draw-vulkan12
+		--image-output "${PROJECT_BINARY_DIR}/mesh-offscreen-vk12.ppm")
+	set_tests_properties(mesh_offscreen_draw mesh_offscreen_draw_vk12 PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 41)
+
 	add_test(NAME shader_vertex_metadata COMMAND $<TARGET_FILE:shader_vertex_metadata_tests>)
 	add_test(NAME resource_materialization COMMAND $<TARGET_FILE:resource_materialization_tests>)
 	add_test(NAME resource_tracking COMMAND $<TARGET_FILE:resource_tracking_tests>)

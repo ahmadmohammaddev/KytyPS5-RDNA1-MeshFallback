@@ -24,7 +24,7 @@
 // results are Intel/software evidence only and cannot close an RDNA1 hardware gate, and
 // this rig proves nothing about PS5 mesh shaders or game compatibility.
 
-// Driver-level guard: this offline test reads the environment for loader discovery only.
+// Driver-level guard: this test reads the environment for loader discovery only.
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "MeshOutputContract.h"
@@ -40,6 +40,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <functional>
 #include <filesystem>
 #include <iterator>
 #include <string>
@@ -589,9 +590,11 @@ int CheckHostFixtures() {
 	return g_failures == 0 ? 0 : 1;
 }
 
+#include "MeshOffscreenDraw.h"
+
 // Core-and-synchronization-validated dispatch at the explicitly requested API level.
 // A single registered skip code covers missing runtime prerequisites, never API failures.
-int RunPrototype(uint32_t required_api) {
+int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem::path& image_path = {}) {
 	void* loader = LoadLoaderLibrary();
 	if (loader == nullptr) {
 		PrintLine1("SKIP: the vulkan-1 system loader cannot be loaded; the dispatch part cannot "
@@ -635,6 +638,9 @@ int RunPrototype(uint32_t required_api) {
 		UnloadLoaderLibrary(loader);
 		return 1;
 	}
+	PrintLine1("implicit-layer environment: VK_IMPLICIT_LAYER_PATH=%s VK_ADD_IMPLICIT_LAYER_PATH=%s",
+	           std::getenv("VK_IMPLICIT_LAYER_PATH") ? std::getenv("VK_IMPLICIT_LAYER_PATH") : "<unset>",
+	           std::getenv("VK_ADD_IMPLICIT_LAYER_PATH") ? std::getenv("VK_ADD_IMPLICIT_LAYER_PATH") : "<unset>");
 	const char* env_layer_path = std::getenv("VK_LAYER_PATH");
 	const char* env_layer_env = std::getenv("VK_ADD_LAYER_PATH");
 	const char* env_layers = std::getenv("VK_INSTANCE_LAYERS");
@@ -895,7 +901,8 @@ int RunPrototype(uint32_t required_api) {
 		}
 		uint32_t compute_family = UINT32_MAX;
 		for (uint32_t j = 0; j < family_count; ++j) {
-			if ((families[j].queueFlags & VK_QUEUE_COMPUTE_BIT) != 0 && families[j].queueCount > 0) {
+			if ((families[j].queueFlags & VK_QUEUE_COMPUTE_BIT) != 0 && families[j].queueCount > 0 &&
+			    (!draw || (families[j].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0)) {
 				compute_family = j;
 				break;
 			}
@@ -952,6 +959,22 @@ int RunPrototype(uint32_t required_api) {
 		PrintLine1("selected-driver: <unavailable>");
 	} else {
 		PrintLine1("selected-driver: %s", selected_driver.driverName);
+	}
+	if (draw) {
+		auto format_properties = reinterpret_cast<PFN_vkGetPhysicalDeviceFormatProperties>(
+		    get_instance_proc_addr(instance, "vkGetPhysicalDeviceFormatProperties"));
+		if (format_properties == nullptr) { Expect(false, "format query entry point"); close_instance(); return 1; }
+		VkFormatProperties format = {};
+		format_properties(selected, VK_FORMAT_R8G8B8A8_UNORM, &format);
+		const auto needed = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_TRANSFER_SRC_BIT;
+		if ((format.optimalTilingFeatures & needed) != needed) {
+			PrintLine1("SKIP: offscreen RGBA8 color/transfer format unavailable"); close_instance(); return kSkip;
+		}
+		format_properties(selected, VK_FORMAT_R32G32B32A32_SFLOAT, &format);
+		if ((format.bufferFeatures & VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT) == 0) {
+			PrintLine1("SKIP: float4 vertex format unavailable"); close_instance(); return kSkip;
+		}
+		PrintLine1("draw-mode: conventional indexed offscreen triangle, graphics+compute queue, API %s", ApiString(required_api).c_str());
 	}
 	// Never downgrade the requested experiment. The auxiliary 1.2 run is an
 	// explicit CLI/CTest case, even on a device that also supports Vulkan 1.3.
@@ -1047,11 +1070,11 @@ int RunPrototype(uint32_t required_api) {
 		if (buffer.mapped != nullptr && vUnmapMemoryD != nullptr) {
 			vUnmapMemoryD(device, buffer.memory);
 		}
-		if (buffer.memory != VK_NULL_HANDLE && vFreeMemoryD != nullptr) {
-			vFreeMemoryD(device, buffer.memory, nullptr);
-		}
 		if (buffer.buffer != VK_NULL_HANDLE && vDestroyBufferD != nullptr) {
 			vDestroyBufferD(device, buffer.buffer, nullptr);
+		}
+		if (buffer.memory != VK_NULL_HANDLE && vFreeMemoryD != nullptr) {
+			vFreeMemoryD(device, buffer.memory, nullptr);
 		}
 		buffer = GpuBuffer{};
 	};
@@ -1131,7 +1154,7 @@ int RunPrototype(uint32_t required_api) {
 	// coherent mapping. The chosen types are printed for the experiment record.
 	if (AllocateMappedBuffer(device, get_device_proc, selected_memory,
 	                         static_cast<VkDeviceSize>(kTotalBytes),
-	                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+	                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | (draw ? VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT : 0),
 	                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
 	                         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 	                         output_buffer, "output-blob") != 0) {
@@ -1453,6 +1476,11 @@ int RunPrototype(uint32_t required_api) {
 	if (aborted) {
 		return fail_and_cleanup();
 	}
+	if (draw && !RunOffscreenDraw(device, get_device_proc, selected_memory, device_13_capable,
+	                              queue, command_buffer, submit_fence, pipeline, pipeline_layout,
+	                              descriptor_set, output_buffer, payload_buffer, image_path)) {
+		return fail_and_cleanup();
+	}
 	// Validation and comparison results decide the run result; warnings alone do
 	// not fail, but every validation ERROR does (a silenced failure is no pass).
 	cleanup_all();
@@ -1463,28 +1491,35 @@ int RunPrototype(uint32_t required_api) {
 
 } // namespace
 
-int main(int argc, char** argv) {
+int RunMain(int argc, char** argv) {
 	if (!LocateShaders(argv[0])) {
 		PrintLine1("RESULT: FAIL (cannot locate executable directory)");
 		return 1;
 	}
 	if (argc == 3 && std::strcmp(argv[1], "--validate-module-vk13") == 0) {
-		const auto binary = LoadSpirvFile(argv[2], "explicit Vulkan 1.3 fixture");
+		const auto binary = LoadSpirvFile(std::filesystem::path(std::u8string(reinterpret_cast<const char8_t*>(argv[2]))), "explicit Vulkan 1.3 fixture");
 		ValidateSpirv(binary, SPV_ENV_VULKAN_1_3, "explicit Vulkan 1.3 fixture");
 		CheckModuleShape(binary, SPV_ENV_VULKAN_1_3, "explicit Vulkan 1.3 fixture");
 		PrintLine1("RESULT: %s (validation and shape)", g_failures == 0 ? "PASS" : "FAIL");
 		return g_failures == 0 ? 0 : 1;
 	}
-	const std::string mode = argc == 2 ? argv[1] : "";
+	const std::string mode = argc >= 2 ? argv[1] : "";
+	const bool draw = mode == "--draw" || mode == "--draw-vulkan12";
+	std::filesystem::path image_path;
+	if (draw && argc == 4 && std::strcmp(argv[2], "--image-output") == 0) {
+		image_path = std::filesystem::path(std::u8string(reinterpret_cast<const char8_t*>(argv[3])));
+	} else if (argc != 2) { PrintLine1("FAIL: unexpected command arguments"); return 1; }
+	if (mode == "--check-draw-oracle") { return CheckDrawOracle(); }
+	if (mode == "--validate-draw-spirv") { return ValidateDrawShaders() ? 0 : 1; }
 	if (mode == "--check-host-fixtures") { return CheckHostFixtures(); }
 	const bool validate_only = mode == "--validate-spirv";
-	const bool runtime13 = mode == "--run";
-	const bool runtime12 = mode == "--run-vulkan12";
+	const bool runtime13 = mode == "--run" || mode == "--draw";
+	const bool runtime12 = mode == "--run-vulkan12" || mode == "--draw-vulkan12";
 	if (!validate_only && !runtime13 && !runtime12) {
-		std::printf("[p41] usage: %s --validate-spirv | --run | --run-vulkan12 | --check-host-fixtures | --validate-module-vk13 FILE\n", argv[0]);
+		std::printf("[p41] usage: %s --validate-spirv | --run | --run-vulkan12 | --check-host-fixtures | --validate-module-vk13 FILE | --draw | --draw-vulkan12 [--image-output FILE] | --check-draw-oracle | --validate-draw-spirv\n", argv[0]);
 		return 1;
 	}
-	if (!RunOfflineValidation()) {
+	if (!RunOfflineValidation() || (draw && !ValidateDrawShaders())) {
 		PrintLine1("RESULT: FAIL (offline SPIR-V validation failed; the authored shader is "
 		           "not a valid prototype)");
 		return 1;
@@ -1494,7 +1529,7 @@ int main(int argc, char** argv) {
 		return 0;
 	}
 	const uint32_t requested_api = runtime13 ? VK_API_VERSION_1_3 : VK_API_VERSION_1_2;
-	const int dispatch_result = RunPrototype(requested_api);
+	const int dispatch_result = RunPrototype(requested_api, draw, image_path);
 	// Setup/teardown errors must never be hidden by an otherwise legitimate skip.
 	if (g_failures != 0 || g_validation_errors != 0) {
 		PrintLine1("RESULT: FAIL (failures=%d validation-errors=%d including cleanup)",
@@ -1502,6 +1537,7 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 	if (dispatch_result == 0) {
+		if (draw) { PrintLine1("DRAW RESULT: PASS (clear control + compute-generated indexed triangle, all pixels/full blob, validation including cleanup)"); }
 		PrintLine1("RESULT: PASS (Vulkan %s%s; nine full-blob scenarios; core + synchronization validation including cleanup)",
 		           runtime13 ? "1.3" : "1.2", runtime12 ? " AUXILIARY, not Vulkan 1.3 evidence" : "");
 		return 0;
@@ -1514,3 +1550,25 @@ int main(int argc, char** argv) {
 	PrintLine1("RESULT: FAIL (the dispatch path reported API or comparison failures)");
 	return 1;
 }
+
+#ifdef _WIN32
+// Windows CRT narrow argv uses the active code page, not UTF-8. Preserve Unicode
+// result paths by decoding wide argv explicitly; shader lookup already uses W APIs.
+int wmain(int argc, wchar_t** wide) {
+	std::vector<std::string> storage;
+	storage.reserve(argc);
+	for (int i = 0; i < argc; ++i) {
+		const int bytes = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide[i], -1, nullptr, 0, nullptr, nullptr);
+		if (bytes <= 0) { return 1; }
+		std::string value(static_cast<size_t>(bytes), '\0');
+		if (!WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide[i], -1, value.data(), bytes, nullptr, nullptr)) { return 1; }
+		value.pop_back();
+		storage.push_back(std::move(value));
+	}
+	std::vector<char*> args;
+	for (auto& value: storage) { args.push_back(value.data()); }
+	return RunMain(argc, args.data());
+}
+#else
+int main(int argc, char** argv) { return RunMain(argc, argv); }
+#endif

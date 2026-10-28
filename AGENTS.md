@@ -1,4 +1,4 @@
-# Instructions for Codex — KytyPS5 RDNA1 Mesh Fallback
+# Instructions for Codex â€” KytyPS5 RDNA1 Mesh Fallback
 
 This project is experimental C++/Vulkan emulator research, **not** a finished patch. The source of truth across sessions is `docs/RDNA1_MESH_FALLBACK_PLAN.md`.
 
@@ -31,7 +31,7 @@ This project is experimental C++/Vulkan emulator research, **not** a finished pa
 - After a stable baseline, implement and validate Windows x64 packaging with commit-named artifacts, manifest and SHA-256 checksums, then reproduce deployment and rollback on the desktop. Future GitHub Actions must reuse that process; hosted CI is not an RX 5700 XT test.
 - After every hardware test, append an experiment with commit/package identity, commands/configuration, device/driver, duration, result, logs, relevant screenshots, performance metrics and artifact locations. Record unavailable metrics and reasons, including early failures.
 - Keep game files, firmware, keys, dumps, proprietary shader binaries and large shader caches outside Git. Keep bulky/private captures outside the checkout; commit sanitized summaries and shareable evidence references. Preserve package license notices and upstream credit.
-- Keep this file and the living plan synchronized as workflow changes. Detailed build, deployment and evidence gates live in plan sections 2.1–2.5.
+- Keep this file and the living plan synchronized as workflow changes. Detailed build, deployment and evidence gates live in plan sections 2.1â€“2.5.
 
 ## Plan is intentionally editable
 You MAY reprioritize, split, merge, or remove future milestones based on evidence. If so, update the live plan and append a reason to Decision Register and Change History. Never rewrite experiment/session history to hide failures or declare an unverified milestone completed.
@@ -43,10 +43,10 @@ You MAY reprioritize, split, merge, or remove future milestones based on evidenc
 4. In your response state branch, SHA, files changed, commands/tests + actual results, blockers, and next step.
 5. **Stop** after the selected subtask; do not start the next phase automatically.
 
-## Current next task (checkpoint S-017)
-P4.1 DONE with native hardware evidence E-017. Second RX desktop run of clean S-015 source `d3cc0bce63b32d8106f098a696646eaba0823f3b`, build ID `20261028T183644317Z`: host/fixtures/offline validation PASS; strict Vulkan 1.3 on RX 5700 XT/API 1.4.308/AMD 25.6.1 PASS, nine exact full-buffer scenarios/eight dispatches, zero validation errors/warnings including cleanup. See `docs/RDNA1_RX_RESULTS_S017.md`; raw inputs/hashes under ignored `_Build/p4-s017/`. S-016 failure retained. Layer-isolation command was advised; exact override not captured. No new build/source/system change or push. 69 registered cases with passing executions, 1 failed-only deferred timer, 361 never run, 431 total.
+## Current next task (checkpoint S-018)
+P4.1 DONE (native strict RX evidence S-017). S-018 implements opt-in P4.2 in the existing synthetic harness: compute output consumed directly as vertex/index data in a conventional offscreen 64x64 draw; all pixels/full guarded buffers checked with clear control. Two-job builds PASS; ten-case serial suite 8 PASS/2 strict-1.3 SKIPPED/0 FAIL (1.32 s). Native Intel/API 1.2.172 auxiliary draw exact, zero validation errors/warnings through cleanup; corrupt black-fragment correctly FAILS; unavailable validation correctly SKIPS. See `docs/RDNA1_P42_RESULTS_S018.md`, full dirty snapshots/logs/images/hashes under ignored `_Build/p4-s018/`. 435 registrations: 72 passing cases, 1 failed-only deferred timer, 1 skipped-only strict draw, 361 never run. No new native RX draw/game evidence.
 
-Next single task: P4.2 standalone conventional indexed draw of one compute-generated triangle into an offscreen image. Add explicit compute-to-vertex/index and image-readback dependencies, deterministic pixel/full-buffer checks and offline public-shader validation. Gate: clean portable commit/package identity; native RX strict 1.3 draw; expected pixels/buffers and zero validation errors through cleanup; retained image/device/driver/log evidence. This first untextured draw does not complete the broader textured-mesh P4 gate. P4.2 NOT_STARTED: no next-phase implementation in S-017. No emulator wiring, guest translation or game testing. Noncoherent runtime, general baseline/emulator packaging and desktop rollback remain open.
+Within this selected subtask: commit source/checkpoint, then build clean portable package and verify relocation/Unicode paths/integrity, append final results. Next hardware task: `Run-Draw.cmd -IsolateImplicitLayers` on RX, native strict Vulkan 1.3, all nine original cases plus clear/triangle image (496 white/3600 black, opaque alpha), full output and zero errors after cleanup, retain triangle.ppm/logs/package/device identity. P4.2 IN_PROGRESS until that evidence. No emulator/guest/game integration or next phase. Noncoherent runtime, textures/varyings, general baseline/emulator packaging and desktop rollback remain open. No push.
 
 ### Retained S-015 package checkpoint
 Standalone portable package DONE locally; clean-source ZIP 681,008 bytes, SHA-256 `9F36E3774F9C99B6E73F95D10216F8AE94E65ECD2A80E8216422360908F2A897`, under ignored `_Build/mesh-prototype-packages/` with sidecar. See `docs/RDNA1_MESH_PACKAGE_S015.md`. Six-case suite 5 PASS/1 strict-1.3 SKIPPED; eight relocation/integrity probes match expected results; auxiliary Intel 1.2 nine blobs match with zero validation errors/warnings after cleanup. No absolute build-path fallback.
