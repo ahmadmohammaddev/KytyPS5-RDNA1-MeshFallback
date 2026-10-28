@@ -45,7 +45,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Native RDNA1 smoke test | PASS P4.1/P4.2/P4.3: native RX 5700 XT/API 1.4.308/AMD 25.6.1, strict 1.3 compute/plain/textured draw, exact buffers/images/UV boundaries, zero errors/warnings after cleanup. No guest/game claim |
 | Passing tests | S-023 clean package 18 focused cases: 14 PASS/4 strict 1.3 SKIP/0 FAIL, 1.81 s; valid wrong generated module and missing strict module correctly FAIL. 443 registered: 80 passing, 1 skipped-only strict IR, 1 failed-only timer, 361 never run |
 | Known blockers / limits | Narrow IR subset still rejects NGG draw parameters, unresolved EXEC/M0, LDS/wave64/CFG/dynamic allocation/cull. Game/integration/noncoherent/timer remain open |
-| Next single actionable task | P3.3 IN_PROGRESS: clean-package and independently run strict Vulkan 1.3 arithmetic/wrap on native RX; Intel Vulkan 1.2 auxiliary and wrong-module mutation passed |
+| Next single actionable task | P3.3 IN_PROGRESS: transfer clean package `3fd0fdd5` / `20261028T215237152Z`, run `Run-IR-Add.cmd -IsolateImplicitLayers` on native RX and retain logs; Intel Vulkan 1.2 auxiliary passed |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -726,6 +726,12 @@ Clean package source `e74e19779f13e33cf3c3a30fcabb58acbf952ad1`, build `20261028
 - Input `e2307049f1e69db7058eab36e3432284953c68d3`, clean branch and 14 matching submodules. Add separate strict/RX arithmetic launcher and runner mode, four module files to package, two registered API-specific CTests, inventory 20; legacy modes preserved. Dirty snapshot `_Build/p0-s012/p3-s028-pre-build-01/`.
 - Two-job build PASS. Six IR CTests: 4 PASS, 2 strict SKIPPED, 0 FAIL, 1.12 s. Intel auxiliary arithmetic full buffers PASS and strict locally unavailable. Logs `_Build/p0-s012/p3-s028-build.log` and `p3-s028-ctest.log`. Compilation/unit/SPIR-V PASS; Vulkan integration Intel auxiliary PASS and strict SKIPPED; RX arithmetic and Astro Bot NOT RUN.
 - Commit source first, then build clean package and verify relocation, integrity, strict skip and Intel auxiliary before handoff. P3.3 RX gate remains open.
+
+#### Final S-028 transfer package
+
+Source `3fd0fdd507a91759a0ca41be4150dff94d5e6485`, build `20261028T215237152Z`, ZIP SHA-256 `FBC0FA54BA000B2FA9952BE8982A1C86BE177D4F20E997F7F5A2FAF031351989`, matching sidecar; clean package serial tests 15 PASS/5 strict SKIPPED/0 FAIL. Unicode/space extraction integrity PASS, Intel auxiliary add/wrap PASS exact full buffers and zero errors/warnings after cleanup, strict Intel SKIPPED 41, RX requirement rejects Intel exit 1. First relocation attempt correctly rejected existing results directory; fresh directory retry PASS. Logs under `_Build/p0-s012/p3-s028-*` and package evidence directory. RX arithmetic and Astro Bot NOT RUN; no game integration.
+
+Next task: transfer ZIP and sidecar, verify hash/extract fresh, run `Run-IR-Add.cmd -IsolateImplicitLayers` on RX. Require strict Vulkan 1.3 add and wrap exact 1840-byte readbacks, zero validation errors/warnings through both cleanups, device/driver and package identity, all logs/result. No next phase started.
 
 ## 8. Change history (append-only)
 

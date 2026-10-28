@@ -43,7 +43,10 @@ You MAY reprioritize, split, merge, or remove future milestones based on evidenc
 4. In your response state branch, SHA, files changed, commands/tests + actual results, blockers, and next step.
 5. **Stop** after the selected subtask; do not start the next phase automatically.
 
-## Current next task (checkpoint S-028 in progress)
+## Current next task (checkpoint S-028)
+Clean package source `3fd0fdd507a91759a0ca41be4150dff94d5e6485`, build `20261028T215237152Z`, SHA-256 `FBC0FA54BA000B2FA9952BE8982A1C86BE177D4F20E997F7F5A2FAF031351989`. 20-case suite 15 PASS/5 SKIPPED; relocated Intel auxiliary add/wrap PASS, strict SKIPPED, RX guard rejects Intel. Next: transfer ZIP+sidecar and run `Run-IR-Add.cmd -IsolateImplicitLayers` on RX; require two exact full buffers and zero errors/warnings through cleanup; retain all logs and result.json. No push.
+
+## Retained S-028 preparation
 Arithmetic runner, launcher, generated module packaging and two CTests implemented; 4 IR tests PASS and 2 strict SKIPPED on Intel, build PASS. Commit source then produce clean package, verify relocation/integrity and Intel auxiliary; RX arithmetic remains NOT RUN.
 
 ## Retained checkpoint S-027
