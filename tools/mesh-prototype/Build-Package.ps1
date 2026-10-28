@@ -158,7 +158,7 @@ try {
     $imports = @($imports | Sort-Object -Unique)
     if (-not $imports.Count) { throw 'PE import inspection returned no dependencies' }
     foreach ($dll in $imports) {
-        if ($dll -notmatch '^(KERNEL32|MSVCP140|VCRUNTIME140(?:_1)?|ucrtbase|api-ms-win-crt-[a-z0-9-]+)\.dll$') {
+        if ($dll -notmatch '^(KERNEL32|MSVCP140(?:_ATOMIC_WAIT)?|VCRUNTIME140(?:_1)?|ucrtbase|api-ms-win-crt-[a-z0-9-]+)\.dll$') {
             throw "Unaccounted runtime dependency: $dll"
         }
     }

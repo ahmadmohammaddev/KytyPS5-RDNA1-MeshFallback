@@ -119,3 +119,5 @@ errors including cleanup fail the run. The Vulkan 1.2 auxiliary modules are
 assembled from the same IR-generated SPIR-V assembly and stay separate from the
 strict 1.3 gate. Missing generated modules fail without a handwritten fallback.
 Return result.json and all logs; no image is expected. Existing modes remain intact.
+
+The IR fixture executable additionally imports `MSVCP140_ATOMIC_WAIT.dll` from the Microsoft Visual C++ v14 x64 redistributable; the matching runtime is an external prerequisite.
