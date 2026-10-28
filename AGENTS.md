@@ -43,7 +43,12 @@ You MAY reprioritize, split, merge, or remove future milestones based on evidenc
 4. In your response state branch, SHA, files changed, commands/tests + actual results, blockers, and next step.
 5. **Stop** after the selected subtask; do not start the next phase automatically.
 
-## Current next task (checkpoint S-028)
+## Current next task (checkpoint S-029)
+Restricted IR arithmetic and wrap PASS on native RX 5700 XT strict Vulkan 1.3: full 460-word buffers, zero errors/warnings through cleanup; six stages PASS. Source `3fd0fdd507a91759a0ca41be4150dff94d5e6485`, build `20261028T215237152Z`. Raw evidence `_Build/p3-s029/`, report `docs/RDNA1_RX_ADD_S029.md`. No game or emulator integration claim.
+
+Next single task: connect restricted IR-generated triangle to the existing isolated conventional indexed offscreen draw. Require independent full-buffer and complete pixel expectations, correct compute-to-vertex/index synchronization, offline SPIR-V validation, focused regression tests and zero validation errors including cleanup. Strict RX execution is a separate hardware gate; preserve native/default path, capture dirty-source builds, commit and stop. No push.
+
+## Retained checkpoint S-028
 Clean package source `3fd0fdd507a91759a0ca41be4150dff94d5e6485`, build `20261028T215237152Z`, SHA-256 `FBC0FA54BA000B2FA9952BE8982A1C86BE177D4F20E997F7F5A2FAF031351989`. 20-case suite 15 PASS/5 SKIPPED; relocated Intel auxiliary add/wrap PASS, strict SKIPPED, RX guard rejects Intel. Next: transfer ZIP+sidecar and run `Run-IR-Add.cmd -IsolateImplicitLayers` on RX; require two exact full buffers and zero errors/warnings through cleanup; retain all logs and result.json. No push.
 
 ## Retained S-028 preparation
