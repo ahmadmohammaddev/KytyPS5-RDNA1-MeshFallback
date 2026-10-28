@@ -30,7 +30,7 @@ struct Fixture {
   Libs::Graphics::ShaderMeshInputInfo mesh;
   IR::Inst *allocation = nullptr, *position = nullptr, *primitive = nullptr,
            *mask = nullptr, *lane = nullptr;
-  Fixture(bool use_add = false, uint32_t addend = 0) {
+  Fixture(bool use_add = false, uint32_t addend = 0, uint32_t second_addend = 0, uint32_t index_addend = 0) {
     mesh.threads_num[0] = 32;
     mesh.threads_num[1] = mesh.threads_num[2] = 1;
     mesh.wave_size = mesh.host_subgroup_size = 32;
@@ -66,13 +66,18 @@ struct Fixture {
     auto data = ir.Emit(Op::CompositeConstructU32x4,
                         {x, y, IR::Value(0u), IR::Value(0x3f800000u)});
     auto mask_lane = use_add ? ir.Emit(Op::IAdd32, {local, IR::Value(addend)}) : local;
+    if (use_add && second_addend)
+      mask_lane = ir.Emit(Op::IAdd32, {mask_lane, IR::Value(second_addend)});
     auto active = ir.Emit(Op::ULessThan32, {mask_lane, IR::Value(3u)});
     mask = active.TryInstruction();
     position = &block.AppendNewInst(
         Op::SetAttribute, {data, active},
         std::bit_cast<uint64_t>(IR::ExportFlags{.index = 0}));
+    auto packed_value = IR::Value((1u << 10) | (2u << 20));
+    if (index_addend)
+      packed_value = ir.Emit(Op::IAdd32, {packed_value, IR::Value(index_addend)});
     auto packed = ir.Emit(Op::CompositeConstructU32x4,
-                          {IR::Value((1u << 10) | (2u << 20)), IR::Value(0u),
+                          {packed_value, IR::Value(0u),
                            IR::Value(0u), IR::Value(0u)});
     primitive = &block.AppendNewInst(
         Op::SetAttribute, {packed, is0},
@@ -449,6 +454,21 @@ void Positives(const std::filesystem::path &dir) {
   Fixture unsafe_add(true, 1);
   auto unsafe_result = R::Lower(unsafe_add.Input());
   Check(!unsafe_result && unsafe_result.binary.empty() && unsafe_result.error.find("undefined") != std::string::npos, "addition cannot bypass lane coverage proof");
+  // Independent arithmetic expectations: unsigned 32-bit addition wraps.
+  for (uint32_t lane = 0; lane < 32; ++lane) {
+    const uint32_t sum = static_cast<uint32_t>(uint64_t(lane) + 0xffffffffull + 1ull);
+    Check(sum == lane, "host wraparound oracle");
+  }
+  Fixture wrapping(true, 0xffffffffu, 1u);
+  auto wrapping_result = R::Lower(wrapping.Input());
+  Valid(wrapping_result);
+  Check(wrapping_result.binary != canonical.binary, "wrap addition emits distinct SPIR-V");
+  Fixture invalid_index(false, 0, 0, 3);
+  auto bad_index = R::Lower(invalid_index.Input());
+  Check(!bad_index && bad_index.binary.empty() && bad_index.error.find("index outside") != std::string::npos,
+        "addition producing invalid packed index rejected");
+  Fixture valid_index(false, 0, 0, 1);
+  Valid(R::Lower(valid_index.Input()));
   Fixture unmasked;
   unmasked.position->SetArg(1, IR::Value(true));
   unmasked.primitive->SetArg(1, IR::Value(true));

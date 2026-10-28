@@ -43,7 +43,10 @@ You MAY reprioritize, split, merge, or remove future milestones based on evidenc
 4. In your response state branch, SHA, files changed, commands/tests + actual results, blockers, and next step.
 5. **Stop** after the selected subtask; do not start the next phase automatically.
 
-## Current next task (checkpoint S-025)
+## Current next task (checkpoint S-026)
+P3.3 offline fixtures validate nonzero and wrapping additions, reject unsafe packed index, and pass SPIR-V validation; 2 focused tests PASS and 2 Vulkan tests SKIPPED. Host arithmetic checks are not GPU output verification. Next single task: execute generated arithmetic and wrap modules with independently specified full-buffer oracles, test a valid wrong-operation mutation, retain validation through cleanup and distinguish Intel auxiliary from RX strict evidence. Capture complete dirty builds; no production integration or push.
+
+## Retained checkpoint S-025
 P3.3 IN_PROGRESS: isolated `IAdd32` lowering added; focused build PASS, two offline tests PASS and two runtime cases SKIPPED. The zero-add fixture and coverage/type rejection do not yet prove nonzero arithmetic or 32-bit wraparound. Next single task: add independent arithmetic/wraparound and unsafe-index/coverage fixtures, validate SPIR-V and rerun focused tests. Preserve complete dirty-source provenance; GPU and RX execution remain separate. See S-025 in the living plan.
 
 ## Retained checkpoint S-024

@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 2.5. **Overall status:** S-024 native RX strict Vulkan 1.3 executes all three P3.2 IR-generated modules with exact buffers and zero validation errors/warnings through cleanup. P3.2 DONE within its narrow subset; P3 and emulator/game integration remain open.
+> **Last edited:** 2026-10-29. **Plan revision:** 2.6. **Overall status:** S-024 native RX strict Vulkan 1.3 executes all three P3.2 IR-generated modules with exact buffers and zero validation errors/warnings through cleanup. P3.2 DONE within its narrow subset; P3 and emulator/game integration remain open.
 
 ## 0. Mission and boundaries
 
@@ -45,7 +45,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Native RDNA1 smoke test | PASS P4.1/P4.2/P4.3: native RX 5700 XT/API 1.4.308/AMD 25.6.1, strict 1.3 compute/plain/textured draw, exact buffers/images/UV boundaries, zero errors/warnings after cleanup. No guest/game claim |
 | Passing tests | S-023 clean package 18 focused cases: 14 PASS/4 strict 1.3 SKIP/0 FAIL, 1.81 s; valid wrong generated module and missing strict module correctly FAIL. 443 registered: 80 passing, 1 skipped-only strict IR, 1 failed-only timer, 361 never run |
 | Known blockers / limits | Narrow IR subset still rejects NGG draw parameters, unresolved EXEC/M0, LDS/wave64/CFG/dynamic allocation/cull. Game/integration/noncoherent/timer remain open |
-| Next single actionable task | P3.3 IN_PROGRESS: add independent arithmetic and 32-bit wraparound expectations, unsafe index tests and generated-code mutation checks; rerun focused tests. GPU/RX execution is a separate gate |
+| Next single actionable task | P3.3 IN_PROGRESS: execute nonzero/wrapping IR-generated arithmetic with independent full-buffer expectations; verify mutation sensitivity and separately record Intel and native RX evidence |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -707,6 +707,12 @@ Clean package source `e74e19779f13e33cf3c3a30fcabb58acbf952ad1`, build `20261028
 - Input `fe92844fb00cc24babc8adc06073de3b579db034`, clean branch and 14 submodules verified. Added `IAdd32` to isolated lowerer with per-lane unsigned arithmetic and `OpIAdd`; a lane-dependent addition fixture validates, unsafe coverage and type mismatch reject. No production renderer change.
 - Full dirty source snapshot `_Build/p0-s012/p3-s025-pre-build-01/`; build log `_Build/p0-s012/p3-s025-build.log`. First plain shell build failed because CMake was not on PATH; VS developer environment build with 2 jobs PASS, existing warnings. `ctest --test-dir _Build/windows-core --output-on-failure -R mesh_ir_ --parallel 1`: two PASS, two Vulkan runtime SKIPPED, zero FAIL; log `_Build/p0-s012/p3-s025-ctest.log`. Shader validation PASS via positive test; new arithmetic GPU dispatch and RX NOT RUN, Astro Bot NOT RUN.
 - P3.3 remains IN_PROGRESS: current positive adds zero, and no independent arithmetic/wraparound oracle or unsafe-index addition fixture proves semantics. Next single task: strengthen arithmetic fixtures with nonzero and 32-bit wrapping cases, independent expected values and rejected invalid index/coverage; validate generated SPIR-V and rerun focused tests. No claim of completed gate or GPU arithmetic execution.
+
+### Session S-026 — 2026-10-29 — Arithmetic safety fixtures
+
+- Input `714375aa9d09df8d9a2ff605a1f60d561b11b4e7`, clean branch and fourteen matching submodules. Extend offline fixtures: lane wrap using `0xffffffff + 1`, independent host arithmetic expectation across 32 lanes, nonzero packed-index addition with valid and invalid results, and retained unsafe-coverage and type rejection. SPIR-V validation passes. Host arithmetic oracle checks arithmetic assumptions, not actual GPU output or a complete independent interpreter. No production renderer changes.
+- Full dirty snapshot `_Build/p0-s012/p3-s026-pre-build-01/`; two-job focused build PASS with existing warnings; logs `_Build/p0-s012/p3-s026-build.log` and `p3-s026-ctest.log`. Four focused CTests: 2 PASS, 2 Vulkan runtime SKIPPED, 0 FAIL (0.30 s). Compilation/unit/offline SPIR-V PASS. Vulkan integration SKIPPED in this environment, new arithmetic on RDNA1 and Astro Bot NOT RUN.
+- P3.3 remains IN_PROGRESS: nonzero/wrapping generated arithmetic has not been independently checked by GPU full-buffer readback or against a deliberately wrong generated operation. Next single task: extend isolated runtime fixtures and independent full-buffer oracles for arithmetic and wrap, include a valid wrong-operation mutation that fails, dispatch with core/synchronization validation, distinguish Intel auxiliary from native RX strict and preserve source/package evidence.
 
 ## 8. Change history (append-only)
 
