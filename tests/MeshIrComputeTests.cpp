@@ -468,7 +468,10 @@ void Positives(const std::filesystem::path &dir) {
   Check(!bad_index && bad_index.binary.empty() && bad_index.error.find("index outside") != std::string::npos,
         "addition producing invalid packed index rejected");
   Fixture valid_index(false, 0, 0, 1);
-  Valid(R::Lower(valid_index.Input()));
+  auto added_index = R::Lower(valid_index.Input());
+  Valid(added_index);
+  Emit(added_index, dir, "mesh_ir_add_vk13");
+  Emit(wrapping_result, dir, "mesh_ir_wrap_vk13");
   Fixture unmasked;
   unmasked.position->SetArg(1, IR::Value(true));
   unmasked.primitive->SetArg(1, IR::Value(true));

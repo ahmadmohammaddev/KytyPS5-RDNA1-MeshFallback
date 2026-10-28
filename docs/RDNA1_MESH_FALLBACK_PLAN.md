@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 2.6. **Overall status:** S-024 native RX strict Vulkan 1.3 executes all three P3.2 IR-generated modules with exact buffers and zero validation errors/warnings through cleanup. P3.2 DONE within its narrow subset; P3 and emulator/game integration remain open.
+> **Last edited:** 2026-10-29. **Plan revision:** 2.7. **Overall status:** S-024 native RX strict Vulkan 1.3 executes all three P3.2 IR-generated modules with exact buffers and zero validation errors/warnings through cleanup. P3.2 DONE within its narrow subset; P3 and emulator/game integration remain open.
 
 ## 0. Mission and boundaries
 
@@ -45,7 +45,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Native RDNA1 smoke test | PASS P4.1/P4.2/P4.3: native RX 5700 XT/API 1.4.308/AMD 25.6.1, strict 1.3 compute/plain/textured draw, exact buffers/images/UV boundaries, zero errors/warnings after cleanup. No guest/game claim |
 | Passing tests | S-023 clean package 18 focused cases: 14 PASS/4 strict 1.3 SKIP/0 FAIL, 1.81 s; valid wrong generated module and missing strict module correctly FAIL. 443 registered: 80 passing, 1 skipped-only strict IR, 1 failed-only timer, 361 never run |
 | Known blockers / limits | Narrow IR subset still rejects NGG draw parameters, unresolved EXEC/M0, LDS/wave64/CFG/dynamic allocation/cull. Game/integration/noncoherent/timer remain open |
-| Next single actionable task | P3.3 IN_PROGRESS: execute nonzero/wrapping IR-generated arithmetic with independent full-buffer expectations; verify mutation sensitivity and separately record Intel and native RX evidence |
+| Next single actionable task | P3.3 IN_PROGRESS: clean-package and independently run strict Vulkan 1.3 arithmetic/wrap on native RX; Intel Vulkan 1.2 auxiliary and wrong-module mutation passed |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -713,6 +713,13 @@ Clean package source `e74e19779f13e33cf3c3a30fcabb58acbf952ad1`, build `20261028
 - Input `714375aa9d09df8d9a2ff605a1f60d561b11b4e7`, clean branch and fourteen matching submodules. Extend offline fixtures: lane wrap using `0xffffffff + 1`, independent host arithmetic expectation across 32 lanes, nonzero packed-index addition with valid and invalid results, and retained unsafe-coverage and type rejection. SPIR-V validation passes. Host arithmetic oracle checks arithmetic assumptions, not actual GPU output or a complete independent interpreter. No production renderer changes.
 - Full dirty snapshot `_Build/p0-s012/p3-s026-pre-build-01/`; two-job focused build PASS with existing warnings; logs `_Build/p0-s012/p3-s026-build.log` and `p3-s026-ctest.log`. Four focused CTests: 2 PASS, 2 Vulkan runtime SKIPPED, 0 FAIL (0.30 s). Compilation/unit/offline SPIR-V PASS. Vulkan integration SKIPPED in this environment, new arithmetic on RDNA1 and Astro Bot NOT RUN.
 - P3.3 remains IN_PROGRESS: nonzero/wrapping generated arithmetic has not been independently checked by GPU full-buffer readback or against a deliberately wrong generated operation. Next single task: extend isolated runtime fixtures and independent full-buffer oracles for arithmetic and wrap, include a valid wrong-operation mutation that fails, dispatch with core/synchronization validation, distinguish Intel auxiliary from native RX strict and preserve source/package evidence.
+
+### Session S-027 — 2026-10-29 — Generated arithmetic runtime on Intel
+
+- Input `94b0908deb047b3be0ea1bccd9323c483324fff1`, clean branch and 14 matching submodules. Added opt-in `--ir-add` / `--ir-add-vulkan12` and generated add/wrap modules with independent full-buffer expectations. Existing three-module modes remain separate. Full dirty snapshot `_Build/p0-s012/p3-s027-pre-build-01/`.
+- Initial sandbox build FAIL during CMake regeneration: submodule metadata access denied and attempted FFmpeg download failed DNS. Outside-sandbox two-job build PASS; both logs retained under `_Build/p0-s012/p3-s027-build*.log`. Compilation and SPIR-V validation PASS. Four existing focused tests: 3 PASS, 1 strict 1.3 SKIPPED, 0 FAIL (0.72 s).
+- First Intel runtime SKIPPED 41 because Khronos validation layer was not in default discovery; process-local VK_LAYER_PATH retry PASS on Intel Iris Xe API 1.2.172: add and wrap full 460-word buffers exact, zero validation errors/warnings including cleanup. Replacing add with valid triangle SPIR-V in isolated copied harness correctly FAILS exit 1 with one mismatched word and zero validation errors. This checks wrong module, not an independently altered arithmetic opcode. Logs retained `_Build/p0-s012/p3-s027-*.log`. New strict Vulkan 1.3/RX and Astro Bot NOT RUN.
+- P3.3 remains IN_PROGRESS. Next single task: create clean committed-source portable package for opt-in arithmetic mode with integrity and relocation checks, then obtain separate native RX strict 1.3 full-buffer and zero-validation-error evidence. The new modes are not yet registered in CTest or the package runner; preserve existing modes and report missing prerequisites as skip. No production integration.
 
 ## 8. Change history (append-only)
 

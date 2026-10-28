@@ -1372,7 +1372,8 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 		const float pos[12] = {-.5f,-.5f,0,1,.5f,-.5f,0,1,-.5f,.484375f,0,1};
 		one.payload_positions.assign(kPositionWords,0); std::memcpy(one.payload_positions.data(),pos,sizeof(pos));
 		one.payload_indices.assign(kIndexWords,0);
-		if (std::strcmp(ir_variant,"permuted") == 0) { one.payload_indices[0]=2; one.payload_indices[1]=0; one.payload_indices[2]=1; }
+		if (std::strcmp(ir_variant,"add") == 0) { one.payload_indices[0]=1; one.payload_indices[1]=1; one.payload_indices[2]=2; }
+		else if (std::strcmp(ir_variant,"permuted") == 0) { one.payload_indices[0]=2; one.payload_indices[1]=0; one.payload_indices[2]=1; }
 		else { one.payload_indices[0]=0; one.payload_indices[1]=1; one.payload_indices[2]=2; }
 		FinalizeScenario(one); scenarios.push_back(std::move(one));
 	} else { scenarios = MakeScenarios(); }
@@ -1528,7 +1529,9 @@ int RunMain(int argc, char** argv) {
 		return g_failures == 0 ? 0 : 1;
 	}
 	const std::string mode = argc >= 2 ? argv[1] : "";
-	const bool ir_mode = mode == "--ir" || mode == "--ir-vulkan12";
+	const bool ir_add = mode == "--ir-add" || mode == "--ir-add-vulkan12";
+	const bool ir_mode = ir_add || mode == "--ir" || mode == "--ir-vulkan12" || mode == "--ir-add-vulkan12";
+	const std::vector<const char*> ir_variants = ir_add ? std::vector<const char*>{"add", "wrap"} : std::vector<const char*>{"triangle", "permuted", "zero"};
 	const bool textured = mode == "--texture" || mode == "--texture-vulkan12";
 	const bool draw = textured || mode == "--draw" || mode == "--draw-vulkan12";
 	std::filesystem::path image_path;
@@ -1541,8 +1544,8 @@ int RunMain(int argc, char** argv) {
 	if (mode == "--validate-draw-spirv") { return ValidateDrawShaders() ? 0 : 1; }
 	if (mode == "--check-host-fixtures") { return CheckHostFixtures(); }
 	const bool validate_only = mode == "--validate-spirv";
-	const bool runtime13 = mode == "--run" || mode == "--draw" || mode == "--texture" || mode == "--ir";
-	const bool runtime12 = mode == "--run-vulkan12" || mode == "--draw-vulkan12" || mode == "--texture-vulkan12" || mode == "--ir-vulkan12";
+	const bool runtime13 = mode == "--run" || mode == "--draw" || mode == "--texture" || mode == "--ir" || mode == "--ir-add";
+	const bool runtime12 = mode == "--run-vulkan12" || mode == "--draw-vulkan12" || mode == "--texture-vulkan12" || mode == "--ir-vulkan12" || mode == "--ir-add-vulkan12";
 	if (!validate_only && !runtime13 && !runtime12) {
 		std::printf("[p41] usage: %s --validate-spirv | --run | --run-vulkan12 | --check-host-fixtures | --validate-module-vk13 FILE | --draw | --draw-vulkan12 [--image-output FILE] | --check-draw-oracle | --validate-draw-spirv | --texture | --texture-vulkan12 [--image-output FILE] | --check-texture-fixtures | --validate-texture-spirv\n", argv[0]);
 		return 1;
@@ -1557,7 +1560,7 @@ int RunMain(int argc, char** argv) {
 		return 0;
 	}
 	if (ir_mode) {
-		for (const char* variant : {"triangle", "permuted", "zero"}) {
+		for (const char* variant : ir_variants) {
 			const auto path = g_shader_directory / (std::string("mesh_ir_") + variant + (runtime13 ? "_vk13.spv" : "_vk12.spv"));
 			const auto words = LoadSpirvFile(path, variant);
 			const auto env = runtime13 ? SPV_ENV_VULKAN_1_3 : SPV_ENV_VULKAN_1_2;
@@ -1573,7 +1576,7 @@ int RunMain(int argc, char** argv) {
 	const uint32_t requested_api = runtime13 ? VK_API_VERSION_1_3 : VK_API_VERSION_1_2;
 	int dispatch_result = 0;
 	if (ir_mode) {
-		for (const char* variant : {"triangle", "permuted", "zero"}) {
+		for (const char* variant : ir_variants) {
 			PrintLine1("IR case: %s", variant);
 			dispatch_result = RunPrototype(requested_api, false, {}, false, variant);
 			if (dispatch_result != 0 || g_failures != 0 || g_validation_errors != 0) { break; }
@@ -1586,7 +1589,7 @@ int RunMain(int argc, char** argv) {
 		return 1;
 	}
 	if (dispatch_result == 0) {
-		if (ir_mode) { PrintLine1("IR RESULT: PASS (three generated modules, exact full blobs, validation including cleanup)"); }
+		if (ir_mode) { PrintLine1("IR RESULT: PASS (generated modules, exact full blobs, validation including cleanup)"); }
 		if (textured) { PrintLine1("TEXTURE RESULT: PASS (sampled texture, compute UVs/guards/boundaries, exact RGBA, validation including cleanup)"); }
 		if (draw) { PrintLine1("DRAW RESULT: PASS (clear control + compute-generated indexed triangle, all pixels/full blob, validation including cleanup)"); }
 		PrintLine1("RESULT: PASS (Vulkan %s%s; requested full-blob scenarios; core + synchronization validation including cleanup)",
