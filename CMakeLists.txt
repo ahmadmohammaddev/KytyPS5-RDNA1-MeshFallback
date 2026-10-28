@@ -922,6 +922,19 @@ foreach(api IN ITEMS 12 13)
 	endforeach()
 endforeach()
 add_custom_target(mesh_texture_shaders DEPENDS ${mesh_texture_modules})
+# P3.1 isolated offline research: actual repository IR, no native emitter/renderer changes.
+add_executable(mesh_ir_compute_tests EXCLUDE_FROM_ALL
+	"${KYTY_TESTS_DIR}/MeshIrComputeTests.cpp"
+	"${KYTY_TESTS_DIR}/research/MeshIrComputeLowering.cpp"
+	"${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/Block.cpp"
+	"${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/Value.cpp"
+	"${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/Type.cpp"
+	"${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/IREmitter.cpp"
+	"${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/opcodes/ValueOpcodes.cpp"
+	"${KYTY_SOURCE_DIR}/graphics/shader/recompiler/CodegenOptions.cpp"
+)
+target_include_directories(mesh_ir_compute_tests PRIVATE ${inc_headers})
+target_link_libraries(mesh_ir_compute_tests PRIVATE common spirv-tools Vulkan::Headers)
 add_executable(mesh_compute_proto_tests EXCLUDE_FROM_ALL
 	"${KYTY_TESTS_DIR}/MeshComputePrototypeTests.cpp"
 )
@@ -1434,6 +1447,8 @@ if(BUILD_TESTING)
 	add_test(NAME vram_budget COMMAND $<TARGET_FILE:vram_budget_tests>)
 	add_test(NAME device_compat COMMAND $<TARGET_FILE:device_compat_tests>)
 	add_test(NAME mesh_output_contract COMMAND $<TARGET_FILE:mesh_output_contract_tests>)
+	add_test(NAME mesh_ir_compute_positive COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --positive)
+	add_test(NAME mesh_ir_compute_rejections COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --reject)
 	add_test(NAME mesh_proto_spirv COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --validate-spirv)
 	set_tests_properties(mesh_proto_spirv PROPERTIES TIMEOUT 120)
 	add_test(NAME mesh_proto_host_fixtures COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --check-host-fixtures)
@@ -2598,6 +2613,7 @@ if(BUILD_TESTING)
 		device_compat_tests
 		mesh_output_contract_tests
 		mesh_compute_proto_tests
+		mesh_ir_compute_tests
 		shader_precompile_tests
 		shader_vertex_metadata_tests
 		resource_materialization_tests
