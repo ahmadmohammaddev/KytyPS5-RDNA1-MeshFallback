@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 2.3. **Overall status:** S-023 actual IR-generated triangle/permuted/zero modules execute and match full blobs on Intel/Vulkan 1.2 with zero validation errors; strict 1.3 skips locally. P3.2 IN_PROGRESS pending clean package/native RX evidence; no emulator/game integration.
+> **Last edited:** 2026-10-29. **Plan revision:** 2.3. **Overall status:** S-023 actual IR-generated triangle/permuted/zero modules execute and match full blobs on Intel/Vulkan 1.2 with zero validation errors; strict 1.3 skips locally. P3.2 IN_PROGRESS pending native RX evidence; clean package source `e74e1977`/build `20261028T213608114Z` verified locally; no emulator/game integration.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P3 IN_PROGRESS: P3.1 offline DONE; P3.2 actual generated modules PASS on Intel auxiliary, native RX strict pending** |
-| Current subtask | S-023 generated-module runtime and clean package handoff; see `docs/RDNA1_P32_RESULTS_S023.md` |
+| Current subtask | S-023 IR-generated module runtime and clean package verified locally; native RX strict run next |
 | Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
-| Last verified git commit | Build input `49e0c7532301225aaa077c9e98e0ee12870ce79c` plus retained complete dirty source snapshots; containing commit includes test/research code. Generated artifacts are not a clean transfer package |
+| Last verified git commit | Clean package source `e74e19779f13e33cf3c3a30fcabb58acbf952ad1`, build `20261028T213608114Z`; final handoff commit documentation only |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | S-021 input clean, pinned ancestry/all fourteen matching submodules checked. S-020 clean package provenance retained; no production renderer changes |
 | Build status | S-023 focused two-job build PASS/no PGO/IPO; both 1.3 and 1.2 modules assembled from repository IR; no core/GUI rebuild |
 | Native RDNA1 smoke test | PASS P4.1/P4.2/P4.3: native RX 5700 XT/API 1.4.308/AMD 25.6.1, strict 1.3 compute/plain/textured draw, exact buffers/images/UV boundaries, zero errors/warnings after cleanup. No guest/game claim |
-| Passing tests | S-023 18 focused cases: 14 PASS/4 strict 1.3 SKIP/0 FAIL, 2.24 s; valid wrong generated module and missing strict module correctly FAIL. 443 registered: 80 passing, 1 skipped-only strict IR, 1 failed-only timer, 361 never run |
+| Passing tests | S-023 clean package 18 focused cases: 14 PASS/4 strict 1.3 SKIP/0 FAIL, 1.81 s; valid wrong generated module and missing strict module correctly FAIL. 443 registered: 80 passing, 1 skipped-only strict IR, 1 failed-only timer, 361 never run |
 | Known blockers / limits | Native RX strict generated modules NOT RUN; narrow IR subset still rejects NGG draw parameters, unresolved EXEC/M0, LDS/wave64/CFG/dynamic allocation/cull. Game/integration/noncoherent/timer remain open |
-| Next single actionable task | Build/verify clean standalone IR runtime package, then run strict native RX for triangle/permuted/zero exact buffers, zero validation errors including cleanup, retained identity/logs. No renderer/game wiring |
+| Next single actionable task | Transfer S-023 ZIP+sidecar source `e74e1977`/build `20261028T213608114Z`, verify/extract fresh, normal-user RX `Run-IR.cmd -IsolateImplicitLayers`. Require native strict 1.3 triangle/permuted/zero exact buffers and zero errors through cleanup; retain logs/result/device/package identity |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -673,6 +673,10 @@ Next one task: verify/transfer/extract THIS ZIP+sidecar on RX, normal-user `Run-
 - Input `03efcc5242dcb130d2cba4c4e85f873d2d48d2d6`, clean branch/pinned ancestry/14 submodules checked. Extend isolated existing runtime, generator, CMake, package runner/launcher and documentation; no renderer/game source or push. Complete pre-build dirty snapshot retained.
 - Two-job build PASS; 18-case suite 14 PASS/4 strict SKIP/0 FAIL, 2.24 s. Native Intel 1.2 auxiliary executes three actual generated modules with exact full-buffer readback and zero validation errors/warnings including cleanup. Replacing triangle with valid zero module correctly FAILS 13 words; missing strict module FAILS before device discovery. SPIR-V 1.3 and auxiliary 1.2 both generated from same IR-derived assembly. Native RX generated-module/game NOT RUN.
 - Within selected P3.2 task commit source/checkpoint, then build clean transferable package and verify relocation/integrity. Append final evidence; next hardware gate requires native RX strict execution of all three cases and zero errors through cleanup. No next phase.
+
+#### Final S-023 package / next hardware gate
+
+Clean package source `e74e19779f13e33cf3c3a30fcabb58acbf952ad1`, build `20261028T213608114Z`, ZIP 1,521,726 bytes/SHA-256 `EE0B7D175FBBF8E9923A7C4088374A34F7E4442F10F53E15E3229AF73ABF97D8` with sidecar. Clean serial suite 14 PASS/4 SKIPPED/0 FAIL, 1.81 s. Ten expected Unicode relocation/integrity/identity/legacy outcomes PASS; actual generated 1.2 modules match full buffers on Intel with zero errors/warnings through cleanup. First packaging attempt failed import audit on Microsoft `MSVCP140_ATOMIC_WAIT.dll`; retained and resolved by explicitly documenting/allowing the external v14 runtime dependency. Details in `docs/RDNA1_P32_RESULTS_S023.md`; no native RX generated module/game test yet. Next run THIS package on RX using `Run-IR.cmd -IsolateImplicitLayers`; retain all logs/result. No next phase/push.
 
 ### Template for S-024 onward
 - **Date / who:**
