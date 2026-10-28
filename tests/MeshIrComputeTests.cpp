@@ -381,6 +381,23 @@ void Emit(const R::Result &r, const std::filesystem::path &dir,
              r.binary.size() * 4);
   file.close();
   Check(!file.fail(), "SPIR-V artifact write");
+  // Explicit auxiliary Vulkan 1.2 variant assembled from the same IR-derived
+  // assembly; never substitute it for strict 1.3.
+  spvtools::SpirvTools auxiliary(SPV_ENV_VULKAN_1_2);
+  std::vector<uint32_t> binary12;
+  const bool valid12 = auxiliary.Assemble(r.assembly, &binary12) && auxiliary.Validate(binary12);
+  Check(valid12, "auxiliary IR-derived module validates Vulkan 1.2");
+  if (valid12) {
+    auto name12 = name;
+    const auto suffix = name12.rfind("_vk13");
+    Check(suffix != std::string::npos, "IR module name contains API suffix");
+    if (suffix != std::string::npos) {
+      name12.replace(suffix, 5, "_vk12");
+      std::ofstream f12(dir / (name12 + ".spv"), std::ios::binary);
+      f12.write(reinterpret_cast<const char*>(binary12.data()), binary12.size()*4);
+      f12.close(); Check(!f12.fail(), "auxiliary IR module write");
+    }
+  }
   std::ofstream text(dir / (name + ".spvasm"));
   text << r.assembly;
   text.close();

@@ -8,10 +8,12 @@ param(
     [switch]$VerifyOnly,
     [switch]$Draw,
     [switch]$Texture,
+    [switch]$Ir,
     [switch]$IsolateImplicitLayers
 )
 $ErrorActionPreference = 'Stop'
 if ($Texture) { $Draw = $true }
+if ($Ir -and $Draw) { Write-Host "FAIL: choose IR or draw/texture mode"; exit 1 }
 $root = [IO.Path]::GetFullPath($PSScriptRoot)
 function FileHash([string]$Path) {
     $stream = [IO.File]::OpenRead($Path)
@@ -123,6 +125,13 @@ try {
         $run = RunCheck -Name $check.name -Exe $check.exe -Arguments $check.arguments
         if ($run.record.exit -ne 0) { $preflightOk = $false; break }
     }
+    if ($preflightOk -and $Ir) {
+        foreach ($argument in @('--positive','--reject')) {
+            $name = if ($argument -eq '--positive') { 'ir-positive' } else { 'ir-rejections' }
+            $run = RunCheck -Name $name -Exe 'mesh_ir_compute_tests.exe' -Arguments @($argument)
+            if ($run.record.exit -ne 0) { $preflightOk = $false; break }
+        }
+    }
     if ($preflightOk -and $Draw) {
         foreach ($argument in @('--check-draw-oracle','--validate-draw-spirv')) {
             $name = if ($argument -eq '--check-draw-oracle') { 'draw-oracle' } else { 'draw-spirv' }
@@ -142,6 +151,7 @@ try {
     $overall = if ($preflightOk) { 'PASS' } else { 'FAIL' }
     if ($preflightOk -and $Mode -ne 'Offline') {
         $argument = if ($Mode -eq 'Strict') { '--run' } else { '--run-vulkan12' }
+        if ($Ir) { $argument = if ($Mode -eq 'Strict') { '--ir' } else { '--ir-vulkan12' } }
         $arguments = @($argument)
         if ($Draw) {
             $argument = if ($Mode -eq 'Strict') { '--draw' } else { '--draw-vulkan12' }
@@ -150,16 +160,19 @@ try {
         }
         $run = RunCheck -Name 'runtime' -Exe 'mesh_compute_proto_tests.exe' -Arguments $arguments
         $runtimeStatus = $run.record.status
-        $runtimeIdentity = @($run.lines | Where-Object { $_ -match 'physical-devices:|\[\d+\].*type=|selected:|selected-driver:|dispatch-module:|summary after cleanup:|offscreen.*pixels|DRAW RESULT:|TEXTURE RESULT:|UV boundary|UV full-buffer:' })
+        $runtimeIdentity = @($run.lines | Where-Object { $_ -match 'physical-devices:|\[\d+\].*type=|selected:|selected-driver:|dispatch-module:|summary after cleanup:|offscreen.*pixels|DRAW RESULT:|TEXTURE RESULT:|UV boundary|UV full-buffer:|IR case:|IR RESULT:' })
         $overall = $runtimeStatus
+        $selectedDevices = @($run.lines | Where-Object { $_ -match '^\[p41\] selected:' })
+        $rxDevices = @($selectedDevices | Where-Object { $_ -match 'RX\s*5700\s*XT' })
+        $expectedDevices = if ($Ir) { 3 } else { 1 }
         if ($RequireRx5700Xt -and $runtimeStatus -eq 'PASS' -and
-            -not (@($run.lines | Where-Object { $_ -match 'selected:.*RX\s*5700\s*XT' }).Count)) {
+            ($selectedDevices.Count -ne $expectedDevices -or $rxDevices.Count -ne $expectedDevices)) {
             $overall = 'FAIL'
             Write-Host 'FAIL: runtime completed but the selected device was not identified as RX 5700 XT'
         }
     }
     $summary = [ordered]@{schema=1; gitCommit=$manifest.gitCommit; buildId=$manifest.buildId;
-        mode=$Mode; draw=[bool]$Draw; texture=[bool]$Texture; isolateImplicitLayers=[bool]$IsolateImplicitLayers; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
+        mode=$Mode; ir=[bool]$Ir; draw=[bool]$Draw; texture=[bool]$Texture; isolateImplicitLayers=[bool]$IsolateImplicitLayers; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
         runs=@($runs.ToArray()); deviceEvidence=$runtimeIdentity;
         environment=@{VK_LAYER_PATH=$env:VK_LAYER_PATH; VK_INSTANCE_LAYERS=$env:VK_INSTANCE_LAYERS;
             VK_DRIVER_FILES=$env:VK_DRIVER_FILES; VK_ICD_FILENAMES=$env:VK_ICD_FILENAMES;

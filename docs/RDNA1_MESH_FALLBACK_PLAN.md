@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 2.2. **Overall status:** S-022 implements a deliberately restricted offline real repository Mesh IR-to-GLCompute proof with validator, fail-fast unsupported semantics and independent ABI mutation checks. P3.1 offline DONE; generated modules have not run on a GPU, so P3 remains IN_PROGRESS. P4.1–P4.3 native RX authored fixtures remain separate; game not tested.
+> **Last edited:** 2026-10-29. **Plan revision:** 2.3. **Overall status:** S-023 actual IR-generated triangle/permuted/zero modules execute and match full blobs on Intel/Vulkan 1.2 with zero validation errors; strict 1.3 skips locally. P3.2 IN_PROGRESS pending clean package/native RX evidence; no emulator/game integration.
 
 ## 0. Mission and boundaries
 
@@ -35,17 +35,17 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 
 | Field | Current value |
 | --- | --- |
-| Current phase | **P3 IN_PROGRESS: P3.1 restricted offline IR lowering DONE; P3.2 generated-module runtime NOT_STARTED. P4 broader coverage remains open** |
-| Current subtask | S-022 isolated offline repository IR-to-compute proof DONE; see `docs/RDNA1_P31_RESULTS_S022.md` |
+| Current phase | **P3 IN_PROGRESS: P3.1 offline DONE; P3.2 actual generated modules PASS on Intel auxiliary, native RX strict pending** |
+| Current subtask | S-023 generated-module runtime and clean package handoff; see `docs/RDNA1_P32_RESULTS_S023.md` |
 | Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | Build input `49e0c7532301225aaa077c9e98e0ee12870ce79c` plus retained complete dirty source snapshots; containing commit includes test/research code. Generated artifacts are not a clean transfer package |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | S-021 input clean, pinned ancestry/all fourteen matching submodules checked. S-020 clean package provenance retained; no production renderer changes |
-| Build status | S-022 focused 2-job builds PASS, existing dependency warnings retained, no PGO/IPO; no core/GUI rebuild |
+| Build status | S-023 focused two-job build PASS/no PGO/IPO; both 1.3 and 1.2 modules assembled from repository IR; no core/GUI rebuild |
 | Native RDNA1 smoke test | PASS P4.1/P4.2/P4.3: native RX 5700 XT/API 1.4.308/AMD 25.6.1, strict 1.3 compute/plain/textured draw, exact buffers/images/UV boundaries, zero errors/warnings after cleanup. No guest/game claim |
-| Passing tests | S-022 16 focused cases: 13 PASS/3 Intel strict SKIP/0 FAIL, 1.54 s. Two new offline IR cases, seven valid-SPIR-V structural mutants correctly rejected. 441 registrations: 79 with passing executions, 1 failed-only timer, 361 never run |
-| Known blockers / limits | Generated IR module GPU execution NOT RUN; subset rejects NGG draw parameters, unresolved EXEC/M0, dynamic allocations, LDS/wave64/CFG/partial exports/cull. Native integration, game, broader P4 memory/measurement and timer remain open |
-| Next single actionable task | P3.2 clean portable standalone runtime for actual IR-generated triangle/permuted/zero modules, exact independent full-buffer comparisons with barriers/fence/validation, no handwritten-module fallback; execute locally where available and strict native RX with identity/logs. No renderer/game wiring |
+| Passing tests | S-023 18 focused cases: 14 PASS/4 strict 1.3 SKIP/0 FAIL, 2.24 s; valid wrong generated module and missing strict module correctly FAIL. 443 registered: 80 passing, 1 skipped-only strict IR, 1 failed-only timer, 361 never run |
+| Known blockers / limits | Native RX strict generated modules NOT RUN; narrow IR subset still rejects NGG draw parameters, unresolved EXEC/M0, LDS/wave64/CFG/dynamic allocation/cull. Game/integration/noncoherent/timer remain open |
+| Next single actionable task | Build/verify clean standalone IR runtime package, then run strict native RX for triangle/permuted/zero exact buffers, zero validation errors including cleanup, retained identity/logs. No renderer/game wiring |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -57,8 +57,8 @@ Never change a phase to `DONE` without a command/test/log and its actual result.
 | Compilation | S-022 focused 2-job research build PASS; existing dependency warnings retained; no core/GUI rebuild |
 | Unit tests | S-022 repository IR positive/rejection cases PASS, plus original prototype subset; prior timer failure retained |
 | Shader compilation and SPIR-V validation | S-022 actual IR-generated GLCompute modules assemble/validate Vulkan 1.3 PASS; independent ABI checker rejects seven valid SPIR-V mutants; no GPU execution of those modules |
-| Vulkan integration tests | Existing Intel 1.2 auxiliary tests PASS, strict local cases SKIPPED; newly generated IR modules NOT RUN on GPU. Prior native RX P4 tests remain separate |
-| RDNA1 hardware tests | Prior scoped P4.1–P4.3 authored fixtures PASS; S-022 generated IR modules NOT RUN on RX |
+| Vulkan integration tests | S-023 three actual IR-generated modules PASS exact full buffers on Intel Vulkan 1.2 auxiliary; strict 1.3 SKIPPED locally. Native RX P4 authored tests remain separate |
+| RDNA1 hardware tests | Prior P4.1–P4.3 authored fixtures PASS; new IR-generated modules NOT RUN on RX |
 | Astro Bot compatibility tests | NOT RUN on RX 5700 XT; pre-fork observations retained separately |
 
 ## 2. Operating protocol for Codex (mandatory)
@@ -117,8 +117,8 @@ Every checkpoint/test report must give a separate result for each category: PASS
 | Compilation | S-022 focused 2-job research build PASS; existing dependency warnings retained; no core/GUI rebuild |
 | Unit tests | S-022 repository IR positive/rejection cases PASS, plus original prototype subset; prior timer failure retained |
 | Shader compilation and SPIR-V validation | S-022 actual IR-generated GLCompute modules assemble/validate Vulkan 1.3 PASS; independent ABI checker rejects seven valid SPIR-V mutants; no GPU execution of those modules |
-| Vulkan integration tests | Existing Intel 1.2 auxiliary tests PASS, strict local cases SKIPPED; newly generated IR modules NOT RUN on GPU. Prior native RX P4 tests remain separate |
-| RDNA1 hardware tests | Prior scoped P4.1–P4.3 authored fixtures PASS; S-022 generated IR modules NOT RUN on RX |
+| Vulkan integration tests | S-023 three actual IR-generated modules PASS exact full buffers on Intel Vulkan 1.2 auxiliary; strict 1.3 SKIPPED locally. Native RX P4 authored tests remain separate |
+| RDNA1 hardware tests | Prior P4.1–P4.3 authored fixtures PASS; new IR-generated modules NOT RUN on RX |
 | Astro Bot compatibility tests | **RX 5700 XT desktop only**, local installation | Record title/version, package identity, settings, duration and separate app-start/splash/new-frame/title/menu/gameplay outcomes, logs and screenshots. Synthetic RDNA1 success does not imply game compatibility. |
 
 Hardware-dependent gates in P0.5 and P3–P8 remain incomplete until required tests run on RX 5700 XT. Generic Intel Vulkan integration is independent evidence. No RDNA1 milestone can be completed from laptop tests alone.
@@ -337,6 +337,8 @@ Status: **NOT_STARTED**
 | E-021 | Reviewed 2026-10-29; run UTC 2026-10-28T21:00:12.1670089Z (local Oct 29); package source `90bd8de180ff78fbc374c2947304510022aa500d`, build `20261028T204207755Z`; native RX 5700 XT/API 1.4.308/AMD 25.6.1/loader 1.4.309 | User strict required-RX texture run, recorded process-local implicit isolation; archive plus identical uncompressed inputs reviewed | Eight stages PASS, runtime exit 0/0.1432311 s; original/plain/textured full pixels/blobs and UV 0/64/65/recovery exact; zero errors/warnings through cleanup. Both PPM hashes and every RGB pixel independently match references | `docs/RDNA1_RX_TEXTURE_S021.md`; ignored `_Build/p4-s021/` original RAR/extracted files/hashes/verification/previews. P4.3 DONE; no new build, desktop 1.2 runtime, guest/game/performance/rollback claim; no independent desktop package-ZIP rehash |
 
 | E-022 | 2026-10-29; input `49e0c7532301225aaa077c9e98e0ee12870ce79c` plus complete dirty snapshots; Intel laptop | Isolated real repository IR-to-compute offline lowering, 2-job build, 16 focused serial CTests and valid-SPIR-V ABI mutants | Builds PASS; 13 PASS/3 old strict SKIP/0 FAIL, 1.54 s. Actual IR-generated Vulkan 1.3 GLCompute validates; seven structurally faulty valid mutants rejected. Generated module GPU NOT RUN | `docs/RDNA1_P31_RESULTS_S022.md`; `_Build/p3-s022/` source snapshots, commands/logs/XML/generated modules/mutants/hashes. No native renderer/game change or new RX evidence |
+
+| E-023 | 2026-10-29; input `03efcc5242dcb130d2cba4c4e85f873d2d48d2d6` plus dirty snapshot; native Intel Iris Xe/API 1.2.172 | Three repository-IR-generated modules, full-buffer readback, focused build and 18 serial CTests | 14 PASS/4 strict SKIP/0 FAIL, 2.24 s. Auxiliary three exact blobs, zero errors/warnings after cleanup. Wrong valid module FAIL 13 words; missing strict module FAIL before device skip | `docs/RDNA1_P32_RESULTS_S023.md`; ignored `_Build/p3-s023/` snapshot/logs; native RX/game NOT RUN. Clean package outcome follows |
 
 New experiments MUST include real date, commit SHA, driver, device, exact command/config, time budget, result (PASS/FAIL/INCONCLUSIVE), and logs/artifact location. Hardware tests must also follow section 2.5 for package identity, screenshots and metrics (or explicit unavailability reasons). Avoid adding game code/assets to git.
 
@@ -666,7 +668,13 @@ Next one task: verify/transfer/extract THIS ZIP+sidecar on RX, normal-user `Run-
 - **Evidence:** complete dirty snapshots before each build, commands/logs/XML/generated modules/seven mutants/hashes in ignored `_Build/p3-s022/`; canonical module SHA-256 `19849CB261B22E12CF502AF5CB7B62E12F5A281A41764291612A9F34F057C9F5`. Detailed subset/limits in `docs/RDNA1_P31_RESULTS_S022.md`. Compilation/unit/SPIR-V PASS; only old Intel auxiliary Vulkan tests ran; new generated-module RDNA1 and Astro Bot NOT RUN. Prior native P4 results retained. 441 registered: 79 passing, 1 failed-only timer, 361 never run.
 - **Status/next:** D-025/revision 2.2. P3.1 restricted offline gate DONE, P3 IN_PROGRESS. Next P3.2 package and run actual generated triangle/permuted/zero modules, independent full-buffer reference, clean provenance, barriers/fence/core+sync validation, zero errors including cleanup and separate native RX strict evidence. Preserve plain modes and reject missing generated modules without fallback. No next task started; commit and stop.
 
-### Template for S-023 onward
+### Session S-023 — 2026-10-29 — IR-generated module runtime
+
+- Input `03efcc5242dcb130d2cba4c4e85f873d2d48d2d6`, clean branch/pinned ancestry/14 submodules checked. Extend isolated existing runtime, generator, CMake, package runner/launcher and documentation; no renderer/game source or push. Complete pre-build dirty snapshot retained.
+- Two-job build PASS; 18-case suite 14 PASS/4 strict SKIP/0 FAIL, 2.24 s. Native Intel 1.2 auxiliary executes three actual generated modules with exact full-buffer readback and zero validation errors/warnings including cleanup. Replacing triangle with valid zero module correctly FAILS 13 words; missing strict module FAILS before device discovery. SPIR-V 1.3 and auxiliary 1.2 both generated from same IR-derived assembly. Native RX generated-module/game NOT RUN.
+- Within selected P3.2 task commit source/checkpoint, then build clean transferable package and verify relocation/integrity. Append final evidence; next hardware gate requires native RX strict execution of all three cases and zero errors through cleanup. No next phase.
+
+### Template for S-024 onward
 - **Date / who:**
 - **Branch / HEAD before → after:**
 - **Phase / one subtask:**
@@ -708,6 +716,8 @@ Next one task: verify/transfer/extract THIS ZIP+sidecar on RX, normal-user `Run-
 | 2026-10-29 | 2.1 | 1,3–5,7–8; AGENTS; RX texture report | S-021 closes bounded P4.3 on native RX with independently verified images/UV boundaries and zero errors/warnings. D-024 selects missing guest-IR lowering feasibility next while retaining broader memory/measurement/game gates |
 
 | 2026-10-29 | 2.2 | 1,3–5,7–8; AGENTS; isolated P3.1 code/tests/report | S-022 proves narrow repository IR-to-GLCompute offline with fail-fast limits and binary ABI mutations; generated-module GPU gate remains open |
+
+| 2026-10-29 | 2.3 | 1,3,5,7–8; AGENTS; IR runtime/package/report | S-023 executes actual IR-generated modules on Intel auxiliary with exact buffers; strict RX gate remains open |
 
 ## 9. Quick commands (reference; verify before running)
 

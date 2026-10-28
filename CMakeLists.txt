@@ -935,10 +935,21 @@ add_executable(mesh_ir_compute_tests EXCLUDE_FROM_ALL
 )
 target_include_directories(mesh_ir_compute_tests PRIVATE ${inc_headers})
 target_link_libraries(mesh_ir_compute_tests PRIVATE common spirv-tools Vulkan::Headers)
+set(mesh_ir_generated_modules)
+foreach(api IN ITEMS 12 13)
+  foreach(name IN ITEMS triangle permuted zero)
+    list(APPEND mesh_ir_generated_modules "${mesh_proto_generated_dir}/mesh_ir_${name}_vk${api}.spv")
+  endforeach()
+endforeach()
+add_custom_command(OUTPUT ${mesh_ir_generated_modules}
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${mesh_proto_generated_dir}"
+  COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --emit "${mesh_proto_generated_dir}"
+  DEPENDS mesh_ir_compute_tests VERBATIM)
+add_custom_target(mesh_ir_generated_shaders DEPENDS ${mesh_ir_generated_modules})
 add_executable(mesh_compute_proto_tests EXCLUDE_FROM_ALL
 	"${KYTY_TESTS_DIR}/MeshComputePrototypeTests.cpp"
 )
-add_dependencies(mesh_compute_proto_tests mesh_compute_proto_shaders mesh_offscreen_shaders mesh_texture_shaders)
+add_dependencies(mesh_compute_proto_tests mesh_compute_proto_shaders mesh_offscreen_shaders mesh_texture_shaders mesh_ir_generated_shaders)
 target_link_libraries(mesh_compute_proto_tests spirv-tools Vulkan::Headers ${CMAKE_DL_LIBS})
 target_include_directories(mesh_compute_proto_tests PRIVATE ${inc_headers})
 target_compile_definitions(mesh_compute_proto_tests PRIVATE VK_NO_PROTOTYPES)
@@ -1449,6 +1460,9 @@ if(BUILD_TESTING)
 	add_test(NAME mesh_output_contract COMMAND $<TARGET_FILE:mesh_output_contract_tests>)
 	add_test(NAME mesh_ir_compute_positive COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --positive)
 	add_test(NAME mesh_ir_compute_rejections COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --reject)
+	add_test(NAME mesh_ir_runtime COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir)
+	add_test(NAME mesh_ir_runtime_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir-vulkan12)
+	set_tests_properties(mesh_ir_runtime mesh_ir_runtime_vk12 PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 41)
 	add_test(NAME mesh_proto_spirv COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --validate-spirv)
 	set_tests_properties(mesh_proto_spirv PROPERTIES TIMEOUT 120)
 	add_test(NAME mesh_proto_host_fixtures COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --check-host-fixtures)

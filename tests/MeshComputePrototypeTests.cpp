@@ -594,7 +594,7 @@ int CheckHostFixtures() {
 
 // Core-and-synchronization-validated dispatch at the explicitly requested API level.
 // A single registered skip code covers missing runtime prerequisites, never API failures.
-int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem::path& image_path = {}, bool textured = false) {
+int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem::path& image_path = {}, bool textured = false, const char* ir_variant = nullptr) {
 	void* loader = LoadLoaderLibrary();
 	if (loader == nullptr) {
 		PrintLine1("SKIP: the vulkan-1 system loader cannot be loaded; the dispatch part cannot "
@@ -987,11 +987,12 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 	// explicit CLI/CTest case, even on a device that also supports Vulkan 1.3.
 	const bool  device_13_capable = required_api >= VK_API_VERSION_1_3;
 	const char* module_label      = device_13_capable ? "vulkan1.3" : "vulkan1.2";
-	const auto module_path = ModulePath(device_13_capable);
+	const auto module_path = ir_variant ? g_shader_directory / (std::string("mesh_ir_") + ir_variant + (device_13_capable ? "_vk13.spv" : "_vk12.spv")) : ModulePath(device_13_capable);
 	PrintLine1("dispatch-module: %s (%s)", module_label,
 	           device_13_capable ? "strict Vulkan 1.3 runtime gate"
 	                             : "explicit auxiliary Vulkan 1.2 run; not Vulkan 1.3 evidence");
-	const std::vector<uint32_t> module_words = LoadSpirvFile(module_path, module_label);
+	const std::vector<uint32_t> module_words = LoadSpirvFile(module_path, ir_variant ? ir_variant : module_label);
+	if (ir_variant && !ValidateSpirv(module_words, device_13_capable ? SPV_ENV_VULKAN_1_3 : SPV_ENV_VULKAN_1_2, "IR-generated module")) { close_instance(); return 1; }
 	if (module_words.empty()) {
 		close_instance();
 		return 1;
@@ -1363,8 +1364,19 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 	// the mandatory invalidate for non-coherent readback, and the exact 460-word
 	// comparison against the host reference blob from the shared contract header.
 	constexpr uint64_t kFenceTimeoutNs = 10ull * 1000ull * 1000ull * 1000ull;
-	const std::vector<Scenario> scenarios = MakeScenarios();
-	Expect(scenarios.size() == 9, "nine contracted scenarios are scripted");
+	std::vector<Scenario> scenarios;
+	if (ir_variant) {
+		Scenario one; one.name = std::string("ir-") + ir_variant; one.initial.Init();
+		one.vertex_count = std::strcmp(ir_variant,"zero") == 0 ? 0 : 3;
+		one.primitive_count = one.vertex_count ? 1 : 0;
+		const float pos[12] = {-.5f,-.5f,0,1,.5f,-.5f,0,1,-.5f,.484375f,0,1};
+		one.payload_positions.assign(kPositionWords,0); std::memcpy(one.payload_positions.data(),pos,sizeof(pos));
+		one.payload_indices.assign(kIndexWords,0);
+		if (std::strcmp(ir_variant,"permuted") == 0) { one.payload_indices[0]=2; one.payload_indices[1]=0; one.payload_indices[2]=1; }
+		else { one.payload_indices[0]=0; one.payload_indices[1]=1; one.payload_indices[2]=2; }
+		FinalizeScenario(one); scenarios.push_back(std::move(one));
+	} else { scenarios = MakeScenarios(); }
+	Expect(scenarios.size() == (ir_variant ? 1u : 9u), "expected scenario inventory");
 	bool aborted = false;
 	if (g_failures != 0 || g_validation_errors != 0) {
 		return fail_and_cleanup();
@@ -1516,6 +1528,7 @@ int RunMain(int argc, char** argv) {
 		return g_failures == 0 ? 0 : 1;
 	}
 	const std::string mode = argc >= 2 ? argv[1] : "";
+	const bool ir_mode = mode == "--ir" || mode == "--ir-vulkan12";
 	const bool textured = mode == "--texture" || mode == "--texture-vulkan12";
 	const bool draw = textured || mode == "--draw" || mode == "--draw-vulkan12";
 	std::filesystem::path image_path;
@@ -1528,8 +1541,8 @@ int RunMain(int argc, char** argv) {
 	if (mode == "--validate-draw-spirv") { return ValidateDrawShaders() ? 0 : 1; }
 	if (mode == "--check-host-fixtures") { return CheckHostFixtures(); }
 	const bool validate_only = mode == "--validate-spirv";
-	const bool runtime13 = mode == "--run" || mode == "--draw" || mode == "--texture";
-	const bool runtime12 = mode == "--run-vulkan12" || mode == "--draw-vulkan12" || mode == "--texture-vulkan12";
+	const bool runtime13 = mode == "--run" || mode == "--draw" || mode == "--texture" || mode == "--ir";
+	const bool runtime12 = mode == "--run-vulkan12" || mode == "--draw-vulkan12" || mode == "--texture-vulkan12" || mode == "--ir-vulkan12";
 	if (!validate_only && !runtime13 && !runtime12) {
 		std::printf("[p41] usage: %s --validate-spirv | --run | --run-vulkan12 | --check-host-fixtures | --validate-module-vk13 FILE | --draw | --draw-vulkan12 [--image-output FILE] | --check-draw-oracle | --validate-draw-spirv | --texture | --texture-vulkan12 [--image-output FILE] | --check-texture-fixtures | --validate-texture-spirv\n", argv[0]);
 		return 1;
@@ -1543,8 +1556,29 @@ int RunMain(int argc, char** argv) {
 		PrintLine1("RESULT: PASS (offline SPIR-V validation, both modules)");
 		return 0;
 	}
+	if (ir_mode) {
+		for (const char* variant : {"triangle", "permuted", "zero"}) {
+			const auto path = g_shader_directory / (std::string("mesh_ir_") + variant + (runtime13 ? "_vk13.spv" : "_vk12.spv"));
+			const auto words = LoadSpirvFile(path, variant);
+			const auto env = runtime13 ? SPV_ENV_VULKAN_1_3 : SPV_ENV_VULKAN_1_2;
+			if (!ValidateSpirv(words, env, variant)) { return 1; }
+			spvtools::SpirvTools validator(env); std::string disassembly;
+			if (!validator.Disassemble(words, &disassembly) || disassembly.find("OpEntryPoint GLCompute") == std::string::npos ||
+			    disassembly.find("LocalSize 32 1 1") == std::string::npos || disassembly.find("OpSetMeshOutputsEXT") != std::string::npos ||
+			    disassembly.find("MeshShadingEXT") != std::string::npos) {
+				Expect(false,"generated module execution model and shape"); return 1;
+			}
+		}
+	}
 	const uint32_t requested_api = runtime13 ? VK_API_VERSION_1_3 : VK_API_VERSION_1_2;
-	const int dispatch_result = RunPrototype(requested_api, draw, image_path, textured);
+	int dispatch_result = 0;
+	if (ir_mode) {
+		for (const char* variant : {"triangle", "permuted", "zero"}) {
+			PrintLine1("IR case: %s", variant);
+			dispatch_result = RunPrototype(requested_api, false, {}, false, variant);
+			if (dispatch_result != 0 || g_failures != 0 || g_validation_errors != 0) { break; }
+		}
+	} else { dispatch_result = RunPrototype(requested_api, draw, image_path, textured); }
 	// Setup/teardown errors must never be hidden by an otherwise legitimate skip.
 	if (g_failures != 0 || g_validation_errors != 0) {
 		PrintLine1("RESULT: FAIL (failures=%d validation-errors=%d including cleanup)",
@@ -1552,9 +1586,10 @@ int RunMain(int argc, char** argv) {
 		return 1;
 	}
 	if (dispatch_result == 0) {
+		if (ir_mode) { PrintLine1("IR RESULT: PASS (three generated modules, exact full blobs, validation including cleanup)"); }
 		if (textured) { PrintLine1("TEXTURE RESULT: PASS (sampled texture, compute UVs/guards/boundaries, exact RGBA, validation including cleanup)"); }
 		if (draw) { PrintLine1("DRAW RESULT: PASS (clear control + compute-generated indexed triangle, all pixels/full blob, validation including cleanup)"); }
-		PrintLine1("RESULT: PASS (Vulkan %s%s; nine full-blob scenarios; core + synchronization validation including cleanup)",
+		PrintLine1("RESULT: PASS (Vulkan %s%s; requested full-blob scenarios; core + synchronization validation including cleanup)",
 		           runtime13 ? "1.3" : "1.2", runtime12 ? " AUXILIARY, not Vulkan 1.3 evidence" : "");
 		return 0;
 	}

@@ -108,3 +108,14 @@ Offline -Texture`; laptop-only auxiliary rendering uses `-Mode Vulkan12 -Texture
 These do not certify native RX strict execution. Existing `Run-Strict.cmd` and
 `Run-Draw.cmd` retain their previous compute/untextured behavior. Texture work does
 not implement guest mesh translation or game compatibility.
+
+## P3.2 generated IR modules
+
+Run `Run-IR.cmd -IsolateImplicitLayers` on the RX desktop as a normal user.
+This runs positive/rejection IR fixtures and three actual generated modules:
+triangle, permuted indices and zero output. Each dispatch compares the complete
+1840-byte output against an independently scripted host expectation; validation
+errors including cleanup fail the run. The Vulkan 1.2 auxiliary modules are
+assembled from the same IR-generated SPIR-V assembly and stay separate from the
+strict 1.3 gate. Missing generated modules fail without a handwritten fallback.
+Return result.json and all logs; no image is expected. Existing modes remain intact.
