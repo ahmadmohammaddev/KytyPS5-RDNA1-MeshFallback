@@ -8,6 +8,12 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
+function FileHash([string]$Path) {
+    $stream = [IO.File]::OpenRead($Path)
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return [BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '') }
+    finally { $sha.Dispose(); $stream.Dispose() }
+}
 function BuildPath([string]$Relative) {
     $path = if ([IO.Path]::IsPathRooted($Relative)) { [IO.Path]::GetFullPath($Relative) } else {
         [IO.Path]::GetFullPath((Join-Path $repo $Relative))
@@ -51,7 +57,7 @@ function CopyPayload([string]$Source, [string]$Relative) {
 }
 function FileRecord([IO.FileInfo]$File) {
     return [ordered]@{path=$File.FullName.Substring($stage.Length+1).Replace([char]92,[char]47);
-        bytes=$File.Length; sha256=(Get-FileHash -LiteralPath $File.FullName -Algorithm SHA256).Hash}
+        bytes=$File.Length; sha256=(FileHash $File.FullName)}
 }
 $oldLayerPath = $env:VK_LAYER_PATH
 $oldInstanceLayers = $env:VK_INSTANCE_LAYERS
@@ -161,8 +167,9 @@ try {
     AssertClean | Out-Null
     if ([string]::Join('', @(GitLines -Arguments @('rev-parse','HEAD'))) -ne $commit) { throw 'Commit changed during staging' }
     $archive = Join-Path $output "$name.zip"
-    Compress-Archive -LiteralPath $stage -DestinationPath $archive -CompressionLevel Optimal
-    $archiveHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [IO.Compression.ZipFile]::CreateFromDirectory($stage, $archive, [IO.Compression.CompressionLevel]::Optimal, $true)
+    $archiveHash = FileHash $archive
     "$archiveHash  $name.zip" | Set-Content -LiteralPath "$archive.sha256" -Encoding ASCII
     [ordered]@{archive=$archive; sha256=$archiveHash; gitCommit=$commit; evidence=$evidence; stage=$stage} |
         ConvertTo-Json | Set-Content -LiteralPath "$evidence/package-result.json" -Encoding UTF8
