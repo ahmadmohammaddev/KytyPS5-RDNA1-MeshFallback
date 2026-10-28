@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-28. **Plan revision:** 1.5. **Overall status:** S-015 portable standalone synthetic package is built from clean committed source and locally verified after ZIP extraction/relocation (D-020). Package source `d3cc0bce`, build ID `20261028T183644317Z`. Focused suite passes 5/skips 1; eight relocation/integrity probes meet expected results, including zero-error auxiliary Intel 1.2 execution. Strict 1.3/native RX testing, desktop deployment/rollback, P0 baseline and broad emulator packaging remain open. No game/fallback milestone complete.
+> **Last edited:** 2026-10-28. **Plan revision:** 1.6. **Overall status:** S-016 first native RX 5700 XT package attempt reviewed: host/offline checks PASS; strict Vulkan 1.3 runtime FAIL before dispatch due to two missing Steam layer manifests. Qualifying RX/API/driver identified; no scenario/readback evidence yet. P4.1 remains IN_PROGRESS. Next: isolate implicit-layer discovery for a validated strict rerun of the same S-015 package. No game/fallback milestone complete.
 
 ## 0. Mission and boundaries
 
@@ -35,17 +35,17 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 
 | Field | Current value |
 | --- | --- |
-| Current phase | **P4.1 IN_PROGRESS: harness repaired and Intel/Vulkan 1.2 auxiliary gate passes; strict Vulkan 1.3 runtime pending qualifying device** |
-| Current subtask | S-015 standalone transfer preparation DONE with local evidence. Final package/source identity and instructions in `docs/RDNA1_MESH_PACKAGE_S015.md`; desktop execution is next |
+| Current phase | **P4.1 IN_PROGRESS: Intel/Vulkan 1.2 auxiliary PASS; native RX strict 1.3 attempt FAIL before dispatch (loader environment)** |
+| Current subtask | S-016 desktop evidence review DONE; see `docs/RDNA1_RX_EXPERIMENT_S016.md`. Same-package strict RX rerun is next |
 | Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | Final S-015 package built from clean `d3cc0bce63b32d8106f098a696646eaba0823f3b`, clean recursive submodules, generated identity `d3cc0bc`. Containing final handoff commit changes documentation only; package manifest names its exact earlier source commit |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | S-015 package build verified clean committed source, pinned ancestry and all 14 matching clean recursive submodules. Portable test/handoff changes only; no production renderer changes |
 | Build status | S-015 clean-source focused incremental configure/build/test/package PASS, 2 jobs, no PGO/IPO. Final source at `d3cc0bce`; both SPIR-V modules validate. No core/GUI rebuild |
-| Native RDNA1 smoke test | Not run in this fork |
-| Passing tests | S-015 clean package suite: 5 PASS, 1 SKIPPED, 0 failures, serial 0.65 s; eight private relocation/integrity probes match expected outcomes. Across registered evidence: 68 with passing executions, 1 failed-only timer, 1 skipped-only strict 1.3 runtime, 361 never run; 431 registered. No full-suite claim |
-| Known blockers / limits | Current Intel driver exposes Vulkan 1.2.172, so strict 1.3 dispatch remains skipped. Coherent memory exercised; noncoherent runtime path not exercised. RDNA1/game/deployment gates open. CondWaitUntil remains deferred under D-016 |
-| Next single actionable task | Copy the final S-015 ZIP + checksum sidecar to RX desktop, verify/extract into a new directory, satisfy external v14 x64 runtime/native Vulkan driver/Khronos validation layers, and run `Run-Strict.cmd`. Require native RX 5700 XT/Vulkan 1.3, all nine exact blobs, zero validation errors after cleanup and retained result/log/package identity. Missing prerequisites SKIP; errors FAIL. No game or renderer integration |
+| Native RDNA1 smoke test | S-016: device selected (RX 5700 XT/API 1.4.308/AMD 25.6.1); strict run exit 1, two missing-Steam-manifest loader errors; no dispatch or readback |
+| Passing tests | S-016 desktop host-contract/host-fixtures/offline SPIR-V PASS; strict 1.3 runtime FAIL before scenarios. S-015 local suite and 68 passing registered cases retained; strict case now has a desktop FAIL as well as historical Intel SKIP. 431 registrations; no full-suite claim |
+| Known blockers / limits | RX loader cannot open two Steam layer JSON files; zero-error strict dispatch gate remains open. Intel strict 1.3 remains skipped independently. Noncoherent runtime, game and rollback unverified; timer deferred D-016 |
+| Next single actionable task | Rerun same S-015 package on RX using process-local empty implicit-layer directory, normal non-admin shell, explicit core/sync validation retained. Require nine exact buffers, zero errors through cleanup, strict 1.3/native RX identity and retained logs/override. See S-016 report; no next phase |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -57,8 +57,8 @@ Never change a phase to `DONE` without a command/test/log and its actual result.
 | Compilation | PASS: prior Qt-free core baseline retained; S-014 focused host/prototype build exit 0 (2 jobs). GUI/install/package not run |
 | Unit tests | PASS: host contract and new host-fixture regression. Prior mutation evidence and deferred thread_service failure retained; no full-suite claim |
 | Shader compilation and SPIR-V validation | PASS (scoped): S-014 regenerated public prototype modules for Vulkan 1.3/SPIR-V 1.6 and Vulkan 1.2/SPIR-V 1.5; both validate with pinned SPIRV-Tools. Valid-but-wrong-binding fixture correctly rejected by direct shape checker. Prior baseline shader evidence retained |
-| Vulkan integration tests | PASS: explicit auxiliary Intel Vulkan 1.2 run, nine exact full-blob scenarios, eight dispatches, zero validation errors/warnings after cleanup. Strict Vulkan 1.3 runtime SKIPPED: no qualifying device. No RDNA1 implication |
-| RDNA1 hardware tests | NOT RUN on RX 5700 XT |
+| Vulkan integration tests | Auxiliary Intel 1.2 PASS retained separately. S-016 native RX strict 1.3 FAIL before dispatch: two loader errors. Historical Intel strict SKIP retained; not a new skip |
+| RDNA1 hardware tests | S-016 native RX selected; strict compute/readback acceptance FAIL before scenarios. Device support verified; workload correctness NOT RUN |
 | Astro Bot compatibility tests | NOT RUN on RX 5700 XT; pre-fork observations retained separately |
 
 ## 2. Operating protocol for Codex (mandatory)
@@ -117,8 +117,8 @@ Every checkpoint/test report must give a separate result for each category: PASS
 | Compilation | Laptop initially, future Windows x64 CI | Configure/selected targets exit 0; flags, tool versions, job count, build logs and generated Git identity retained. Compilation says nothing about rendering. |
 | Unit tests | Laptop / future CI, verified CPU-only subset | Inventory with `ctest --test-dir <build-dir> -N`; inspect registrations/source before selecting cases; run with `--output-on-failure --parallel 1`, record named tests/counts/failures/skips. S-003 confirms a 20-case CPU helper batch; broader selection remains incomplete. |
 | Shader compilation and SPIR-V validation | Offline synthetic fixtures on laptop / future CI | Record compiler/SPIRV-Tools versions, fixture identity, exact Vulkan/SPIR-V target environment and validator results. Building glslang shaders alone does not validate all generated recompiler SPIR-V. |
-| Vulkan integration tests | Available device; laptop explicitly Intel; desktop explicitly AMD | Record physical device, driver/ICD, features, validation-layer/synchronization settings and messages, correctness assertions and skips. The aggregate `kyty_tests` includes GPU-related executables; a full CTest run is not automatically a CPU unit-test result. |
-| RDNA1 hardware tests | **RX 5700 XT desktop only** | Confirm native AMD ICD and selected physical device; archive phase-specific synthetic/rendering correctness, validation and performance evidence. Intel, hosted CI and Lavapipe cannot close this gate. |
+| Vulkan integration tests | Auxiliary Intel 1.2 PASS retained separately. S-016 native RX strict 1.3 FAIL before dispatch: two loader errors. Historical Intel strict SKIP retained; not a new skip |
+| RDNA1 hardware tests | S-016 native RX selected; strict compute/readback acceptance FAIL before scenarios. Device support verified; workload correctness NOT RUN |
 | Astro Bot compatibility tests | **RX 5700 XT desktop only**, local installation | Record title/version, package identity, settings, duration and separate app-start/splash/new-frame/title/menu/gameplay outcomes, logs and screenshots. Synthetic RDNA1 success does not imply game compatibility. |
 
 Hardware-dependent gates in P0.5 and P3–P8 remain incomplete until required tests run on RX 5700 XT. Generic Intel Vulkan integration is independent evidence. No RDNA1 milestone can be completed from laptop tests alone.
@@ -206,7 +206,7 @@ Status: **NOT_STARTED**
 **Gate:** Synthetic test demonstrates compute processing on the **real AMD GPU** with correct positions/indices; no illegal SPIR-V or undisclosed fallback to CPU renderer.
 
 ### P4 — GPU output-buffer and traditional draw prototype
-Status: **IN_PROGRESS** — P4.1 S-013 findings repaired in S-014. Intel/Vulkan 1.2 auxiliary compute/readback PASS (nine cases, zero validation errors/warnings after cleanup); offline Vulkan 1.3 validation PASS, but strict 1.3 runtime SKIPPED on this device. P4.1's 1.3 runtime gate and the broader RDNA1 rendering gate remain open. See `docs/RDNA1_P41_RESULTS_S014.md`; deferred P0 work remains separate under D-016.
+Status: **IN_PROGRESS** — P4.1 S-013 findings repaired in S-014. Intel/Vulkan 1.2 auxiliary compute/readback PASS (nine cases, zero validation errors/warnings after cleanup); offline Vulkan 1.3 validation PASS, but strict 1.3 runtime SKIPPED on this device. P4.1's 1.3 runtime gate and the broader RDNA1 rendering gate remain open. See `docs/RDNA1_P41_RESULTS_S014.md`; deferred P0 work remains separate under D-016. S-016 supplies a qualifying RX 5700 XT device, but strict runtime FAILS before dispatch on two missing Steam manifests; see `docs/RDNA1_RX_EXPERIMENT_S016.md`. The next task is an isolated strict rerun, not P4.2.
 
 - P4.1: initialize the blob with zero data, sentinel guards and Pending=`0xFFFFFFFF`; authored public synthetic Vulkan 1.3 compute shader writes it exactly per `tests/MeshOutputContractTests.cpp` (three float4 positions, indices 0/1/2, counts 3/1/reserved 0, stored Ok last). Validate SPIR-V offline, dispatch one workgroup with core and synchronization validation, fence and invalidate noncoherent mapped readback as required, then compare every expectation exactly, unused words and guards included. Status is not a substitute for Vulkan dependencies or completion waits. Record physical device/driver/ICD and validation messages; Intel evidence stays Intel only, software ICD evidence stays software only; unavailable Vulkan is a skip, never a pass. No emulator/renderer source change or guest translation.
 - S-014 implements strict `mesh_compute_proto` (`--run`, requires Vulkan 1.3) separately from auxiliary `mesh_compute_proto_vk12` (`--run-vulkan12`). Both require core/sync validation and an error collector. Nine scenarios include two genuine same-buffer overflow recoveries. Auxiliary support does not relax the original Vulkan 1.3 acceptance gate (D-019).
@@ -312,6 +312,8 @@ Status: **NOT_STARTED**
 | E-015 | 2026-10-28; final clean package source `d3cc0bce63b32d8106f098a696646eaba0823f3b`, build ID `20261028T183644317Z`; same native Intel Iris Xe/API 1.2.172/driver 0x0019255D | Portable standalone package with executable-relative modules, clean Git/source/toolchain manifest, license/import audit, file/ZIP hashes; extract to space/Arabic path and invoke from unrelated CWD | Final clean package PASS; source CTest 5 PASS/1 strict-1.3 SKIPPED, 0 failures, 0.65 s. Eight relocation probes meet expected exits: verify/offline/auxiliary PASS; strict SKIPPED; expected rejection for wrong GPU, tamper, missing module and no-build-fallback. Packaged auxiliary nine-scenario run: zero validation errors/warnings after cleanup. Two failed earlier packaging attempts retained and fixed (PS5 hash cmdlet/JSON-array differences) | `docs/RDNA1_MESH_PACKAGE_S015.md`; `_Build/p4-s015/`; final ZIP under `_Build/mesh-prototype-packages/`, 681,008 bytes, SHA-256 `9F36E3774F9C99B6E73F95D10216F8AE94E65ECD2A80E8216422360908F2A897`. Native RX/strict 1.3/desktop rollback/game NOT RUN; no FPS/VRAM/screenshots for buffer-only test |
 
 New experiments MUST include real date, commit SHA, driver, device, exact command/config, time budget, result (PASS/FAIL/INCONCLUSIVE), and logs/artifact location. Hardware tests must also follow section 2.5 for package identity, screenshots and metrics (or explicit unavailability reasons). Avoid adding game code/assets to git.
+
+| E-016 | 2026-10-28; S-015 package source `d3cc0bce63b32d8106f098a696646eaba0823f3b`, build ID `20261028T183644317Z`; native RX 5700 XT vendor 0x1002/device 0x731F/API 1.4.308/AMD proprietary 25.6.1; loader 1.4.309 | User desktop Strict/requireRx5700Xt run; executable `--run`; logs reviewed without rerunning | Host contract/fixtures/offline both-module validation PASS. Strict runtime exit 1 FAIL, 0.2630157 s, two missing Steam manifest loader errors through cleanup. No scenarios/dispatch/readback. Vulkan 1.2 runtime NOT RUN on desktop; no game test | `docs/RDNA1_RX_EXPERIMENT_S016.md`; unchanged raw logs + SHA-256 inventory in ignored `_Build/p4-s016/`. Original desktop ZIP checksum not supplied independently; no GPU metrics/screenshots (pre-dispatch failure), no rollback. Next same-package process-local implicit-layer isolation rerun, explicit validation required |
 
 ## 6. Risks / exit criteria
 
@@ -568,7 +570,15 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(devi
 - **Six categories / limits:** Compilation PASS (focused clean-source package build); Unit tests PASS; shader/SPIR-V PASS; Vulkan integration PASS for auxiliary packaged Intel/1.2, strict 1.3 SKIPPED; RDNA1 hardware NOT RUN; Astro Bot compatibility NOT RUN. Local standalone package integrity/relocation PASS. No noncoherent runtime, independent desktop deployment/rollback, broad baseline/core/GUI/CI or general emulator-package completion. Registered test totals unchanged from S-014; private probes are not new CTest passes.
 - **Files / evidence / next single task:** CMake/default-module path changes, `tests/MeshComputePrototypeTests.cpp`, new `tools/mesh-prototype/` builder/runner/launcher/readme/notices and synchronized plan/AGENTS; final report `docs/RDNA1_MESH_PACKAGE_S015.md`. Complete local evidence under `_Build/p4-s015/` and final package `*-evidence/` directory. S-015 DONE locally; P4.1 strict native-device gate stays IN_PROGRESS. Next: verify/copy/extract final ZIP + sidecar on RX machine, satisfy external prerequisites, run strict RX launcher, retain all nine exact comparisons/zero validation errors/device-driver-ICD/commands/logs/package identity. Missing prerequisite SKIP, API/integrity/validation issue FAIL. No game or next phase. Stop after final documentation commit.
 
-### Template for S-016 onward
+### Session S-016 — 2026-10-28 — First native RX package evidence review
+
+- **Scope/identity:** review only the user's five desktop logs; input `a974e595412a35e2a4a072f42d452dfcc8dabade`, branch `feature/rdna1-mesh-fallback`. Initial checkout clean, pinned ancestry and all 14 matching recursive submodules verified outside sandbox after known metadata restrictions. No source/build/driver/registry changes, merge/rebase/push or next phase.
+- **Evidence/files:** new `docs/RDNA1_RX_EXPERIMENT_S016.md`, plan revision 1.6 and AGENTS checkpoint. Raw originals copied unchanged to ignored `_Build/p4-s016/rx-input/`, hashed in `input-hashes.json`; private paths remain local. Package identity matches S-015 source/build ID; desktop archive hash not independently supplied.
+- **Actual desktop results:** host contract and fixtures PASS, both offline modules validate PASS; native RX 5700 XT/API 1.4.308/AMD 25.6.1 selected. Strict Vulkan 1.3 runtime FAIL exit 1, 0.2630157 s, two missing Steam JSON loader errors, including cleanup count. Code inspection confirms early abort before all nine scenarios; no submitted GPU work/readback. Compilation NOT RUN; desktop Vulkan 1.2 runtime NOT RUN; Astro Bot NOT RUN. No new tests executed by Codex; no synthetic RX success inferred.
+- **Diagnosis/limits:** environment/layer discovery blocks acceptance. Stale Steam registrations inferred, not inspected. Official loader v1.4.309 docs support process-local implicit search override without removing explicit validation. Proposed rerun is not yet desktop-verified. ICD DLL path/hash, GPU metrics/screenshots and rollback unavailable; reasons in report. Historical Intel auxiliary success/skips and baseline timer failure retained.
+- **Validation/handoff:** raw-copy hashes and JSON/log consistency checked; documentation diff/fences checked before commit. Next one task: same-package RX strict rerun from normal PowerShell with empty process-local implicit-layer directory and explicit core/sync validation kept. Record override, all nine exact full buffers, zero errors including cleanup, exit 0 and full identity/logs. Preserve failures; if still blocked inspect discovery read-only. No game/renderer integration. Commit docs and stop.
+
+### Template for S-017 onward
 - **Date / who:**
 - **Branch / HEAD before → after:**
 - **Phase / one subtask:**
@@ -598,6 +608,8 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(devi
 | 2026-10-28 | 1.3 | 1,3,7–8; AGENTS; new P4.1 review | Interrupted OpenCode implementation inspected and rebuilt without source changes. Host/offline tests pass, runtime skip is a harness defect; eight findings recorded, P4.1 remains in progress and repair is next |
 | 2026-10-28 | 1.4 | 1,3–5,7–8; AGENTS; code/tests/results | S-014 repairs all eight review findings and obtains actual Intel/Vulkan 1.2 full-blob readback with zero validation errors including cleanup. Strict 1.3 skips honestly; D-019 keeps auxiliary evidence separate and original gate open |
 | 2026-10-28 | 1.5 | 1,3–5,7–8; AGENTS; portability/package tools/report | S-015 portable synthetic test package built from clean committed source and verified after relocation; PS5 packaging failures retained/fixed. D-020 keeps this bounded transfer prep separate from unverified general baseline/emulator packaging and native desktop/RX gates |
+
+| 2026-10-28 | 1.6 | 1,3,5,7–8; AGENTS; RX report | S-016 records first native RX strict attempt honestly: host/offline PASS, runtime FAIL before dispatch on two missing Steam manifests. Device qualifies; P4.1 stays open pending isolated validated rerun |
 
 ## 9. Quick commands (reference; verify before running)
 
