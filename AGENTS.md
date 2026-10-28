@@ -43,7 +43,10 @@ You MAY reprioritize, split, merge, or remove future milestones based on evidenc
 4. In your response state branch, SHA, files changed, commands/tests + actual results, blockers, and next step.
 5. **Stop** after the selected subtask; do not start the next phase automatically.
 
-## Current next task (checkpoint S-024)
+## Current next task (checkpoint S-025)
+P3.3 IN_PROGRESS: isolated `IAdd32` lowering added; focused build PASS, two offline tests PASS and two runtime cases SKIPPED. The zero-add fixture and coverage/type rejection do not yet prove nonzero arithmetic or 32-bit wraparound. Next single task: add independent arithmetic/wraparound and unsafe-index/coverage fixtures, validate SPIR-V and rerun focused tests. Preserve complete dirty-source provenance; GPU and RX execution remain separate. See S-025 in the living plan.
+
+## Retained checkpoint S-024
 P3.2 narrow IR-generated triangle/permuted/zero strict Vulkan 1.3 runs PASS on native RX 5700 XT (AMD 25.6.1, API 1.4.308): exact full 1840-byte buffers and zero validation errors/warnings including cleanup. Six desktop stages PASS. Intel Vulkan 1.2 auxiliary remains separate. Evidence/report: `docs/RDNA1_RX_IR_S024.md`, ignored `_Build/p3-s024/`. This does not prove full NGG, emulator integration or Astro Bot.
 
 Next single task P3.3: extend the isolated research lowerer with bounded `IAdd32` lane-dependent expressions. Acceptance: source-backed semantics, finite coverage/index safety proofs, explicit rejection of unsupported or unproven cases, independent positive/negative host tests, Vulkan 1.3 SPIR-V validation and focused regressions with complete dirty-build provenance. Keep native/default path unchanged; runtime/RX validation is a distinct subsequent gate. Commit and stop; no push.

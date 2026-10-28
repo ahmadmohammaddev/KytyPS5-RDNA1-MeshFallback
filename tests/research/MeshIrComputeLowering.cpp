@@ -182,6 +182,14 @@ struct Compiler {
       v.id = "%lane";
       for (uint32_t i = 0; i < 32; ++i)
         v.lanes[i][0] = i;
+    } else if (op == Op::IAdd32) {
+      Value a, b;
+      if (!Argument(inst, 0, Type::U32, a) || !Argument(inst, 1, Type::U32, b))
+        return false;
+      v.type = Type::U32;
+      body << v.id << " = OpIAdd %uint " << a.id << " " << b.id << "\n";
+      for (size_t i = 0; i < 32; ++i)
+        v.lanes[i][0] = a.lanes[i][0] + b.lanes[i][0];
     } else if (op == Op::CompositeConstructU32x4) {
       v.type = Type::U32x4;
       std::string args;

@@ -30,7 +30,7 @@ struct Fixture {
   Libs::Graphics::ShaderMeshInputInfo mesh;
   IR::Inst *allocation = nullptr, *position = nullptr, *primitive = nullptr,
            *mask = nullptr, *lane = nullptr;
-  Fixture() {
+  Fixture(bool use_add = false, uint32_t addend = 0) {
     mesh.threads_num[0] = 32;
     mesh.threads_num[1] = mesh.threads_num[2] = 1;
     mesh.wave_size = mesh.host_subgroup_size = 32;
@@ -65,7 +65,8 @@ struct Fixture {
     auto x = choose(-.5f, .5f, -.5f), y = choose(-.5f, -.5f, .484375f);
     auto data = ir.Emit(Op::CompositeConstructU32x4,
                         {x, y, IR::Value(0u), IR::Value(0x3f800000u)});
-    auto active = ir.Emit(Op::ULessThan32, {local, IR::Value(3u)});
+    auto mask_lane = use_add ? ir.Emit(Op::IAdd32, {local, IR::Value(addend)}) : local;
+    auto active = ir.Emit(Op::ULessThan32, {mask_lane, IR::Value(3u)});
     mask = active.TryInstruction();
     position = &block.AppendNewInst(
         Op::SetAttribute, {data, active},
@@ -441,6 +442,13 @@ void Positives(const std::filesystem::path &dir) {
             zero.binary != canonical.binary,
         "zero allocation emits different guarded module");
   Emit(zero, dir, "mesh_ir_zero_vk13");
+  Fixture added(true, 0);
+  auto add_result = R::Lower(added.Input());
+  Valid(add_result);
+  Check(add_result.binary != canonical.binary, "lane addition affects module");
+  Fixture unsafe_add(true, 1);
+  auto unsafe_result = R::Lower(unsafe_add.Input());
+  Check(!unsafe_result && unsafe_result.binary.empty() && unsafe_result.error.find("undefined") != std::string::npos, "addition cannot bypass lane coverage proof");
   Fixture unmasked;
   unmasked.position->SetArg(1, IR::Value(true));
   unmasked.primitive->SetArg(1, IR::Value(true));
@@ -529,9 +537,9 @@ void Rejections() {
   });
   Reject("unresolved EXEC", "unsupported IR opcode",
          [](auto &f, auto &) { f.block.AppendNewInst(Op::GetExec); });
-  Reject("arithmetic outside subset", "unsupported IR opcode",
+  Reject("addition wrong type", "type mismatch",
          [](auto &f, auto &) {
-           f.block.AppendNewInst(Op::IAdd32, {IR::Value(1u), IR::Value(2u)});
+           f.block.AppendNewInst(Op::IAdd32, {IR::Value(true), IR::Value(2u)});
          });
   Reject("input other than local lane", "only local", [](auto &f, auto &) {
     f.lane->SetArg(
