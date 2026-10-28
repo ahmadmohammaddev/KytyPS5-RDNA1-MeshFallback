@@ -9,11 +9,12 @@ param(
     [switch]$Draw,
     [switch]$Texture,
     [switch]$Ir,
+    [switch]$IrAdd,
     [switch]$IsolateImplicitLayers
 )
 $ErrorActionPreference = 'Stop'
 if ($Texture) { $Draw = $true }
-if ($Ir -and $Draw) { Write-Host "FAIL: choose IR or draw/texture mode"; exit 1 }
+if (($Ir -and $IrAdd) -or (($Ir -or $IrAdd) -and $Draw)) { Write-Host "FAIL: choose IR or draw/texture mode"; exit 1 }
 $root = [IO.Path]::GetFullPath($PSScriptRoot)
 function FileHash([string]$Path) {
     $stream = [IO.File]::OpenRead($Path)
@@ -125,7 +126,7 @@ try {
         $run = RunCheck -Name $check.name -Exe $check.exe -Arguments $check.arguments
         if ($run.record.exit -ne 0) { $preflightOk = $false; break }
     }
-    if ($preflightOk -and $Ir) {
+    if ($preflightOk -and ($Ir -or $IrAdd)) {
         foreach ($argument in @('--positive','--reject')) {
             $name = if ($argument -eq '--positive') { 'ir-positive' } else { 'ir-rejections' }
             $run = RunCheck -Name $name -Exe 'mesh_ir_compute_tests.exe' -Arguments @($argument)
@@ -152,6 +153,7 @@ try {
     if ($preflightOk -and $Mode -ne 'Offline') {
         $argument = if ($Mode -eq 'Strict') { '--run' } else { '--run-vulkan12' }
         if ($Ir) { $argument = if ($Mode -eq 'Strict') { '--ir' } else { '--ir-vulkan12' } }
+        if ($IrAdd) { $argument = if ($Mode -eq 'Strict') { '--ir-add' } else { '--ir-add-vulkan12' } }
         $arguments = @($argument)
         if ($Draw) {
             $argument = if ($Mode -eq 'Strict') { '--draw' } else { '--draw-vulkan12' }
@@ -164,7 +166,7 @@ try {
         $overall = $runtimeStatus
         $selectedDevices = @($run.lines | Where-Object { $_ -match '^\[p41\] selected:' })
         $rxDevices = @($selectedDevices | Where-Object { $_ -match 'RX\s*5700\s*XT' })
-        $expectedDevices = if ($Ir) { 3 } else { 1 }
+        $expectedDevices = if ($IrAdd) { 2 } elseif ($Ir) { 3 } else { 1 }
         if ($RequireRx5700Xt -and $runtimeStatus -eq 'PASS' -and
             ($selectedDevices.Count -ne $expectedDevices -or $rxDevices.Count -ne $expectedDevices)) {
             $overall = 'FAIL'
@@ -172,7 +174,7 @@ try {
         }
     }
     $summary = [ordered]@{schema=1; gitCommit=$manifest.gitCommit; buildId=$manifest.buildId;
-        mode=$Mode; ir=[bool]$Ir; draw=[bool]$Draw; texture=[bool]$Texture; isolateImplicitLayers=[bool]$IsolateImplicitLayers; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
+        mode=$Mode; ir=[bool]$Ir; irAdd=[bool]$IrAdd; draw=[bool]$Draw; texture=[bool]$Texture; isolateImplicitLayers=[bool]$IsolateImplicitLayers; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
         runs=@($runs.ToArray()); deviceEvidence=$runtimeIdentity;
         environment=@{VK_LAYER_PATH=$env:VK_LAYER_PATH; VK_INSTANCE_LAYERS=$env:VK_INSTANCE_LAYERS;
             VK_DRIVER_FILES=$env:VK_DRIVER_FILES; VK_ICD_FILENAMES=$env:VK_ICD_FILENAMES;

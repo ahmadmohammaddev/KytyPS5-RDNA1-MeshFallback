@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 2.7. **Overall status:** S-024 native RX strict Vulkan 1.3 executes all three P3.2 IR-generated modules with exact buffers and zero validation errors/warnings through cleanup. P3.2 DONE within its narrow subset; P3 and emulator/game integration remain open.
+> **Last edited:** 2026-10-29. **Plan revision:** 2.8. **Overall status:** S-024 native RX strict Vulkan 1.3 executes all three P3.2 IR-generated modules with exact buffers and zero validation errors/warnings through cleanup. P3.2 DONE within its narrow subset; P3 and emulator/game integration remain open.
 
 ## 0. Mission and boundaries
 
@@ -720,6 +720,12 @@ Clean package source `e74e19779f13e33cf3c3a30fcabb58acbf952ad1`, build `20261028
 - Initial sandbox build FAIL during CMake regeneration: submodule metadata access denied and attempted FFmpeg download failed DNS. Outside-sandbox two-job build PASS; both logs retained under `_Build/p0-s012/p3-s027-build*.log`. Compilation and SPIR-V validation PASS. Four existing focused tests: 3 PASS, 1 strict 1.3 SKIPPED, 0 FAIL (0.72 s).
 - First Intel runtime SKIPPED 41 because Khronos validation layer was not in default discovery; process-local VK_LAYER_PATH retry PASS on Intel Iris Xe API 1.2.172: add and wrap full 460-word buffers exact, zero validation errors/warnings including cleanup. Replacing add with valid triangle SPIR-V in isolated copied harness correctly FAILS exit 1 with one mismatched word and zero validation errors. This checks wrong module, not an independently altered arithmetic opcode. Logs retained `_Build/p0-s012/p3-s027-*.log`. New strict Vulkan 1.3/RX and Astro Bot NOT RUN.
 - P3.3 remains IN_PROGRESS. Next single task: create clean committed-source portable package for opt-in arithmetic mode with integrity and relocation checks, then obtain separate native RX strict 1.3 full-buffer and zero-validation-error evidence. The new modes are not yet registered in CTest or the package runner; preserve existing modes and report missing prerequisites as skip. No production integration.
+
+### Session S-028 — 2026-10-29 — Arithmetic transfer preparation
+
+- Input `e2307049f1e69db7058eab36e3432284953c68d3`, clean branch and 14 matching submodules. Add separate strict/RX arithmetic launcher and runner mode, four module files to package, two registered API-specific CTests, inventory 20; legacy modes preserved. Dirty snapshot `_Build/p0-s012/p3-s028-pre-build-01/`.
+- Two-job build PASS. Six IR CTests: 4 PASS, 2 strict SKIPPED, 0 FAIL, 1.12 s. Intel auxiliary arithmetic full buffers PASS and strict locally unavailable. Logs `_Build/p0-s012/p3-s028-build.log` and `p3-s028-ctest.log`. Compilation/unit/SPIR-V PASS; Vulkan integration Intel auxiliary PASS and strict SKIPPED; RX arithmetic and Astro Bot NOT RUN.
+- Commit source first, then build clean package and verify relocation, integrity, strict skip and Intel auxiliary before handoff. P3.3 RX gate remains open.
 
 ## 8. Change history (append-only)
 

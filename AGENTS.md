@@ -43,7 +43,10 @@ You MAY reprioritize, split, merge, or remove future milestones based on evidenc
 4. In your response state branch, SHA, files changed, commands/tests + actual results, blockers, and next step.
 5. **Stop** after the selected subtask; do not start the next phase automatically.
 
-## Current next task (checkpoint S-027)
+## Current next task (checkpoint S-028 in progress)
+Arithmetic runner, launcher, generated module packaging and two CTests implemented; 4 IR tests PASS and 2 strict SKIPPED on Intel, build PASS. Commit source then produce clean package, verify relocation/integrity and Intel auxiliary; RX arithmetic remains NOT RUN.
+
+## Retained checkpoint S-027
 P3.3 generated arithmetic and wrap modules PASS exact full buffers on Intel Vulkan 1.2 auxiliary with zero validation errors/warnings including cleanup; isolated valid wrong-module mutation correctly FAILS one word. Strict RX arithmetic NOT RUN. First default-layer attempt SKIPPED; process-local VK_LAYER_PATH retry passed. Two-job build PASS after sandbox regeneration failure. Next single task: clean committed-source portable arithmetic package, CTest/runner coverage and relocation/integrity verification, followed by independent strict RX evidence. Keep Vulkan 1.2 and 1.3 evidence separate; no production integration or push.
 
 ## Retained checkpoint S-026

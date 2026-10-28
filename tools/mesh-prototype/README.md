@@ -121,3 +121,7 @@ strict 1.3 gate. Missing generated modules fail without a handwritten fallback.
 Return result.json and all logs; no image is expected. Existing modes remain intact.
 
 The IR fixture executable additionally imports `MSVCP140_ATOMIC_WAIT.dll` from the Microsoft Visual C++ v14 x64 redistributable; the matching runtime is an external prerequisite.
+
+## IR arithmetic
+
+Run `Run-IR-Add.cmd -IsolateImplicitLayers` on the RX desktop. This runs the add and wrap generated modules with strict Vulkan 1.3, full-buffer checks and validation including cleanup. Keep all result logs and result.json. This is synthetic research, not emulator or game compatibility evidence.

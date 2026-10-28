@@ -105,11 +105,11 @@ try {
         $env:VK_LAYER_PATH = $layer
     }
     $env:VK_INSTANCE_LAYERS = $null # the harness explicitly enables its required layer
-    $selection = '^(mesh_output_contract|mesh_proto_spirv|mesh_proto_host_fixtures|mesh_proto_reject_shape|mesh_compute_proto|mesh_compute_proto_vk12|mesh_draw_oracle|mesh_draw_spirv|mesh_offscreen_draw|mesh_offscreen_draw_vk12|mesh_texture_fixtures|mesh_texture_spirv|mesh_textured_draw|mesh_textured_draw_vk12|mesh_ir_compute_positive|mesh_ir_compute_rejections|mesh_ir_runtime|mesh_ir_runtime_vk12)$'
+    $selection = '^(mesh_output_contract|mesh_proto_spirv|mesh_proto_host_fixtures|mesh_proto_reject_shape|mesh_compute_proto|mesh_compute_proto_vk12|mesh_draw_oracle|mesh_draw_spirv|mesh_offscreen_draw|mesh_offscreen_draw_vk12|mesh_texture_fixtures|mesh_texture_spirv|mesh_textured_draw|mesh_textured_draw_vk12|mesh_ir_compute_positive|mesh_ir_compute_rejections|mesh_ir_runtime|mesh_ir_runtime_vk12|mesh_ir_add_runtime|mesh_ir_add_runtime_vk12)$'
     Native -Exe $ctest -Arguments @('--test-dir',$build,'--output-on-failure','--parallel','1','-V',
         '--output-junit',"$evidence/ctest.xml",'-R',$selection) -Log "$evidence/ctest.log" | Out-Null
     [xml]$junit = Get-Content -Raw -LiteralPath "$evidence/ctest.xml"
-    if ([int]$junit.testsuite.tests -ne 18 -or [int]$junit.testsuite.failures -ne 0) { throw 'Unexpected test inventory/results' }
+    if ([int]$junit.testsuite.tests -ne 20 -or [int]$junit.testsuite.failures -ne 0) { throw 'Unexpected test inventory/results' }
     $testResults = @($junit.testsuite.testcase | ForEach-Object {
         [ordered]@{name=$_.name; status=$(if ($_.skipped) { 'SKIPPED' } else { 'PASS' })}
     })
@@ -127,12 +127,12 @@ try {
         }
     }
     foreach ($api in @('12','13')) {
-        foreach ($variant in @('triangle','permuted','zero')) {
+        foreach ($variant in @('triangle','permuted','zero','add','wrap')) {
             $file = "mesh_ir_${variant}_vk${api}.spv"
             CopyPayload "$build/gpu_mesh_proto_shaders/$file" "gpu_mesh_proto_shaders/$file"
         }
     }
-    foreach ($file in @('Run-Prototype.ps1','Run-Strict.cmd','Run-Draw.cmd','Run-Textured.cmd','Run-IR.cmd','README.md','THIRD_PARTY_NOTICES.md')) {
+    foreach ($file in @('Run-Prototype.ps1','Run-Strict.cmd','Run-Draw.cmd','Run-Textured.cmd','Run-IR.cmd','Run-IR-Add.cmd','README.md','THIRD_PARTY_NOTICES.md')) {
         CopyPayload "$PSScriptRoot/$file" $file
     }
     CopyPayload "$repo/LICENSE" 'LICENSE'
