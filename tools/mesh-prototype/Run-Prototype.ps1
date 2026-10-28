@@ -30,7 +30,10 @@ try {
     if ($manifest.schema -ne 1 -or $manifest.gitCommit -notmatch '^[0-9a-f]{40}$' -or $manifest.dirty -ne $false) {
         throw 'Unsupported or dirty package identity'
     }
-    $checks = @(Get-Content -Raw -LiteralPath (Join-Path $root 'SHA256SUMS.json') | ConvertFrom-Json)
+    # Windows PowerShell 5.1 emits a JSON array as one pipeline object; normalize
+    # after assignment rather than wrapping that pipeline (which makes it nested).
+    $checks = Get-Content -Raw -LiteralPath (Join-Path $root 'SHA256SUMS.json') | ConvertFrom-Json
+    $checks = @($checks)
     $expected = @($manifest.files | ForEach-Object { $_.path }) + @('manifest.json')
     if ($checks.Count -ne $expected.Count) { throw 'Checksum inventory does not match manifest' }
     $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
