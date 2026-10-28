@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-28. **Plan revision:** 1.8. **Overall status:** S-018 implements opt-in P4.2 conventional offscreen indexed drawing from P4.1 compute output. Intel/Vulkan 1.2 auxiliary pixel/full-buffer checks PASS with zero validation errors/warnings; strict 1.3 draw SKIPPED locally. P4.1 remains DONE; P4.2 IN_PROGRESS pending native RX draw; clean portable source `26c85b13`, build ID `20261028T194438576Z`, locally verified. No game/fallback compatibility milestone complete.
+> **Last edited:** 2026-10-28. **Plan revision:** 1.8. **Overall status:** S-018 implements opt-in P4.2 conventional offscreen indexed drawing from P4.1 compute output. Intel/Vulkan 1.2 auxiliary pixel/full-buffer checks PASS with zero validation errors/warnings; strict 1.3 draw SKIPPED locally. P4.1 remains DONE; P4.2 IN_PROGRESS pending native RX draw; clean portable source `ea829bfb`, build ID `20261028T195020234Z`, locally verified. No game/fallback compatibility milestone complete.
 
 ## 0. Mission and boundaries
 
@@ -41,11 +41,11 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Last verified git commit | Final S-015 package built from clean `d3cc0bce63b32d8106f098a696646eaba0823f3b`, clean recursive submodules, generated identity `d3cc0bc`. Containing final handoff commit changes documentation only; package manifest names its exact earlier source commit |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | S-015 package build verified clean committed source, pinned ancestry and all 14 matching clean recursive submodules. Portable test/handoff changes only; no production renderer changes |
-| Build status | S-018 two focused dirty-snapshot builds PASS; clean incremental package source `26c85b13` verified with 2 jobs/no PGO/IPO. Both compute and four graphics modules compile/validate; no core/GUI rebuild |
+| Build status | S-018 two focused dirty-snapshot builds PASS; clean incremental package source `ea829bfb` verified with 2 jobs/no PGO/IPO. Both compute and four graphics modules compile/validate; no core/GUI rebuild |
 | Native RDNA1 smoke test | PASS scoped P4.1 compute: RX 5700 XT/API 1.4.308/AMD 25.6.1, nine exact blobs, zero validation errors/warnings after cleanup; no drawing/game evidence |
-| Passing tests | S-018 clean ten-case suite 8 PASS/2 strict-1.3 SKIPPED/0 FAIL, 0.91 s; nine relocation/integrity probes match expected results; black-fragment negative correctly FAILS pixel comparison; missing validation layer correctly SKIPS. 435 registered: 72 with passing executions, 1 failed-only timer, 1 skipped-only strict draw, 361 never run |
+| Passing tests | S-018 clean ten-case suite 8 PASS/2 strict-1.3 SKIPPED/0 FAIL, 0.90 s; nine relocation/integrity probes match expected results; black-fragment negative correctly FAILS pixel comparison; missing validation layer correctly SKIPS. 435 registered: 72 with passing executions, 1 failed-only timer, 1 skipped-only strict draw, 361 never run |
 | Known blockers / limits | Laptop API 1.2.172 cannot execute strict draw 1.3; native RX P4.2 NOT RUN. Noncoherent runtime, texture/varying coverage, guest/game integration and rollback remain open; timer deferred D-016 |
-| Next single actionable task | Transfer verified S-018 ZIP/sidecar (source `26c85b13`, build `20261028T194438576Z`) to RX; verify/extract fresh and run `Run-Draw.cmd -IsolateImplicitLayers` as normal user for native strict 1.3. Gate: clear-only control and triangle all 4096 RGBA pixels/full buffers match, zero validation errors including cleanup, retained image/log/identity. No game/next phase |
+| Next single actionable task | Transfer verified S-018 ZIP/sidecar (source `ea829bfb`, build `20261028T195020234Z`) to RX; verify/extract fresh and run `Run-Draw.cmd -IsolateImplicitLayers` as normal user for native strict 1.3. Gate: clear-only control and triangle all 4096 RGBA pixels/full buffers match, zero validation errors including cleanup, retained image/log/identity. No game/next phase |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -606,6 +606,10 @@ ctest --test-dir _Build/windows-core --output-on-failure --parallel 1 -R '^(devi
 - **Verification:** clean serial suite 8 PASS/2 strict SKIPPED/0 FAIL, 0.91 s. Nine extraction/Unicode/unrelated-CWD/integrity/target guard/legacy outcomes match expected exits. Packaged Intel/1.2 clear+triangle image/full buffers exact, zero validation errors/warnings after cleanup; PPM/hash and process-local isolation logged. One local verification-controller quoting error retained and fixed; aggregate verification succeeds without discarding prior evidence. Source bytes equal compiled snapshot; incremental package build needed no new compile.
 - **Six categories:** Compilation PASS scoped prior two-job builds/clean incremental package; Unit PASS; shader compilation/SPIR-V PASS; Vulkan PASS auxiliary Intel/1.2 and SKIPPED strict locally; new RDNA1 draw NOT RUN (prior P4.1 PASS retained); Astro Bot NOT RUN. P4.2 remains IN_PROGRESS; noncoherent runtime/texture/game/rollback/general emulator gates unchanged.
 - **Next single task/gate:** transfer ZIP+sidecar, verify/extract fresh on RX, normal-user `Run-Draw.cmd -IsolateImplicitLayers`. Native RX strict 1.3 must pass nine contract cases, clear and indexed-triangle exact RGBA pixels/full guarded blobs, zero validation errors including cleanup, exit 0; retain all logs/result JSON/triangle.ppm/device/package identity. Commit docs and stop here; no next development phase.
+
+#### Final S-018 transfer identity
+
+Final replacement package source `ea829bfb8a353f1912ef65d8856d63e7f4e2df99`, build `20261028T195020234Z`, ZIP 708,420 bytes/SHA-256 `329FD032407AE1123FA9926B6BBE17977FBC1E4B32EF72686E4F9F48D8C30B2C`. Only package README punctuation changed from the first artifact; other runtime payload files are byte-identical. Final ten-case clean suite 8 PASS/2 SKIP/0 FAIL, 0.90 s; fresh Unicode relocation auxiliary draw PASS/strict SKIPPED, exact image/hash and zero validation errors/warnings after cleanup. Full evidence in S-018 report; initial package/controller failures retained. Checkpoint now selects THIS package for the next native RX strict draw. No new phase, source logic change or push.
 
 ### Template for S-019 onward
 - **Date / who:**
