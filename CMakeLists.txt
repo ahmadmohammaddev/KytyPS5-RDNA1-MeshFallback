@@ -886,10 +886,7 @@ add_executable(mesh_compute_proto_tests EXCLUDE_FROM_ALL
 add_dependencies(mesh_compute_proto_tests mesh_compute_proto_shaders)
 target_link_libraries(mesh_compute_proto_tests spirv-tools Vulkan::Headers ${CMAKE_DL_LIBS})
 target_include_directories(mesh_compute_proto_tests PRIVATE ${inc_headers})
-target_compile_definitions(mesh_compute_proto_tests PRIVATE VK_NO_PROTOTYPES
-	"KYTY_MESH_PROTO_SPV_VULKAN_1_3=\"${PROJECT_BINARY_DIR}/gpu_mesh_proto_shaders/mesh_output_proto_vk13.spv\""
-	"KYTY_MESH_PROTO_SPV_VULKAN_1_2=\"${PROJECT_BINARY_DIR}/gpu_mesh_proto_shaders/mesh_output_proto_vk12.spv\""
-)
+target_compile_definitions(mesh_compute_proto_tests PRIVATE VK_NO_PROTOTYPES)
 
 add_executable(ime_dialog_tests EXCLUDE_FROM_ALL
 	"${KYTY_TESTS_DIR}/ImeDialogTests.cpp"

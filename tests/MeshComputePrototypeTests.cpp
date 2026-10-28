@@ -40,6 +40,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <filesystem>
 #include <iterator>
 #include <string>
 #include <vector>
@@ -64,6 +65,33 @@ int g_failures = 0;
 std::atomic<int> g_validation_errors{0};
 std::atomic<int> g_validation_warnings{0};
 constexpr int kSkip = 41; // All unavailable-environment paths use CTest's registered code.
+std::filesystem::path g_shader_directory;
+
+std::string PathText(const std::filesystem::path& path) {
+	const auto utf8 = path.u8string();
+	return std::string(utf8.begin(), utf8.end());
+}
+
+bool LocateShaders(const char* executable) {
+#ifdef _WIN32
+	std::wstring buffer(32768, L'\0');
+	const DWORD length = GetModuleFileNameW(nullptr, buffer.data(), static_cast<DWORD>(buffer.size()));
+	if (length == 0 || length >= buffer.size()) { return false; }
+	buffer.resize(length);
+	const std::filesystem::path executable_path(buffer);
+#else
+	std::error_code error;
+	auto executable_path = std::filesystem::read_symlink("/proc/self/exe", error);
+	if (error) { executable_path = std::filesystem::absolute(executable, error); }
+	if (error) { return false; }
+#endif
+	g_shader_directory = executable_path.parent_path() / "gpu_mesh_proto_shaders";
+	return true;
+}
+
+std::filesystem::path ModulePath(bool vulkan13) {
+	return g_shader_directory / (vulkan13 ? "mesh_output_proto_vk13.spv" : "mesh_output_proto_vk12.spv");
+}
 
 void PrintLine1(const char* format, ...) {
 	char buffer[1024];
@@ -126,14 +154,14 @@ const char* DeviceTypeString(VkPhysicalDeviceType type) {
 
 // ---------------------------------------------------------------------------
 // Offline SPIR-V gates (shader compilation happened at build time via the pinned
-// glslang; the two module paths are compile definitions from CMakeLists.txt)
+// glslang; modules are resolved beside the executable, independent of working directory)
 // ---------------------------------------------------------------------------
 
-std::vector<uint32_t> LoadSpirvFile(const char* path, const char* label) {
+std::vector<uint32_t> LoadSpirvFile(const std::filesystem::path& path, const char* label) {
 	std::ifstream file(path, std::ios::binary);
 	if (!file) {
 		Expect(false, "SPIR-V module file opens");
-		PrintLine1("module-missing: %s (%s)", label, path);
+		PrintLine1("module-missing: %s (%s)", label, PathText(path).c_str());
 		return {};
 	}
 	std::vector<char> bytes((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -190,10 +218,10 @@ void CheckModuleShape(const std::vector<uint32_t>& binary, spv_target_env env, c
 	       (name + " declares push constants").c_str());
 }
 
-bool RunOfflineValidation(const char* vk13_path = KYTY_MESH_PROTO_SPV_VULKAN_1_3,
-                          const char* vk12_path = KYTY_MESH_PROTO_SPV_VULKAN_1_2) {
-	const std::vector<uint32_t> vk13 = LoadSpirvFile(vk13_path, "vulkan1.3");
-	const std::vector<uint32_t> vk12 = LoadSpirvFile(vk12_path, "vulkan1.2");
+bool RunOfflineValidation() {
+	PrintLine1("shader-directory: %s", PathText(g_shader_directory).c_str());
+	const std::vector<uint32_t> vk13 = LoadSpirvFile(ModulePath(true), "vulkan1.3");
+	const std::vector<uint32_t> vk12 = LoadSpirvFile(ModulePath(false), "vulkan1.2");
 	Expect(!vk13.empty(), "vulkan1.3 module present");
 	Expect(!vk12.empty(), "vulkan1.2 module present");
 	CheckModuleShape(vk13, SPV_ENV_VULKAN_1_3, "vulkan1.3");
@@ -929,8 +957,7 @@ int RunPrototype(uint32_t required_api) {
 	// explicit CLI/CTest case, even on a device that also supports Vulkan 1.3.
 	const bool  device_13_capable = required_api >= VK_API_VERSION_1_3;
 	const char* module_label      = device_13_capable ? "vulkan1.3" : "vulkan1.2";
-	const char* module_path       = device_13_capable ? KYTY_MESH_PROTO_SPV_VULKAN_1_3
-	                                                  : KYTY_MESH_PROTO_SPV_VULKAN_1_2;
+	const auto module_path = ModulePath(device_13_capable);
 	PrintLine1("dispatch-module: %s (%s)", module_label,
 	           device_13_capable ? "strict Vulkan 1.3 runtime gate"
 	                             : "explicit auxiliary Vulkan 1.2 run; not Vulkan 1.3 evidence");
@@ -1437,6 +1464,10 @@ int RunPrototype(uint32_t required_api) {
 } // namespace
 
 int main(int argc, char** argv) {
+	if (!LocateShaders(argv[0])) {
+		PrintLine1("RESULT: FAIL (cannot locate executable directory)");
+		return 1;
+	}
 	if (argc == 3 && std::strcmp(argv[1], "--validate-module-vk13") == 0) {
 		const auto binary = LoadSpirvFile(argv[2], "explicit Vulkan 1.3 fixture");
 		ValidateSpirv(binary, SPV_ENV_VULKAN_1_3, "explicit Vulkan 1.3 fixture");
