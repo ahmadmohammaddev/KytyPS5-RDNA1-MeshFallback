@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 5.8. **Overall status:** S-058 clean portable acceptance package verified; STOP for fresh native RX acceptance. No renderer/game integration.
+> **Last edited:** 2026-10-29. **Plan revision:** 5.9. **Overall status:** S-059 standalone combined actual-stage portable acceptance PASS on native RX; production bundle/scheduler integration remains open.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
-| Current subtask | S-058 clean portable acceptance package verified locally; native acceptance pending |
+| Current subtask | S-059 native combined acceptance DONE with evidence; production integration not activated |
 | Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | Clean package source `ad57feab7d794b7cedb855a6fb5411ca76881200`, build20261029T122933634Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | Clean committed package source; pinned ancestry and all 14 recursive submodules matching/clean; S-048 dirty tree captured before builds (`_Build/p0-s012/p2-s048-pre-build-01/`, 16 files + 7 untracked) |
 | Build status | S-055 clean2-job diagnostic package/producer build PASS; no memory retry/PGO/IPO |
-| Native RDNA1 smoke test | S-056 same native RX/API/driver: float triangle+zero PASS, maxerror1.1920929e-7, zero validation; original paired RGBA8 FAIL58, original paired zero NOT RUN |
+| Native RDNA1 smoke test | S-059 RX5700XT API1.4.308 AMD25.6.1:19 stages PASS,12 native strict selections/cleanups zero errors/warnings; full paired triangle+zero accepted |
 | Passing tests | S-05543 cases32 PASS/11 strict SKIPPED/0 FAIL(5.73s);21 expected transfer/negative outcomes,12 exact PPMs/2 complete CSVs/44 unchanged modules |
-| Known blockers / limits | Nearest-only UNORM oracle stronger than portable guarantee; numeric float acceptance not implemented; original native combined gate remains FAIL; adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache wiring/scheduler/production/game remain open |
-| Next single actionable task | On RX fresh extraction run Run-Combined-Milestone.cmd -IsolateImplicitLayers; require19 stages/12 RX strict cleanups, full buffers/UNORM+float checks,12 PPM/2 CSV; return complete folder |
+| Known blockers / limits | Standalone native portable combined gate PASS; production bundle/scheduler/descriptors/lifetime wiring remains open; adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache wiring/scheduler/production/game remain open |
+| Next single actionable task | Isolated atomic compile bundle joining admission/adapter/reflected bridge/canonical identity; CPU+SPIR-V accepted/rejected/context/source-preservation tests, no renderer activation |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -1155,3 +1155,13 @@ Six categories: Compilation scoped PASS; Unit tests PASS; Shader compilation/SPI
 Next single hardware task: transfer this ZIP+sidecar, extract fresh on RX, run `Run-Combined-Milestone.cmd -IsolateImplicitLayers`. Require19 stages PASS,12 independently identified native RX strict1.3 selections and validation-clean cleanup summaries; full geometry/UV buffers, exact coverage/clear/zero, permitted per-channel UNORM sets and bounded numerical float triangle/zero. Return complete result folder with19 logs,result.json,12 PPMs and paired-frontend_uv.csv/paired-frontend_uv_zero.csv. Each CSV must contain4096 ordered pixels. Nearest-different58 may be reported without failure when permitted-set-invalid0 and float gate passes; no blanket tolerance. Any actual failed gate remains FAIL, unavailable prerequisites SKIPPED, unexecuted cases NOT RUN. Stop for RX; no renderer wiring/game work/push.
 
 Change history5.8: S-058 verified clean portable acceptance transfer and mandatory float artifacts; stop for independent native acceptance.
+
+### Session S-059 / Experiment E-059 — Native portable combined acceptance
+
+Input683dc5f0 clean branch/pinned ancestry/14 matching submodules verified. Supplied source9081c154137440411ba516e38fab984b4b6fd63e/build20261029T132623339Z:19 stages19PASS/0FAIL/0SKIPPED,12 native RX5700XT strict1.3 selections and cleanup summaries zero errors/warnings, AMD25.6.1 API1.4.308. Stage sum1.1776838s; no FPS/game measurement.34 raw files/hash inventory `_Build/p3-s059/`, report docs/RDNA1_RX_ACCEPTANCE_S059.md.14 artifact hashes verified,11 reference PPMs exact,paired UV all12288 RGB channels satisfy rational allowed sets; both4096-row float CSVs independently checked all channels, maxtriangleerror1.1920928955078125e-7, zero/background exact. Full geometry/UV/RGBA8 alpha/coverage checks runtimePASS. Historical nearest-only failures unchanged.
+
+Compilation/new CTestNOT RUN this review; supplied host/offline/SPIR-VPASS, native Vulkan/RDNA1 bounded combinedPASS, AstroBotNOT RUN. Standalone combined actual frontend compute+bridge+native public pixel gate closed with evidence; no production scheduler/game/general NGG claim. No code/build/new package/push.
+
+Decision D-035: after standalone combined acceptance, compose the existing separate admission/compiler/bridge/canonical identity helpers into one atomic production-owned isolated compile bundle before scheduler wiring. Reason: independent harness composition does not yet establish a complete fail-closed result for production consumers. Gate: accepted public pair yields modules/ABI/interface/context key, every rejected path empty outputs+stable diagnostic, context separation/source preservation/CPU+SPIR-V regressions and complete provenance; no renderer activation/cache mutation. Scheduler/descriptors/scratch/lifetime follow separately; batch RX cadence retained.
+
+Next one local task that compile bundle, no implementation in S-059. Change history5.9: native portable acceptance closes standalone gate; selects atomic production bundle preparation under D-035.
