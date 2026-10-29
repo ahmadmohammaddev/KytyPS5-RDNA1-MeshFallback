@@ -51,7 +51,12 @@ Request native RX testing when a defined milestone acceptance gate is ready, whe
 
 Intel Vulkan 1.2 and native RX strict Vulkan 1.3 evidence remain distinct. Never mark an RX gate complete from local results. Report PASS, FAIL, SKIPPED and NOT RUN accurately, retain failures and all provenance requirements. The one-selected-subtask rule still bounds each development session; it does not require a hardware handoff after every session.
 
-## Current next task (checkpoint S-031)
+## Current next task (checkpoint S-032)
+P3.5 offline UV parameter lowering DONE: opt-in parameter-0 xy into separate 544-byte guarded storage at set0/binding2, 17 rejection cases, independent binary/full-snapshot oracle and eight valid SPIR-V mutants detected. Three 2-job builds PASS; 24-case suite 18 PASS/6 strict SKIPPED/0 FAIL (3.53 s); ten legacy generated modules byte-identical. New UV GPU execution NOT RUN; earlier Intel auxiliary regressions validation-clean. See `docs/RDNA1_IR_UV_S032.md`; all dirty snapshots and logs retained. Native generated draw/UV tests remain batched under D-028.
+
+Next single local task P3.6: connect actual generated position/index/UV output to the existing standalone textured draw. Extend generated-mode descriptor binding 2, initialize and compare full guarded UV/geometry buffers and all pixels, preserve texture uploads and correct compute/vertex/sample/host dependencies, prevent authored UV-generator overwrite, keep strict and auxiliary API tests separate and validation clean through cleanup. Consolidate RX packaging at the textured milestone. No emulator/game wiring or push; commit and stop.
+
+## Retained checkpoint S-031
 Generated-IR triangle/permuted/zero now feed conventional indexed drawing in the standalone harness. Intel Vulkan 1.2 auxiliary: all buffers/pixels exact, zero validation errors/warnings through cleanup; 22 focused cases 16 PASS/6 strict SKIPPED/0 FAIL (2.92 s). Valid wrong fragment correctly FAILS 496 pixels; missing strict module FAILS before device discovery. Report `docs/RDNA1_IR_DRAW_S031.md`; complete dirty build snapshots and logs retained. Native RX draw gate is pending and batched under D-028; no new transfer package or game evidence.
 
 Next single local task (D-029): offline lowering of one bounded per-vertex float2 UV parameter export into the existing separate 544-byte guarded UV ABI. Gate explicit metadata/type/mask/capacity rejection, independent layout/output coverage tests and Vulkan 1.3 SPIR-V validation; preserve the position/index ABI and native/default renderer. Runtime textured integration and consolidated strict RX verification follow as distinct gates. Commit and stop; no push.

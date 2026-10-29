@@ -26,11 +26,13 @@ struct Fixture {
   IR::Block block;
   IR::IREmitter ir{&block};
   std::array<IR::Block *, 1> blocks{&block};
-  std::array<IR::ExportInfo, 2> exports{};
+  std::array<IR::ExportInfo, 3> exports{};
+  bool enable_uv = false;
+  IR::Inst* uv = nullptr;
   Libs::Graphics::ShaderMeshInputInfo mesh;
   IR::Inst *allocation = nullptr, *position = nullptr, *primitive = nullptr,
            *mask = nullptr, *lane = nullptr;
-  Fixture(bool use_add = false, uint32_t addend = 0, uint32_t second_addend = 0, uint32_t index_addend = 0) {
+  Fixture(bool use_add = false, uint32_t addend = 0, uint32_t second_addend = 0, uint32_t index_addend = 0, bool with_uv = false) {
     mesh.threads_num[0] = 32;
     mesh.threads_num[1] = mesh.threads_num[2] = 1;
     mesh.wave_size = mesh.host_subgroup_size = 32;
@@ -82,14 +84,23 @@ struct Fixture {
     primitive = &block.AppendNewInst(
         Op::SetAttribute, {packed, is0},
         std::bit_cast<uint64_t>(IR::ExportFlags{.index = 1}));
+    enable_uv = with_uv;
+    if (with_uv) {
+      exports[2] = {.kind = IR::ExportTargetKind::Parameter, .target = 0x20, .en = 3};
+      auto u = choose(.25f, 1.25f, .25f);
+      auto v = choose(.25f, .25f, 1.25f);
+      auto uv_data = ir.Emit(Op::CompositeConstructU32x4, {u, v, IR::Value(0u), IR::Value(0u)});
+      uv = &block.AppendNewInst(Op::SetAttribute, {uv_data, active},
+          std::bit_cast<uint64_t>(IR::ExportFlags{.index = 2}));
+    }
   }
   R::Input Input() const {
-    return {.mesh = mesh, .blocks = blocks, .exports = exports};
+    return {.mesh = mesh, .blocks = blocks, .exports = std::span(exports).first(enable_uv ? 3 : 2), .enable_uv = enable_uv};
   }
 };
 // Independent binary structural checker: no reliance on compiler assembly IDs
 // or its lane-coverage evaluator. Does not claim to execute the GPU module.
-bool CheckAbi(const R::Result &r) {
+bool CheckAbi(const R::Result &r, bool with_uv = false) {
   struct Def {
     spv::Op op;
     std::vector<uint32_t> args;
@@ -101,7 +112,7 @@ bool CheckAbi(const R::Result &r) {
   std::map<uint32_t, uint32_t> constants;
   std::map<uint32_t, Def> defs;
   std::vector<Store> stores;
-  uint32_t output = 0, local = 0, current_block = 0;
+  uint32_t output = 0, uv = 0, local = 0, current_block = 0;
   std::map<uint32_t, uint32_t> guards;
   size_t barrier = 0, barrier_count = 0;
   std::vector<uint32_t> barrier_args;
@@ -124,6 +135,8 @@ bool CheckAbi(const R::Result &r) {
     case spv::OpDecorate:
       if (count == 4 && w[2] == spv::DecorationBinding && w[3] == 1)
         output = w[1];
+      if (count == 4 && w[2] == spv::DecorationBinding && w[3] == 2)
+        uv = w[1];
       if (count == 4 && w[2] == spv::DecorationBuiltIn &&
           w[3] == spv::BuiltInLocalInvocationIndex)
         local = w[1];
@@ -192,7 +205,7 @@ bool CheckAbi(const R::Result &r) {
     at += n;
   }
   if (!output || !local || !set_zero || !array_stride || !array_length ||
-      !block_offset || stores.size() != 11 || barrier_count != 1)
+      !block_offset || stores.size() != (with_uv ? 15u : 11u) || barrier_count != 1)
     return false;
   if (!c(barrier_args[0], 2) || !c(barrier_args[1], 2) ||
       !c(barrier_args[2], 72))
@@ -230,6 +243,8 @@ bool CheckAbi(const R::Result &r) {
     if (ptr == defs.end() || ptr->second.op != spv::OpAccessChain)
       return false;
     const auto &args = ptr->second.args;
+    if (with_uv && uv && args.size() == 3 && args[0] == uv)
+      continue;
     if (args.size() != 3 || args[0] != output || !c(args[1], 0))
       return false;
     if (constants.contains(args[2])) {
@@ -298,6 +313,8 @@ bool CheckAbi(const R::Result &r) {
   const auto &last = defs.at(stores.back().pointer).args;
   return c(last[2], 457) && stores.back().offset > barrier;
 }
+#include "research/MeshIrUvOracle.h"
+
 void StructuralMutations(const R::Result &canonical,
                          const std::filesystem::path &dir) {
   if (!canonical)
@@ -541,7 +558,7 @@ void Rejections() {
          [](auto &f, auto &) { f.exports[0].compr = true; });
   Reject("metadata missing", "metadata",
          [](auto &, auto &i) { i.exports = {}; });
-  Reject("varying export", "packed triangle", [](auto &f, auto &) {
+  Reject("varying export", "parameter-0", [](auto &f, auto &) {
     f.exports[1].kind = IR::ExportTargetKind::Parameter;
   });
   Reject("masked-off allocated vertex", "undefined",
@@ -595,16 +612,131 @@ void Rejections() {
           "duplicate allocation rejected");
   }
 }
+void ValidUv(const R::Result& r) {
+  Check(static_cast<bool>(r), r.error.c_str());
+  if (!r) return;
+  spvtools::SpirvTools tools(SPV_ENV_VULKAN_1_3);
+  Check(tools.Validate(r.binary), "UV independent Vulkan 1.3 validation");
+  Check(CheckAbi(r, true), "position/index ABI unchanged with UV output");
+  Check(CheckUvBinary(r), "independent UV binary/layout/full-snapshot oracle");
+}
+void UvPositives(const std::filesystem::path& dir = {}) {
+  Fixture f(false, 0, 0, 0, true);
+  auto input = f.Input();
+  auto r = R::Lower(input);
+  ValidUv(r);
+  if (!r) return;
+  Emit(r, dir, "mesh_ir_uv_vk13");
+  Check(r.binary == R::Lower(input).binary, "UV deterministic lowering");
+  auto* data = f.uv->Arg(0).TryInstruction();
+  const auto original_u = data->Arg(0);
+  data->SetArg(0, IR::Value(0x3F000000u));
+  auto changed_uv = R::Lower(input);
+  spvtools::SpirvTools validator(SPV_ENV_VULKAN_1_3);
+  Check(changed_uv && validator.Validate(changed_uv.binary) &&
+            changed_uv.binary != r.binary && CheckAbi(changed_uv, true) && !CheckUvBinary(changed_uv),
+        "changed IR UV value changes binary and differs from independent nominal oracle");
+  data->SetArg(0, original_u);
+  input.uv_capacity = 3;
+  ValidUv(R::Lower(input));
+  f.uv->SetArg(1, IR::Value(true));
+  ValidUv(R::Lower(input));
+  f.allocation->SetArg(0, IR::Value(0u));
+  f.uv->SetArg(1, IR::Value(false));
+  input.uv_capacity = 1;
+  auto zero = R::Lower(input);
+  ValidUv(zero);
+  Emit(zero, dir, "mesh_ir_uv_zero_vk13");
+
+  // Every mutant still assembles and validates; the independent binary oracle
+  // must reject descriptor/layout/value/visibility/publication mistakes.
+  unsigned mutants = 0;
+  auto mutant = [&](const char* name, std::string text) {
+    R::Result changed;
+    changed.vertices = 3; changed.primitives = 1;
+    spvtools::SpirvTools tools(SPV_ENV_VULKAN_1_3);
+    Check(tools.Assemble(text, &changed.binary) && tools.Validate(changed.binary), "UV mutant remains valid SPIR-V");
+    Check(!CheckUvBinary(changed) || !CheckAbi(changed, true), name);
+    changed.assembly = text;
+    Emit(changed, dir, "mesh_ir_uv_mutant_" + std::to_string(++mutants) + "_vk13");
+  };
+  for (auto [from, to] : {
+       std::pair{"%uv Binding 2", "%uv Binding 3"},
+       std::pair{"%uv_array ArrayStride 4", "%uv_array ArrayStride 8"},
+       std::pair{"OpConstant %uint 136\n", "OpConstant %uint 135\n"},
+       std::pair{"OpConstant %uint 133\n", "OpConstant %uint 134\n"},
+       std::pair{"OpConstant %uint 1048576000\n", "OpConstant %uint 1056964608\n"},
+       std::pair{"OpConstant %uint 72\n", "OpConstant %uint 0\n"}}) {
+    auto text = r.assembly;
+    auto at = text.find(from);
+    Check(at != std::string::npos, "UV mutation anchor");
+    if (at != std::string::npos) text.replace(at, strlen(from), to);
+    mutant("UV layout/value/barrier mutation detected", text);
+  }
+  auto text = r.assembly;
+  auto at = text.rfind(" = OpAccessChain %ptr_uint %uv ");
+  Check(at != std::string::npos, "UV success pointer anchor");
+  at = text.find("OpStore ", at);
+  Check(at != std::string::npos, "UV success store anchor");
+  if (at != std::string::npos) text.erase(at, text.find('\n', at) - at + 1);
+  mutant("missing UV success write detected", text);
+  text = r.assembly;
+  at = text.rfind(" = OpLogicalAnd %bool ");
+  Check(at != std::string::npos, "UV bounds anchor");
+  if (at != std::string::npos) text.replace(at, strlen(" = OpLogicalAnd %bool "), " = OpLogicalOr %bool ");
+  mutant("UV lost bounds guard detected", text);
+  Check(mutants == 8, "UV mutation inventory");
+  std::cout << "UV offline: zero/three vertices, capacity, mask, full binary snapshot and 8 valid-SPIR-V mutations checked\n";
+}
+void UvRejections() {
+  auto reject = [&](const char* name, const char* diagnostic, const Mutate& mutation) {
+    Fixture f(false, 0, 0, 0, true);
+    auto input = f.Input();
+    mutation(f, input);
+    auto r = R::Lower(input);
+    Check(!r && r.binary.empty() && r.assembly.empty(), name);
+    Check(r.error.find(diagnostic) != std::string::npos, name);
+    std::cout << "reject UV " << name << ": " << r.error << "\n";
+  };
+  reject("disabled", "enabled", [](auto&, auto& i) { i.enable_uv = false; });
+  reject("capacity zero", "UV capacity", [](auto&, auto& i) { i.uv_capacity = 0; });
+  reject("capacity overflow", "UV capacity", [](auto&, auto& i) { i.uv_capacity = 65; });
+  reject("allocation overflow", "UV capacity", [](auto&, auto& i) { i.uv_capacity = 2; });
+  reject("wrong target", "parameter-0", [](auto& f, auto&) { f.exports[2].target = 0x21; });
+  reject("wrong index", "auxiliary", [](auto& f, auto&) { f.exports[2].index = 1; });
+  reject("wrong channels", "parameter-0", [](auto& f, auto&) { f.exports[2].en = 15; });
+  reject("missing y", "parameter-0", [](auto& f, auto&) { f.exports[2].en = 1; });
+  reject("compressed", "compressed", [](auto& f, auto&) { f.exports[2].compr = true; });
+  reject("valid mask", "valid-mask", [](auto& f, auto&) { f.exports[2].vm = true; });
+  reject("missing lane", "undefined", [](auto& f, auto&) { f.uv->SetArg(1, IR::Value(false)); });
+  reject("partial coverage", "undefined", [](auto& f, auto&) { f.mask->SetArg(1, IR::Value(2u)); });
+  reject("wrong vector type", "type mismatch", [](auto& f, auto&) { f.uv->SetArg(0, IR::Value(1u)); });
+  reject("wrong predicate type", "type mismatch", [](auto& f, auto&) { f.uv->SetArg(1, IR::Value(1u)); });
+  reject("bad metadata", "metadata", [](auto& f, auto&) { f.uv->SetFlags(std::bit_cast<uint64_t>(IR::ExportFlags{.index = 9})); });
+  reject("duplicate", "single parameter", [](auto& f, auto&) {
+    f.block.AppendNewInst(Op::SetAttribute, {f.uv->Arg(0), f.uv->Arg(1)}, std::bit_cast<uint64_t>(IR::ExportFlags{.index = 2}));
+  });
+  Fixture plain;
+  auto input = plain.Input(); input.enable_uv = true;
+  auto missing = R::Lower(input);
+  Check(!missing && missing.binary.empty() && missing.assembly.empty() && missing.error.find("UV export missing") != std::string::npos, "required UV export missing");
+}
 int main(int argc, char **argv) {
   const std::string mode = argc > 1 ? argv[1] : "";
   if (mode == "--positive")
     Positives({});
   else if (mode == "--reject")
     Rejections();
+  else if (mode == "--uv-positive")
+    UvPositives();
+  else if (mode == "--uv-reject")
+    UvRejections();
+  else if (mode == "--emit-uv" && argc == 3)
+    UvPositives(argv[2]);
   else if (mode == "--emit" && argc == 3)
     Positives(argv[2]);
   else {
-    std::cerr << "usage: --positive | --reject | --emit DIRECTORY\n";
+    std::cerr << "usage: --positive | --reject | --emit DIRECTORY | --uv-positive | --uv-reject | --emit-uv DIRECTORY\n";
     return 1;
   }
   std::cout << "mesh IR compute offline: " << (failures ? "FAIL" : "PASS")

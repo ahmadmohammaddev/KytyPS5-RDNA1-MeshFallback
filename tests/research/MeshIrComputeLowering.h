@@ -15,6 +15,10 @@ struct Input {
   Libs::Graphics::ShaderMeshInputInfo mesh;
   std::span<IR::Block *const> blocks;
   std::span<const IR::ExportInfo> exports;
+  // Research-only parameter-0 xy raw float bits, set 0/binding 2. The fixed
+  // 544-byte guarded buffer is independent of the position/index ABI.
+  bool enable_uv = false;
+  uint32_t uv_capacity = 64;
 };
 struct Result {
   std::vector<uint32_t> binary;

@@ -10,6 +10,11 @@ namespace Kyty::MeshResearch {
 namespace {
 using Op = IR::ValueOpcode;
 using Type = IR::Type;
+// Separate UV ABI already exercised by MeshTextureProbe.h: guards at
+// 0/1,130/131,134/135; 64 raw float2 slots begin at word 2.
+constexpr uint32_t kUvCapacity = 64, kUvWords = 136;
+constexpr uint32_t kUvCountWord = 132, kUvStatusWord = 133;
+static_assert(2 + kUvCapacity * 2 == 130 && kUvWords * 4 == 544);
 struct Value {
   Type type = Type::Void;
   std::string id;
@@ -22,7 +27,7 @@ struct Compiler {
   uint32_t next_id = 0;
   std::map<std::pair<Type, uint32_t>, Value> constants;
   std::unordered_map<const IR::Inst *, Value> values;
-  bool allocation = false, position = false, primitive = false;
+  bool allocation = false, position = false, primitive = false, uv = false;
   bool Fail(const std::string &why) {
     if (result.error.empty())
       result.error = why;
@@ -71,9 +76,10 @@ struct Compiler {
     body << id << " = " << op << " " << type << " " << args << "\n";
     return id;
   }
-  void Store(const std::string &index, const std::string &value) {
+  void Store(const std::string &index, const std::string &value,
+             const std::string &buffer = "%output") {
     auto ptr =
-        Emit("OpAccessChain", "%ptr_uint", "%output " + U(0) + " " + index);
+        Emit("OpAccessChain", "%ptr_uint", buffer + " " + U(0) + " " + index);
     body << "OpStore " << ptr << " " << value << "\n";
   }
   bool Export(const IR::Inst &inst) {
@@ -89,8 +95,13 @@ struct Compiler {
       return false;
     if (exp.compr || exp.vm || exp.index != 0)
       return Fail("compressed/valid-mask/auxiliary export unsupported");
+    const bool param = exp.kind == IR::ExportTargetKind::Parameter;
     bool pos = exp.kind == IR::ExportTargetKind::Position;
-    if (pos) {
+    if (param) {
+      if (!input.enable_uv || uv || exp.target != 0x20u || exp.en != 3u)
+        return Fail("require enabled single parameter-0 xy UV export");
+      uv = true;
+    } else if (pos) {
       if (position || exp.target != 0x0cu || exp.en != 15u)
         return Fail("require one full position-0 export");
       position = true;
@@ -101,13 +112,13 @@ struct Compiler {
             "require one packed triangle export; other outputs unsupported");
       primitive = true;
     }
-    const auto count = pos ? result.vertices : result.primitives;
+    const auto count = (pos || param) ? result.vertices : result.primitives;
     // We cannot invent values for masked-off allocated outputs. Prove the
     // predicate covers every allocated lane; predicates outside it stay masked.
     for (uint32_t lane = 0; lane < count; ++lane) {
       if (!mask.lanes[lane][0])
         return Fail("masked export leaves an allocated output undefined");
-      if (!pos) {
+      if (!pos && !param) {
         auto packed = data.lanes[lane][0];
         if (packed & 0xc0000000u)
           return Fail("cull/null/reserved primitive bits unsupported");
@@ -122,18 +133,20 @@ struct Compiler {
     body << "OpSelectionMerge " << merge << " None\nOpBranchConditional "
          << active << " " << then_label << " " << merge << "\n"
          << then_label << " = OpLabel\n";
-    auto base = Emit("OpIMul", "%uint", "%lane " + U(pos ? 4 : 3));
-    if (!pos)
+    auto base = Emit("OpIMul", "%uint", "%lane " + U(param ? 2 : (pos ? 4 : 3)));
+    if (param)
+      base = Emit("OpIAdd", "%uint", base + " " + U(2));
+    else if (!pos)
       base = Emit("OpIAdd", "%uint",
                   base + " " + U(MeshOutput::kIndicesStartWord));
-    auto packed = pos ? std::string()
+    auto packed = (pos || param) ? std::string()
                       : Emit("OpCompositeExtract", "%uint", data.id + " 0");
-    for (unsigned c = 0; c < (pos ? 4u : 3u); ++c) {
-      auto value = pos ? Emit("OpCompositeExtract", "%uint",
+    for (unsigned c = 0; c < (param ? 2u : (pos ? 4u : 3u)); ++c) {
+      auto value = (pos || param) ? Emit("OpCompositeExtract", "%uint",
                               data.id + " " + std::to_string(c))
                        : Emit("OpBitFieldUExtract", "%uint",
                               packed + " " + U(10 * c) + " " + U(10));
-      Store(Emit("OpIAdd", "%uint", base + " " + U(c)), value);
+      Store(Emit("OpIAdd", "%uint", base + " " + U(c)), value, param ? "%uv" : "%output");
     }
     body << "OpBranch " << merge << "\n" << merge << " = OpLabel\n";
     return true;
@@ -162,6 +175,8 @@ struct Compiler {
       if (result.vertices > input.mesh.max_vertices ||
           result.primitives > input.mesh.max_primitives)
         return Fail("allocation exceeds declared output capacity");
+      if (input.enable_uv && result.vertices > input.uv_capacity)
+        return Fail("allocation exceeds UV capacity");
       allocation = true;
       return true;
     }
@@ -258,6 +273,8 @@ struct Compiler {
              m.max_primitives == 0 ||
              m.max_primitives > MeshOutput::kMaxPrimitives)
       Fail("declared capacities outside guarded ABI");
+    else if (input.enable_uv && (input.uv_capacity == 0 || input.uv_capacity > kUvCapacity))
+      Fail("UV capacity outside guarded ABI");
     else if (input.blocks.size() != 1 || input.blocks[0] == nullptr)
       Fail("exactly one complete IR block required");
     if (!result.error.empty())
@@ -280,6 +297,8 @@ struct Compiler {
       }
     if (result.error.empty() && (!allocation || !position || !primitive))
       Fail("allocation/position/primitive export missing");
+    if (result.error.empty() && input.enable_uv && !uv)
+      Fail("UV export missing");
     if (!result.error.empty())
       return std::move(result);
     // Every invocation reaches this barrier: accepted IR has no CFG or early
@@ -291,6 +310,10 @@ struct Compiler {
     body << "OpSelectionMerge " << end << " None\nOpBranchConditional " << first
          << " " << commit << " " << end << "\n"
          << commit << " = OpLabel\n";
+    if (input.enable_uv) {
+      Store(U(kUvCountWord), U(result.vertices), "%uv");
+      Store(U(kUvStatusWord), U(0), "%uv");
+    }
     Store(U(MeshOutput::kCountsStartWord), U(result.vertices));
     Store(U(MeshOutput::kCountsStartWord + 1), U(result.primitives));
     Store(U(MeshOutput::kCountsStartWord + 2), U(0));
@@ -298,15 +321,17 @@ struct Compiler {
     body << "OpBranch " << end << "\n"
          << end << " = OpLabel\nOpReturn\nOpFunctionEnd\n";
     const auto length = U(MeshOutput::kTotalWords);
+    const auto uv_length = input.enable_uv ? U(kUvWords) : std::string();
     std::ostringstream module;
     module
         << "OpCapability Shader\nOpMemoryModel Logical GLSL450\n"
         << "OpEntryPoint GLCompute %main \"main\" %local "
-           "%output\nOpExecutionMode %main LocalSize 32 1 1\n"
+           "%output" << (input.enable_uv ? " %uv" : "") << "\nOpExecutionMode %main LocalSize 32 1 1\n"
         << "OpDecorate %local BuiltIn LocalInvocationIndex\nOpDecorate %array "
            "ArrayStride 4\n"
         << "OpMemberDecorate %block 0 Offset 0\nOpDecorate %block Block\n"
         << "OpDecorate %output DescriptorSet 0\nOpDecorate %output Binding 1\n"
+        << (input.enable_uv ? "OpDecorate %uv_array ArrayStride 4\nOpMemberDecorate %uv_block 0 Offset 0\nOpDecorate %uv_block Block\nOpDecorate %uv DescriptorSet 0\nOpDecorate %uv Binding 2\n" : "")
         << "%void = OpTypeVoid\n%bool = OpTypeBool\n%uint = OpTypeInt 32 "
            "0\n%uint4 = OpTypeVector %uint 4\n"
         << "%func = OpTypeFunction %void\n%ptr_in = OpTypePointer Input %uint\n"
@@ -316,6 +341,7 @@ struct Compiler {
         << "%ptr_block = OpTypePointer StorageBuffer %block\n%local = "
            "OpVariable %ptr_in Input\n"
         << "%output = OpVariable %ptr_block StorageBuffer\n"
+        << (input.enable_uv ? "%uv_array = OpTypeArray %uint " + uv_length + "\n%uv_block = OpTypeStruct %uv_array\n%ptr_uv = OpTypePointer StorageBuffer %uv_block\n%uv = OpVariable %ptr_uv StorageBuffer\n" : "")
         << body.str();
     result.assembly = module.str();
     spvtools::SpirvTools tools(SPV_ENV_VULKAN_1_3);
