@@ -201,3 +201,19 @@ The paired process checks both allowed UNORM sets and all float channels against
 the explicit2^-20 fixture budget before reporting PASS. Both CSVs are mandatory
 runner artifacts. Return the complete result folder. Intel auxiliary and skips
 cannot close this native gate. Previous nearest-only FAILs stay historical.
+
+## S-063 compiler-bundle execution milestone
+
+Fresh extraction on native RX: `Run-Bundle-Milestone.cmd -IsolateImplicitLayers`.
+This runs all existing combined checks plus offline compiler/proof identity tests
+and actual in-process bundle triangle/permuted/zero execution with public native
+pixel. Require21 stages PASS,15 actual RX strict1.3 selections/cleanups with zero
+validation errors/warnings,15 PPMs and5 complete4096-row float CSVs. Return the
+whole results folder. New bundle artifacts have prefix bundle-frontend_uv.
+Input payload binding0 is absent in bundle compute; descriptors1/2 and draw ranges
+come from its compiler plan, zero records no indexed draw. Offline reference
+compiler capability profile is not runtime-device admission; actual requested API
+and native device prerequisites are independently enforced. Vulkan12 auxiliary is
+explicit via -Mode Vulkan12 -BundleMilestone and cannot close native acceptance.
+Original CombinedMilestone and diagnostic mode retain their separate inventories.
+No production renderer/scheduler or game activation is included in this package.

@@ -140,7 +140,7 @@ try {
             }
         }
     }
-    foreach ($file in @('Run-Prototype.ps1','Run-Strict.cmd','Run-Draw.cmd','Run-Textured.cmd','Run-IR.cmd','Run-IR-Add.cmd','Run-IR-Milestone.cmd','Run-Frontend-Milestone.cmd','Run-Combined-Milestone.cmd','Run-Paired-Diagnostic.cmd','Analyze-PairedPrecision.py','README.md','THIRD_PARTY_NOTICES.md')) {
+    foreach ($file in @('Run-Prototype.ps1','Run-Strict.cmd','Run-Draw.cmd','Run-Textured.cmd','Run-IR.cmd','Run-IR-Add.cmd','Run-IR-Milestone.cmd','Run-Frontend-Milestone.cmd','Run-Combined-Milestone.cmd','Run-Bundle-Milestone.cmd','Run-Paired-Diagnostic.cmd','Analyze-PairedPrecision.py','README.md','THIRD_PARTY_NOTICES.md')) {
         CopyPayload "$PSScriptRoot/$file" $file
     }
     CopyPayload "$repo/LICENSE" 'LICENSE'
