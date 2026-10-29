@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 4.0. **Overall status:** S-040 clean frontend milestone package verified locally; actual frontend triangle/permuted/zero PASS Intel1.2 auxiliary. Stop for the independent native strict RX frontend gate; no production/game integration.
+> **Last edited:** 2026-10-29. **Plan revision:** 4.1. **Overall status:** S-041 native RX actual frontend triangle/permuted/zero gate PASS; all fifteen stages, eight strict selections/cleanups and images exact. Bounded frontend UV export next; production/game integration remains open.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P3 IN_PROGRESS: bounded IR geometry/arithmetic/UV and generated draw native gates verified; real frontend/NGG compatibility remains open** |
-| Current subtask | S-039 actual frontend triangle/permuted/zero indexed draw PASS Intel auxiliary; consolidated native frontend gate pending |
+| Current subtask | S-041 native frontend milestone acceptance DONE with evidence |
 | Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
-| Last verified git commit | S-040 clean package source `87e912bd9786abd206b635ff7c68a832562f9b8a`, build20261029T081156341Z |
+| Last verified git commit | S-041 input `39b32c36096e20e95233500c91ea75f511d008a1`; tested package source87e912bd/build20261029T081156341Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | Clean committed package source; pinned ancestry and all 14 recursive submodules matching/clean |
 | Build status | S-040 clean two-job focused package build PASS; no memory retry/PGO/IPO |
 | Native RDNA1 smoke test | S-035 PASS for generated triangle/permuted/zero and UV/UV-zero sampled draws: native RX5700XT API1.4.308 AMD25.6.1, strict1.3, all blobs/pixels exact and zero errors/warnings through all five cleanups |
-| Passing tests | S-040 29 cases: 21 PASS/8 strict SKIPPED/0 FAIL, 3.89 s; 15 expected relocation/integrity/runtime/guard outcomes verified |
-| Known blockers / limits | New native frontend strict RX gate pending; indexed/resources/CFG/LDS/dynamic counts/noncoherent/production/game/timer remain open |
-| Next single actionable task | Run verified ZIP on RX: Run-Frontend-Milestone.cmd -IsolateImplicitLayers; require 15 stages/eight native strict selections/cleanups, exact blobs/eight images and zero validation messages; return complete result folder |
+| Passing tests | S-041 all15 desktop stages PASS, 0 FAIL/SKIPPED; eight native strict1.3 cases/cleanups, buffers/images exact |
+| Known blockers / limits | No blocker for next bounded local UV task; indexed/resources/CFG/LDS/dynamic counts/noncoherent/production/game/timer remain open |
+| Next single actionable task | Actual frontend bounded parameter0 xy UV export offline: metadata/mask rejection, independent UV values, unchanged geometry ABI, SPIR-V1.3 and focused regressions; runtime integration follows separately |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -222,6 +222,8 @@ Status: **IN_PROGRESS** — bounded P3.1–P3.6 gates have scoped evidence; S-03
 - P3.5 offline UV parameter **DONE offline (S-032/E-032)**: opt-in parameter-0 xy into separate 544-byte guarded set0/binding2 storage, source-backed metadata, finite coverage/capacity rejection, independent binary/snapshot checker and eight detected valid mutants. UV GPU execution/textured integration accepted in S-035; general varying/guest semantics remain open.
 
 - P3.6 generated-IR textured draw **DONE with native evidence (S-033/E-033, S-035/E-035)**: actual generated geometry and UV buffers feed sampled indexed drawing on Intel auxiliary, complete blobs/images exact and validation clean. Zero-output and clear controls plus wrong-UV/status/fragment/missing-module probes pass. Consolidated strict RX gate accepted in S-035; future related development remains batched under D-028.
+
+- P3.7 bounded actual frontend geometry **DONE with native evidence (S-041)**: public ISA decoder/frontend/normal pre-resource SSA preparation, declared non-indexed single-group specialization and complete linear graph lowerer produce triangle/permuted/zero with native strict RX exact buffers/pixels and zero errors/warnings through cleanup. General frontend/NGG semantics remain open.
 
 ### P4 — GPU output-buffer and traditional draw prototype
 Status: **IN_PROGRESS** overall; bounded P4.1/P4.2/P4.3 **DONE with native strict RX evidence** (S-017/S-019/S-021). Textured triangle and compute UVs, all guarded buffers/pixels/boundary recovery exact, zero validation errors/warnings. Broader memory/measurement/semantic coverage remains open. D-024 prioritized translation feasibility; S-035 now verifies generated IR geometry/UV drawing on RX, and D-032 selects the remaining real frontend/NGG boundary next. See `docs/RDNA1_RX_TEXTURE_S021.md` and `docs/RDNA1_RX_IR_MILESTONE_S035.md`.
@@ -866,6 +868,13 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 - Clean scoped build PASS; 29 CTests 21 PASS/8 strict SKIPPED/0 FAIL (3.89 s). Fifteen expected Unicode relocation/unrelated-CWD/integrity/offline/auxiliary/strict/RX-guard/legacy/conflict/missing/tamper/launcher outcomes PASS. Eight images independently checked (32,768 pixels); actual Intel auxiliary full buffers/pixels and zero errors/warnings through eight cleanups. Native frontend RDNA1 and Astro Bot NOT RUN; all prior failures/provenance limits retained.
 - Necessary next hardware gate: normal-user `Run-Frontend-Milestone.cmd -IsolateImplicitLayers` from this ZIP. Require all 15 stages PASS, eight native RX5700XT strict1.3 selections and cleanups, all buffers/images exact, zero errors/warnings, matching source/build, complete result folder. Stop under D-033; no push or next-phase work.
 
+### Session S-041 — 2026-10-29 — Native actual frontend acceptance
+
+- Input39b32c36 clean correct branch, pinned ancestry/all14 submodules verified; initial sandbox Git access failure retried outside sandbox successfully. Copied/hash-verified all24 user files to ignored `_Build/p3-s041/`; no source/build/GPU rerun or push.
+- Package source87e912bd/build20261029T081156341Z matches S-040. All15 desktop stages PASS, no FAIL/SKIP; eight native RX5700XT API1.4.308 AMD25.6.1 selections strict1.3, zero errors/warnings through all eight cleanups, full guarded outputs and16 pixel comparisons exact. All8 supplied images match independently verified references (32,768 pixels). Report `docs/RDNA1_RX_FRONTEND_S041.md`.
+- Scoped unit/SPIR-V/Vulkan/RDNA1 PASS; desktop compilation/GLSL compile/Vulkan1.2/game NOT RUN. Missing raw readback/ZIP hash/metrics/OS/ICD/noncoherent evidence recorded. Bounded frontend gate complete, broader P3/P5/game open.
+- Next one local task: actual frontend parameter0 xy UV export into existing544-byte guarded ABI, explicit metadata/mask rejection, independent values, strict SPIR-V validation and focused regressions/provenance; runtime integration follows separately under batched RX cadence. Evidence review stops here; no next implementation.
+
 ## 8. Change history (append-only)
 
 | Date | Plan revision | Sections | Reason / evidence |
@@ -925,6 +934,8 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 | 2026-10-29 | 3.9 | frontend module generation/runtime/CMake/plan/AGENTS | S-039 executes actual frontend-generated geometry with independent complete oracles; native gate pending |
 
 | 2026-10-29 | 4.0 | consolidated frontend package/runner/README/plan/AGENTS | S-040 prepares one coherent native frontend gate under D-028/D-033; clean package verification precedes handoff |
+
+| 2026-10-29 | 4.1 | checkpoint/P3/evidence/handoff; AGENTS/native report | S-041 accepts native actual frontend geometry and selects bounded frontend UV export next |
 
 ## 9. Quick commands (reference; verify before running)
 
