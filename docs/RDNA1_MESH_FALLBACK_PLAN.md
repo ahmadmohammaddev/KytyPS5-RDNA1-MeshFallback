@@ -1130,3 +1130,13 @@ Complete dirty snapshots -01/-02; focused2-job builds PASS, final43 cases32 PASS
 Next one task clean consolidated acceptance package: mandatory float CSV inventory/43-case suite/Unicode relocation/integrity/API/RX guards/negative tests, then one strict native RX acceptance command. Source committed before packaging; retain oldFAIL, no acceptance closure from replay or Intel.
 
 Change history5.7: S-057 replaces nearest-only oracle with portable conversion sets and independent mandatory bounded numerical float gate.
+
+### S-058 — clean acceptance package preparation
+
+Input4f633f3d clean branch/14 submodules. Mandatory paired triangle/zero CSV
+inventory added to combined runner. Source commit precedes clean packaging;
+verify43 focused tests, manifests/checksums/imports/licenses, relocation,
+strict/auxiliary/RX guards and valid-wrong-module failures. Next only verified
+native RX Run-Combined-Milestone.cmd -IsolateImplicitLayers with19 stages,
+12 native cleanups, exact buffers/coverage/permitted UNORM+bounded float and
+12 PPM/2 CSV artifacts. Do not close native gate from Intel. No push/game/wiring.

@@ -224,3 +224,13 @@ Nearest-only oracle exceeds Vulkan adjacent-integer conversion guarantee; all ob
 Per-channel exact rational UNORM floor/ceil sets, exact integer/clear/saturation, separate nearest diagnostics. Normal paired runs additionally require full RGBA32F numeric error<=2^-20 (explicit conservative fixture budget, not universal guarantee), finite/channel/clear/zero controls. Full dirty snapshots -01/-02 retained.43 cases32 PASS/11 strict SKIPPED/0 FAIL(8.70s), Intel1.2 paired triangle/zero validation-clean/maxerror1.17317078e-7. Wrong bridge FAIL488 UNORM pixels and separately numericFAIL0.952628968 despite structural0;44 modules unchanged. Report docs/RDNA1_PAIRED_ACCEPTANCE_S057.md; evidence `_Build/p3-s057/`. Historical RXFAIL retained; new strict RX acceptance and gameNOT RUN.
 
 Next single task clean acceptance package with mandatory float CSV artifact inventory,43 focused cases, relocation/integrity/API/RX guards and wrong-module checks; then fresh strict RX handoff. No renderer wiring or push.
+
+### S-058 — clean acceptance package preparation
+
+Input4f633f3d clean branch/14 submodules. Mandatory paired triangle/zero CSV
+inventory added to combined runner. Source commit precedes clean packaging;
+verify43 focused tests, manifests/checksums/imports/licenses, relocation,
+strict/auxiliary/RX guards and valid-wrong-module failures. Next only verified
+native RX Run-Combined-Milestone.cmd -IsolateImplicitLayers with19 stages,
+12 native cleanups, exact buffers/coverage/permitted UNORM+bounded float and
+12 PPM/2 CSV artifacts. Do not close native gate from Intel. No push/game/wiring.

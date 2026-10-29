@@ -215,7 +215,7 @@ try {
         }
         if ($CombinedMilestone) {
             $plans += @{name='runtime-paired'; arguments=@("--paired-draw$suffix",'--image-output',(Join-Path $results 'paired.ppm')); devices=2;
-              images=@('paired-frontend_uv.ppm','paired-frontend_uv_zero.ppm')}
+              images=@('paired-frontend_uv.ppm','paired-frontend_uv_zero.ppm','paired-frontend_uv.csv','paired-frontend_uv_zero.csv')}
         }
         if ($PairedPrecisionDiagnostic) {
             # Always run after the original paired stage, even if that stage fails.

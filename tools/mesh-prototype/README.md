@@ -191,3 +191,13 @@ adjacent UNORM value. Nearest-only differences remain printed for diagnosis.
 The standalone float diagnostic now also enforces that numeric budget; its old
 S-055 observational-only description above is historical. Original S-054/S-056
 failures remain retained. Native acceptance requires a fresh strict RX rerun.
+
+## S-058 acceptance handoff
+
+Fresh extraction on RX: `Run-Combined-Milestone.cmd -IsolateImplicitLayers`.
+Require19 stages PASS,12 native strict device selections/cleanup summaries,
+12 PPM images plus paired-frontend_uv.csv and paired-frontend_uv_zero.csv.
+The paired process checks both allowed UNORM sets and all float channels against
+the explicit2^-20 fixture budget before reporting PASS. Both CSVs are mandatory
+runner artifacts. Return the complete result folder. Intel auxiliary and skips
+cannot close this native gate. Previous nearest-only FAILs stay historical.
