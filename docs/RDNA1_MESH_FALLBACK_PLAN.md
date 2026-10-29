@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 5.1. **Overall status:** S-051 actual production pixel compiler/vertex bridge offline pairing PASS, independent interface validation and rejection coverage. Combined generated-stage runtime is next; production renderer/game still unimplemented.
+> **Last edited:** 2026-10-29. **Plan revision:** 5.2. **Overall status:** S-051 actual production pixel compiler/vertex bridge offline pairing PASS, independent interface validation and rejection coverage. Combined generated-stage runtime is next; production renderer/game still unimplemented.
 
 ## 0. Mission and boundaries
 
@@ -1063,3 +1063,11 @@ Change history5.0: S-050 adds isolated reflected bridge and offline tests; expli
 - Next single local task isolated combined actual frontend geometry/UV+generated bridge+native-emitted public pixel runtime, independent full buffers/RGBA/clear+zero controls and cleanup validation, strict1.3 vs auxiliary1.2 separated. Native transfer only at coherent combined-stage gate per D-028; no next implementation in S-051.
 
 Change history5.1: S-051 closes actual production pixel emitter offline pairing; retains actual combined pipeline runtime separately.
+
+### Session S-052 — 2026-10-29 — Combined actual generated-stage runtime
+
+- Inputfadec1db clean branch/14 submodules. Add isolated API-specific paired mode: actual frontend geometry/UV compute, generated bridge/native production public pixel. Eight native pair modules from full pairing producer, exact active path preflight and float-control prerequisite check. Independent integer RGBA, clear/zero/full geometry+UV oracles and existing barriers/cleanup; borrowed UV prevents authored overwrite. No native/default renderer changes.
+- Two2-job builds PASS with full snapshots p3-s052-pre-build-01/-02; new indentation warning fixed/retained initial log.41 cases31 PASS/10 strict SKIPPED/0 FAIL(5.10s). Actual Intel paired buffers/pixels and cleanups exact/zero validation. Fraction-based PPM oracle PASS; valid swapped bridge FAILS488 pixels, missing strict bridge FAILS before discovery. Report docs/RDNA1_COMBINED_RUNTIME_S052.md and ignored `_Build/p3-s052/`.
+- Compilation/unit/SPIR-V/Intel auxiliary Vulkan scoped PASS; native combined RX and Astro Bot NOT RUN. No push/new package. Next clean consolidated combined-stage package/runner with41-case regressions/relocation/integrity/auxiliary/strict/RX guard verification, then stop for native gate per D-028/D-033.
+
+Change history5.2: combined actual frontend compute/generated bridge/native pixel runtime, strict vs auxiliary explicit, native transfer gate next.

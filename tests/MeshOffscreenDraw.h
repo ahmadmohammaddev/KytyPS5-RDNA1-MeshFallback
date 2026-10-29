@@ -10,6 +10,7 @@ bool TrianglePixel(uint32_t x, uint32_t y) {
 	       63 * (2 * static_cast<int>(x) + 1 - 32) +
 	       64 * (2 * static_cast<int>(y) + 1 - 32) < 4032;
 }
+#include "MeshPairedDrawOracle.h"
 size_t PixelMismatches(const uint8_t* rgba, bool triangle) {
 	size_t mismatches = 0;
 	for (uint32_t y = 0; y < kDrawSize; ++y) {
@@ -86,7 +87,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
                       VkQueue queue, VkCommandBuffer cmd, VkFence fence,
                       VkPipeline compute, VkPipelineLayout compute_layout, VkDescriptorSet set,
                       GpuBuffer& output, GpuBuffer& payload, const std::filesystem::path& image_path, bool textured = false,
-                      const Scenario* generated = nullptr, GpuBuffer* generated_uv = nullptr) {
+                      const Scenario* generated = nullptr, GpuBuffer* generated_uv = nullptr, bool paired = false) {
 	// Resolve every entry point, including teardown, before creating any draw objects.
 #define DRAW_PROC(name) auto name = reinterpret_cast<PFN_vk##name>(proc(device, "vk" #name)); \
 	if (name == nullptr) { Expect(false, "draw entry point vk" #name); return false; }
@@ -190,7 +191,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 	if (!CheckVk(CreateFramebuffer(device, &fb, nullptr, &framebuffer), "offscreen framebuffer")) { return false; }
 	VkPipelineShaderStageCreateInfo stages[2] = {};
 	for (size_t i = 0; i < 2; ++i) {
-		const auto words = LoadSpirvFile(textured ? TextureModulePath(api13, i == 0 ? "vert" : "frag") : DrawModulePath(api13, i == 0 ? "vert" : "frag"), "draw-runtime");
+		const auto words = LoadSpirvFile(paired ? PairedModulePath(api13,i==0?"vert":"frag") : textured ? TextureModulePath(api13, i == 0 ? "vert" : "frag") : DrawModulePath(api13, i == 0 ? "vert" : "frag"), "draw-runtime");
 		if (words.empty()) { return false; }
 		VkShaderModuleCreateInfo sm = {};
 		sm.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -386,10 +387,10 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		std::memcpy(actual.words.data(), output.mapped, kTotalBytes);
 		CompareBlobWords(actual, draw ? scenario.expected : scenario.initial, "draw exact full output blob including guards");
 		if (textured && !texture.Check(draw, scenario.vertex_count)) { return false; }
-		const size_t mismatches = textured ? TextureMismatches(static_cast<const uint8_t*>(readback.mapped), draw && scenario.primitive_count != 0)
+		const size_t mismatches = paired ? PairedMismatches(static_cast<const uint8_t*>(readback.mapped),draw && scenario.primitive_count!=0) : textured ? TextureMismatches(static_cast<const uint8_t*>(readback.mapped), draw && scenario.primitive_count != 0)
 		                                    : PixelMismatches(static_cast<const uint8_t*>(readback.mapped), draw && scenario.primitive_count != 0);
 		PrintLine1("offscreen %s: 64x64 RGBA pixels mismatched=%zu/4096; full blob checked",
-		           draw ? (scenario.primitive_count == 0 ? "compute-zero-output" : (textured ? "textured-compute-indexed-triangle" : "compute-indexed-triangle")) : "clear-only-control", mismatches);
+		           draw ? (scenario.primitive_count == 0 ? "compute-zero-output" : (paired ? "paired-production-pixel" : textured ? "textured-compute-indexed-triangle" : "compute-indexed-triangle")) : "clear-only-control", mismatches);
 		Expect(mismatches == 0, "all 4096 offscreen RGBA pixels match");
 		if (draw && !image_path.empty()) {
 			std::ofstream file(image_path, std::ios::binary | std::ios::trunc);

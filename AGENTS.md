@@ -185,3 +185,6 @@ Bounded reflected vertex bridge offline PASS (actual guest ABI float4 vs authore
 
 ## Current checkpoint S-051
 Actual top-level production pixel ISA compiler/native emitter paired with vertex bridge offline PASS. Plain/xy accepted, z/w/remap/flat/no-perspective/missing UV rejected; independently matched binary interfaces. First full shader_cfg_tests2-job build PASS;37 cases28 PASS/9 strict SKIPPED/0 FAIL(4.65s), IR validation/SSA-use byte-equivalence pair PASS. Snapshot/logs/paired SPIR-V `_Build/p3-s051/`; report docs/RDNA1_PIXEL_BRIDGE_S051.md. Next isolated combined actual frontend geometry+UV/generated bridge/production pixel runtime with independent buffers/RGBA/clear+zero controls and cleanup validation. New paired runtime/RX/game NOT RUN; native transfer batched at combined gate, no push.
+
+## Current checkpoint S-052
+Actual generated stages combined draw PASS Intel1.2: complete geometry/UV/RGBA/clear/zero and two cleanups zero validation.41 cases31 PASS/10 strict SKIPPED/0 FAIL(5.10s), two full snapshots; valid wrong bridge/missing strict fail correctly. Report docs/RDNA1_COMBINED_RUNTIME_S052.md. Next clean consolidated paired milestone package/runner and relocation/integrity/API/device checks, then RX strict gate. Native combined RX/game NOT RUN; no renderer activation or push.

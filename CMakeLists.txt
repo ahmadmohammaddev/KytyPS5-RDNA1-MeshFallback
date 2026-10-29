@@ -1003,10 +1003,24 @@ add_custom_command(OUTPUT ${mesh_frontend_modules}
   COMMAND $<TARGET_FILE:mesh_ir_frontend_tests> --emit "${mesh_proto_generated_dir}"
   DEPENDS mesh_ir_frontend_tests VERBATIM)
 add_custom_target(mesh_frontend_generated_shaders DEPENDS ${mesh_frontend_modules})
+set(mesh_paired_modules)
+foreach(api IN ITEMS 12 13)
+  foreach(kind IN ITEMS plain uv)
+    foreach(stage IN ITEMS vert frag)
+      list(APPEND mesh_paired_modules "${mesh_proto_generated_dir}/mesh_paired_${kind}_${stage}_vk${api}.spv")
+    endforeach()
+  endforeach()
+endforeach()
+add_custom_command(OUTPUT ${mesh_paired_modules}
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${mesh_proto_generated_dir}"
+  COMMAND ${CMAKE_COMMAND} -E env "KYTY_MESH_PAIRED_EMIT=${mesh_proto_generated_dir}/mesh_paired"
+    $<TARGET_FILE:shader_cfg_tests> --mesh-pixel-bridge-only
+  DEPENDS shader_cfg_tests VERBATIM)
+add_custom_target(mesh_paired_generated_shaders DEPENDS ${mesh_paired_modules})
 add_executable(mesh_compute_proto_tests EXCLUDE_FROM_ALL
 	"${KYTY_TESTS_DIR}/MeshComputePrototypeTests.cpp"
 )
-add_dependencies(mesh_compute_proto_tests mesh_compute_proto_shaders mesh_offscreen_shaders mesh_texture_shaders mesh_ir_generated_shaders mesh_ir_uv_generated_shaders mesh_frontend_generated_shaders)
+add_dependencies(mesh_compute_proto_tests mesh_compute_proto_shaders mesh_offscreen_shaders mesh_texture_shaders mesh_ir_generated_shaders mesh_ir_uv_generated_shaders mesh_frontend_generated_shaders mesh_paired_generated_shaders)
 target_link_libraries(mesh_compute_proto_tests spirv-tools Vulkan::Headers ${CMAKE_DL_LIBS})
 target_include_directories(mesh_compute_proto_tests PRIVATE ${inc_headers})
 target_compile_definitions(mesh_compute_proto_tests PRIVATE VK_NO_PROTOTYPES)
@@ -1526,6 +1540,13 @@ if(BUILD_TESTING)
 	add_test(NAME mesh_ir_uv_rejections COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --uv-reject)
 	add_test(NAME mesh_ir_frontend_compatibility COMMAND $<TARGET_FILE:mesh_ir_frontend_tests>)
 	set_tests_properties(mesh_ir_frontend_compatibility PROPERTIES TIMEOUT 120)
+  add_test(NAME mesh_paired_oracle COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --check-paired-oracle)
+  add_test(NAME mesh_paired_spirv COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --validate-paired-spirv)
+  add_test(NAME mesh_paired_draw COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --paired-draw
+    --image-output "${PROJECT_BINARY_DIR}/mesh-paired-vk13.ppm")
+  add_test(NAME mesh_paired_draw_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --paired-draw-vulkan12
+    --image-output "${PROJECT_BINARY_DIR}/mesh-paired-vk12.ppm")
+  set_tests_properties(mesh_paired_draw mesh_paired_draw_vk12 PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 41)
   add_test(NAME mesh_frontend_textured_draw COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --frontend-texture
     --image-output "${PROJECT_BINARY_DIR}/mesh-frontend-texture-vk13.ppm")
   add_test(NAME mesh_frontend_textured_draw_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --frontend-texture-vulkan12

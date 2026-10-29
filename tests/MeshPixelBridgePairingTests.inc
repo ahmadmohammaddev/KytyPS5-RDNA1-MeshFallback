@@ -34,6 +34,19 @@ void TestMeshPixelBridgePairing() {
     const auto ids=SpirvDecorationValueTargets(pixel.spirv,30,0);
     Check(!ids.empty(),"actual pixel exposes location0");
     if(parameter)Check(!M::BuildVertexBridge(pixel.spirv,false),"actual parameter requires UV export");
+    if(const char* prefix=std::getenv("KYTY_MESH_PAIRED_EMIT")) {
+      for(const auto& pair:{std::pair{"frag",&pixel.spirv},std::pair{"vert",&bridge.binary}}) {
+        std::string assembly;Check(tools.Disassemble(*pair.second,&assembly),"paired disassembly");
+        for(int api:{12,13}) {
+          spvtools::SpirvTools validator(api==13?SPV_ENV_VULKAN_1_3:SPV_ENV_VULKAN_1_2);
+          std::vector<uint32_t> words;
+          Check(validator.Assemble(assembly,&words) && validator.Validate(words),"paired separate API assembly/validation");
+          const auto path=std::string(prefix)+(parameter?"_uv_":"_plain_")+pair.first+"_vk"+std::to_string(api)+".spv";
+          auto* file=std::fopen(path.c_str(),"wb");Check(file!=nullptr,"API paired artifact opens");
+          Check(std::fwrite(words.data(),sizeof(uint32_t),words.size(),file)==words.size(),"API paired artifact saved");std::fclose(file);
+        }
+      }
+    }
     if(const char* prefix=std::getenv("KYTY_MESH_PIXEL_BRIDGE_DUMP")) {
       for(const auto& pair:{std::pair{"pixel",&pixel.spirv},std::pair{"bridge",&bridge.binary}}) {
         const auto path=std::string(prefix)+(parameter?"-uv-":"-plain-")+pair.first+".spv";

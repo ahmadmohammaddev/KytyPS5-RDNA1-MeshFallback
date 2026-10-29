@@ -594,7 +594,7 @@ int CheckHostFixtures() {
 
 // Core-and-synchronization-validated dispatch at the explicitly requested API level.
 // A single registered skip code covers missing runtime prerequisites, never API failures.
-int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem::path& image_path = {}, bool textured = false, const char* ir_variant = nullptr) {
+int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem::path& image_path = {}, bool textured = false, const char* ir_variant = nullptr, bool paired = false) {
 	const bool ir_uv = ir_variant && (std::strcmp(ir_variant, "uv") == 0 || std::strcmp(ir_variant, "uv_zero") == 0 || std::strcmp(ir_variant, "frontend_uv") == 0 || std::strcmp(ir_variant, "frontend_uv_zero") == 0);
 	void* loader = LoadLoaderLibrary();
 	if (loader == nullptr) {
@@ -984,6 +984,14 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 		}
 		PrintLine1("draw-mode: conventional indexed offscreen triangle, graphics+compute queue, API %s", ApiString(required_api).c_str());
 	}
+  if(paired) {
+    if(!vGetPhysicalDeviceProperties2) {PrintLine1("SKIP: float-control property query unavailable");close_instance();return kSkip;}
+    VkPhysicalDeviceFloatControlsProperties controls{};controls.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES;
+    VkPhysicalDeviceProperties2 props{};props.sType=VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;props.pNext=&controls;
+    vGetPhysicalDeviceProperties2(selected,&props);
+    if(!controls.shaderSignedZeroInfNanPreserveFloat32){PrintLine1("SKIP: native pixel requires signed-zero/Inf/NaN float32 preservation");close_instance();return kSkip;}
+    PrintLine1("paired native pixel float32 preservation: supported");
+  }
 	// Never downgrade the requested experiment. The auxiliary 1.2 run is an
 	// explicit CLI/CTest case, even on a device that also supports Vulkan 1.3.
 	const bool  device_13_capable = required_api >= VK_API_VERSION_1_3;
@@ -1516,7 +1524,7 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 	}
 	if (textured && !RunOffscreenDraw(device, get_device_proc, selected_memory, device_13_capable,
 	                                  queue, command_buffer, submit_fence, pipeline, pipeline_layout,
-	                                  descriptor_set, output_buffer, payload_buffer, image_path, true, ir_uv ? &scenarios.front() : nullptr, ir_uv ? &uv_buffer : nullptr)) {
+	                                  descriptor_set, output_buffer, payload_buffer, image_path, true, ir_uv ? &scenarios.front() : nullptr, ir_uv ? &uv_buffer : nullptr, paired)) {
 		return fail_and_cleanup();
 	}
 	// Validation and comparison results decide the run result; warnings alone do
@@ -1542,7 +1550,8 @@ int RunMain(int argc, char** argv) {
 		return g_failures == 0 ? 0 : 1;
 	}
 	const std::string mode = argc >= 2 ? argv[1] : "";
-	const bool frontend_texture = mode == "--frontend-texture" || mode == "--frontend-texture-vulkan12";
+	const bool paired = mode=="--paired-draw" || mode=="--paired-draw-vulkan12";
+	const bool frontend_texture = paired || mode == "--frontend-texture" || mode == "--frontend-texture-vulkan12";
 	const bool ir_texture = frontend_texture || mode == "--ir-texture" || mode == "--ir-texture-vulkan12";
 	const bool ir_frontend = mode == "--frontend-draw" || mode == "--frontend-draw-vulkan12";
 	const bool ir_draw = ir_frontend || mode == "--ir-draw" || mode == "--ir-draw-vulkan12";
@@ -1557,16 +1566,19 @@ int RunMain(int argc, char** argv) {
 	} else if (argc != 2) { PrintLine1("FAIL: unexpected command arguments"); return 1; }
 	if (mode == "--check-texture-fixtures") { return CheckTextureFixtures(); }
 	if (mode == "--validate-texture-spirv") { return ValidateTextureShaders() ? 0 : 1; }
+	if(mode=="--check-paired-oracle")return CheckPairedOracle();
+	if(mode=="--validate-paired-spirv")return ValidatePairedShaders(true)&&ValidatePairedShaders(false)?0:1;
 	if (mode == "--check-draw-oracle") { return CheckDrawOracle(); }
 	if (mode == "--validate-draw-spirv") { return ValidateDrawShaders() ? 0 : 1; }
 	if (mode == "--check-host-fixtures") { return CheckHostFixtures(); }
 	const bool validate_only = mode == "--validate-spirv";
-	const bool runtime13 = mode == "--frontend-texture" || mode == "--frontend-draw" || mode == "--run" || mode == "--draw" || mode == "--texture" || mode == "--ir" || mode == "--ir-add" || mode == "--ir-draw" || mode == "--ir-texture";
-	const bool runtime12 = mode == "--frontend-texture-vulkan12" || mode == "--frontend-draw-vulkan12" || mode == "--run-vulkan12" || mode == "--draw-vulkan12" || mode == "--texture-vulkan12" || mode == "--ir-vulkan12" || mode == "--ir-add-vulkan12" || mode == "--ir-draw-vulkan12" || mode == "--ir-texture-vulkan12";
+	const bool runtime13 = mode=="--paired-draw" || mode == "--frontend-texture" || mode == "--frontend-draw" || mode == "--run" || mode == "--draw" || mode == "--texture" || mode == "--ir" || mode == "--ir-add" || mode == "--ir-draw" || mode == "--ir-texture";
+	const bool runtime12 = mode=="--paired-draw-vulkan12" || mode == "--frontend-texture-vulkan12" || mode == "--frontend-draw-vulkan12" || mode == "--run-vulkan12" || mode == "--draw-vulkan12" || mode == "--texture-vulkan12" || mode == "--ir-vulkan12" || mode == "--ir-add-vulkan12" || mode == "--ir-draw-vulkan12" || mode == "--ir-texture-vulkan12";
 	if (!validate_only && !runtime13 && !runtime12) {
-		std::printf("[p41] usage: %s --validate-spirv | --run | --run-vulkan12 | --check-host-fixtures | --validate-module-vk13 FILE | --draw | --draw-vulkan12 [--image-output FILE] | --check-draw-oracle | --validate-draw-spirv | --texture | --texture-vulkan12 [--image-output FILE] | --check-texture-fixtures | --validate-texture-spirv | --ir | --ir-vulkan12 | --ir-add | --ir-add-vulkan12 | --ir-draw | --ir-draw-vulkan12 | --ir-texture | --ir-texture-vulkan12 | --frontend-draw | --frontend-draw-vulkan12 | --frontend-texture | --frontend-texture-vulkan12 [--image-output FILE]\n", argv[0]);
+		std::printf("[p41] usage: %s --validate-spirv | --run | --run-vulkan12 | --check-host-fixtures | --validate-module-vk13 FILE | --draw | --draw-vulkan12 [--image-output FILE] | --check-draw-oracle | --validate-draw-spirv | --texture | --texture-vulkan12 [--image-output FILE] | --check-texture-fixtures | --validate-texture-spirv | --ir | --ir-vulkan12 | --ir-add | --ir-add-vulkan12 | --ir-draw | --ir-draw-vulkan12 | --ir-texture | --ir-texture-vulkan12 | --frontend-draw | --frontend-draw-vulkan12 | --frontend-texture | --frontend-texture-vulkan12 | --paired-draw | --paired-draw-vulkan12 | --check-paired-oracle | --validate-paired-spirv [--image-output FILE]\n", argv[0]);
 		return 1;
 	}
+	if(paired && !ValidatePairedShaders(runtime13))return 1;
 	if (!RunOfflineValidation() || (draw && !ValidateDrawShaders()) || (textured && !ValidateTextureShaders())) {
 		PrintLine1("RESULT: FAIL (offline SPIR-V validation failed; the authored shader is "
 		           "not a valid prototype)");
@@ -1602,19 +1614,20 @@ int RunMain(int argc, char** argv) {
 				name += image_path.extension();
 				variant_image = image_path.parent_path() / name;
 			}
-			dispatch_result = RunPrototype(requested_api, ir_draw || ir_texture, variant_image, ir_texture, variant);
+			dispatch_result = RunPrototype(requested_api, ir_draw || ir_texture, variant_image, ir_texture, variant, paired);
 			if (dispatch_result != 0 || g_failures != 0 || g_validation_errors != 0) { break; }
 		}
 	} else { dispatch_result = RunPrototype(requested_api, draw, image_path, textured); }
 	// Setup/teardown errors must never be hidden by an otherwise legitimate skip.
-	if (g_failures != 0 || g_validation_errors != 0) {
+	if (g_failures != 0 || g_validation_errors != 0 || (paired && g_validation_warnings != 0)) {
 		PrintLine1("RESULT: FAIL (failures=%d validation-errors=%d including cleanup)",
 		           g_failures, g_validation_errors.load());
 		return 1;
 	}
 	if (dispatch_result == 0) {
+		if(paired)PrintLine1("PAIRED RESULT: PASS (actual frontend geometry/UV, generated bridge, native pixel; exact complete buffers/RGBA; zero validation including cleanup)");
 		if (ir_mode) { PrintLine1("IR RESULT: PASS (generated modules, exact full blobs, validation including cleanup)"); }
-		if (ir_texture) { PrintLine1("IR TEXTURE RESULT: PASS (generated UV and geometry, exact full buffers/RGBA, validation including cleanup)"); }
+		if (ir_texture && !paired) { PrintLine1("IR TEXTURE RESULT: PASS (generated UV and geometry, exact full buffers/RGBA, validation including cleanup)"); }
 		if (textured && !ir_texture) { PrintLine1("TEXTURE RESULT: PASS (sampled texture, compute UVs/guards/boundaries, exact RGBA, validation including cleanup)"); }
 		if (draw) { PrintLine1("DRAW RESULT: PASS (clear control + compute-generated indexed triangle, all pixels/full blob, validation including cleanup)"); }
 		PrintLine1("RESULT: PASS (Vulkan %s%s; requested full-blob scenarios; core + synchronization validation including cleanup)",
