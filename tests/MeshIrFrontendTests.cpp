@@ -1,4 +1,5 @@
-﻿#include "graphics/shader/recompiler/MeshComputeAdapter.h"
+﻿#include "MeshBundleFixture.h"
+#include "graphics/shader/recompiler/MeshComputeAdapter.h"
 #include "graphics/host_gpu/renderer/meshFallbackBundle.h"
 #include "graphics/shader/recompiler/MeshComputeLowering.h"
 #include "graphics/shader/recompiler/MeshComputeSpecialization.h"
@@ -66,6 +67,33 @@ std::vector<uint32_t> Fixture(bool consumes_prologue,bool uv=false) {
     code.insert(code.end(),std::begin(parameter),std::end(parameter));
   }
   return code;
+}
+Libs::Graphics::MeshFallback::CompileBundleResult KytyMeshFixture::Build(unsigned variant,std::span<const uint32_t> fragment) {
+  namespace B=Libs::Graphics::MeshFallback;
+  if(variant>2){B::CompileBundleResult bad;bad.error="unknown public bundle fixture";return bad;}
+  auto code=Fixture(true,true);
+  if(variant==1)for(auto& word:code)if(word==0x00200400)word=0x00100002;
+  if(variant==2)code[1]=0;
+  S::Decoder::Program decoded;S::Decoder::DecodeProgram(code,decoded);
+  auto cfg=S::CFG::BuildGraph(decoded);
+  Libs::Graphics::ShaderVertexInputInfo input{};auto& m=input.mesh;
+  m.threads_num[0]=32;m.threads_num[1]=m.threads_num[2]=1;m.wave_size=m.host_subgroup_size=32;
+  m.input_primitive=uint32_t(Libs::Graphics::Prospero::PrimitiveType::kTriList);
+  m.vertices_per_group=3;m.primitives_per_group=1;m.max_vertices=m.max_primitives=64;
+  S::Frontend::TranslateOptions options{};options.stage=Libs::Graphics::ShaderType::Mesh;
+  options.wave_size=32;options.input_info.vertex=&input;
+  auto raw=S::Frontend::TranslateProgram(decoded,cfg,options);
+  R::CompileRequest request;request.mesh=m;request.enable_uv=true;
+  B::Capabilities caps;caps.api_major=1;caps.api_minor=3;caps.compute_graphics_queue=true;
+  caps.max_compute_invocations=caps.max_compute_size_x=32;caps.max_compute_size_y=caps.max_compute_size_z=1;
+  caps.max_compute_groups_x=caps.max_compute_groups_y=caps.max_compute_groups_z=1;
+  caps.storage_buffers_per_stage=caps.storage_buffers_per_set=3;caps.max_storage_range=1840;
+  B::Draw draw;draw.metadata_known=true;draw.topology=B::Topology::TriangleList;
+  draw.vertex_count=3;draw.instance_count=1;draw.groups_x=draw.groups_y=draw.groups_z=1;
+  // Canonical public source: full authored ISA, fixed frontend profile version.
+  std::vector<uint8_t> identity{1,0,0,0};
+  for(auto word:code)for(unsigned i=0;i<4;++i)identity.push_back(uint8_t(word>>(i*8)));
+  return B::CompileBundle(B::Mode::Compute,caps,draw,raw,request,fragment,identity);
 }
 void Simplify(IR::Program& program) {
   // Shared production pre-resource preparation prefix (PreparePreResource) â€”
@@ -310,6 +338,7 @@ OpFunctionEnd
     }
   }
 }
+#ifndef KYTY_BUNDLE_PROVIDER_ONLY
 int main(int argc,char** argv) {
   std::filesystem::path out;
   if(argc==3 && (std::string(argv[1])=="--dump" || std::string(argv[1])=="--emit")) out=argv[2];
@@ -318,3 +347,5 @@ int main(int argc,char** argv) {
   std::cout << "frontend compatibility regression: " << (failures ? "FAIL" : "PASS") << " (GPU NOT RUN)\n";
   return failures ? 1 : 0;
 }
+
+#endif

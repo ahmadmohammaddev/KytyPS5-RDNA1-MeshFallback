@@ -1018,11 +1018,17 @@ add_custom_command(OUTPUT ${mesh_paired_modules}
     $<TARGET_FILE:shader_cfg_tests> --mesh-pixel-bridge-only
   DEPENDS shader_cfg_tests VERBATIM)
 add_custom_target(mesh_paired_generated_shaders DEPENDS ${mesh_paired_modules})
+# Isolated public frontend compiler fixture; no production renderer activation.
+get_target_property(mesh_bundle_fixture_sources mesh_ir_frontend_tests SOURCES)
+add_library(mesh_bundle_fixture STATIC EXCLUDE_FROM_ALL ${mesh_bundle_fixture_sources})
+target_compile_definitions(mesh_bundle_fixture PRIVATE KYTY_BUNDLE_PROVIDER_ONLY)
+target_include_directories(mesh_bundle_fixture PRIVATE ${inc_headers})
+target_link_libraries(mesh_bundle_fixture PUBLIC common spirv-tools Vulkan::Headers)
 add_executable(mesh_compute_proto_tests EXCLUDE_FROM_ALL
 	"${KYTY_TESTS_DIR}/MeshComputePrototypeTests.cpp"
 )
 add_dependencies(mesh_compute_proto_tests mesh_compute_proto_shaders mesh_offscreen_shaders mesh_texture_shaders mesh_ir_generated_shaders mesh_ir_uv_generated_shaders mesh_frontend_generated_shaders mesh_paired_generated_shaders)
-target_link_libraries(mesh_compute_proto_tests spirv-tools Vulkan::Headers ${CMAKE_DL_LIBS})
+target_link_libraries(mesh_compute_proto_tests mesh_bundle_fixture spirv-tools Vulkan::Headers ${CMAKE_DL_LIBS})
 target_include_directories(mesh_compute_proto_tests PRIVATE ${inc_headers})
 target_compile_definitions(mesh_compute_proto_tests PRIVATE VK_NO_PROTOTYPES)
 
@@ -1541,6 +1547,10 @@ if(BUILD_TESTING)
 	add_test(NAME mesh_ir_uv_rejections COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --uv-reject)
 	add_test(NAME mesh_ir_frontend_compatibility COMMAND $<TARGET_FILE:mesh_ir_frontend_tests>)
 	set_tests_properties(mesh_ir_frontend_compatibility PROPERTIES TIMEOUT 120)
+  add_test(NAME mesh_bundle_offline COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --check-bundle)
+  add_test(NAME mesh_bundle_draw COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --bundle-draw --image-output "${PROJECT_BINARY_DIR}/mesh-bundle-vk13.ppm")
+  add_test(NAME mesh_bundle_draw_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --bundle-draw-vulkan12 --image-output "${PROJECT_BINARY_DIR}/mesh-bundle-vk12.ppm")
+  set_tests_properties(mesh_bundle_draw mesh_bundle_draw_vk12 PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 41)
   add_test(NAME mesh_paired_oracle COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --check-paired-oracle)
   add_test(NAME mesh_paired_float_diagnostic COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --paired-float-diagnostic
     --image-output "${PROJECT_BINARY_DIR}/mesh-paired-float-vk13.csv")

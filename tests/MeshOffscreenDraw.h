@@ -87,7 +87,14 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
                       VkQueue queue, VkCommandBuffer cmd, VkFence fence,
                       VkPipeline compute, VkPipelineLayout compute_layout, VkDescriptorSet set,
                       GpuBuffer& output, GpuBuffer& payload, const std::filesystem::path& image_path, bool textured = false,
-                      const Scenario* generated = nullptr, GpuBuffer* generated_uv = nullptr, bool paired = false, bool float_diagnostic = false) {
+                      const Scenario* generated = nullptr, GpuBuffer* generated_uv = nullptr, bool paired = false, bool float_diagnostic = false, const Libs::Graphics::MeshFallback::CompileBundleResult* bundle = nullptr) {
+    const auto* plan=bundle&&*bundle?&*bundle->plan:nullptr;
+    if(bundle && (!plan || !generated || plan->vertices!=generated->vertex_count || plan->primitives!=generated->primitive_count ||
+        plan->geometry_bytes!=kTotalBytes || plan->uv_bytes!=kUvBytes || plan->geometry_binding!=1 || plan->uv_binding!=2 || plan->position_stride!=16 || plan->uv_stride!=8 || plan->index_element_bytes!=4 || output.size<plan->geometry_bytes || !generated_uv || generated_uv->size<plan->uv_bytes)) {
+        Expect(false,"bundle plan/resource/independent fixture agreement");return false;
+    }
+    if(plan)PrintLine1("bundle-plan: vertices=%u indices=%u draw=%u offsets=%llu/%llu/%llu",plan->vertices,plan->index_count,plan->draw_indexed,
+        (unsigned long long)plan->position_offset,(unsigned long long)plan->index_offset,(unsigned long long)plan->uv_offset);
 	// Resolve every entry point, including teardown, before creating any draw objects.
 #define DRAW_PROC(name) auto name = reinterpret_cast<PFN_vk##name>(proc(device, "vk" #name)); \
 	if (name == nullptr) { Expect(false, "draw entry point vk" #name); return false; }
@@ -192,7 +199,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 	if (!CheckVk(CreateFramebuffer(device, &fb, nullptr, &framebuffer), "offscreen framebuffer")) { return false; }
 	VkPipelineShaderStageCreateInfo stages[2] = {};
 	for (size_t i = 0; i < 2; ++i) {
-		const auto words = LoadSpirvFile(paired ? PairedModulePath(api13,i==0?"vert":"frag") : textured ? TextureModulePath(api13, i == 0 ? "vert" : "frag") : DrawModulePath(api13, i == 0 ? "vert" : "frag"), "draw-runtime");
+		const auto words = bundle?KytyMeshFixture::ApiModule(i==0?bundle->vertex:bundle->fragment,api13):LoadSpirvFile(paired ? PairedModulePath(api13,i==0?"vert":"frag") : textured ? TextureModulePath(api13, i == 0 ? "vert" : "frag") : DrawModulePath(api13, i == 0 ? "vert" : "frag"), "draw-runtime");
 		if (words.empty()) { return false; }
 		VkShaderModuleCreateInfo sm = {};
 		sm.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -208,7 +215,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 	layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	if (textured) { layout_info.setLayoutCount = 1; layout_info.pSetLayouts = &texture.sampled_layout; }
 	if (!CheckVk(CreatePipelineLayout(device, &layout_info, nullptr, &layout), "draw pipeline layout")) { return false; }
-	VkVertexInputBindingDescription bindings[2] = {{0, 16, VK_VERTEX_INPUT_RATE_VERTEX}, {1, 8, VK_VERTEX_INPUT_RATE_VERTEX}};
+	VkVertexInputBindingDescription bindings[2] = {{0, plan?plan->position_stride:16, VK_VERTEX_INPUT_RATE_VERTEX}, {1, plan?plan->uv_stride:8, VK_VERTEX_INPUT_RATE_VERTEX}};
 	VkVertexInputAttributeDescription attributes[2] = {{0, 0, VK_FORMAT_R32G32B32A32_SFLOAT, 0}, {1, 1, VK_FORMAT_R32G32_SFLOAT, 0}};
 	VkPipelineVertexInputStateCreateInfo vertex = {};
 	vertex.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -273,12 +280,14 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		FinalizeScenario(scenario);
 		if (generated) { scenario = *generated; }
 		std::memcpy(output.mapped, scenario.initial.words.data(), kTotalBytes);
+        if(!bundle) {
 		std::memcpy(payload.mapped, scenario.payload_positions.data(), kPositionWords * 4);
 		std::memcpy(static_cast<uint8_t*>(payload.mapped) + kPositionWords * 4,
 		            scenario.payload_indices.data(), kIndexWords * 4);
 		// IR-generated geometry must not be supplied by the host payload. Poison it
 		// independently of the expected output before the fresh draw dispatch.
 		if (generated) { std::memset(payload.mapped, 0xA5, (kPositionWords + kIndexWords) * 4); }
+        }
 		std::memset(readback.mapped, 0xA5, readback_bytes);
 		for (auto* buffer: {&output, &payload, &readback}) {
 			if (buffer->noncoherent) {
@@ -305,19 +314,28 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 			CmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, compute);
 			CmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, compute_layout, 0, 1, &set, 0, nullptr);
 			const uint32_t counts[2] = {scenario.vertex_count, scenario.primitive_count};
-			CmdPushConstants(cmd, compute_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(counts), counts);
-			CmdDispatch(cmd, 1, 1, 1);
+			if(!bundle)CmdPushConstants(cmd, compute_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(counts), counts);
+			CmdDispatch(cmd, plan?plan->dispatch_x:1,plan?plan->dispatch_y:1,plan?plan->dispatch_z:1);
 			VkBufferMemoryBarrier geometry = {};
 			geometry.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
 			geometry.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-			geometry.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT | VK_ACCESS_INDEX_READ_BIT;
+			geometry.dstAccessMask = plan ? (plan->compute_write_to_vertex_read?VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT:0) | (plan->compute_write_to_index_read?VK_ACCESS_INDEX_READ_BIT:0) : VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT | VK_ACCESS_INDEX_READ_BIT;
 			geometry.srcQueueFamilyIndex = geometry.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 			geometry.buffer = output.buffer;
-			geometry.size = kTotalBytes;
+			geometry.size = plan?plan->geometry_bytes:kTotalBytes;
 			CmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
 			                   0, 0, nullptr, 1, &geometry, 0, nullptr);
 		}
-		if (textured && draw) { texture.Record(cmd); }
+		if (textured && draw) {
+            if(bundle) {
+                VkBufferMemoryBarrier uv_barrier{};uv_barrier.sType=VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+                uv_barrier.srcAccessMask=VK_ACCESS_SHADER_WRITE_BIT;
+                uv_barrier.dstAccessMask=plan->compute_write_to_uv_vertex_read?VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT:0;
+                uv_barrier.srcQueueFamilyIndex=uv_barrier.dstQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED;
+                uv_barrier.buffer=generated_uv->buffer;uv_barrier.size=plan->uv_bytes;
+                CmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,0,0,nullptr,1,&uv_barrier,0,nullptr);
+            } else texture.Record(cmd);
+        }
 		VkImageMemoryBarrier image_barrier = {};
 		image_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 		image_barrier.oldLayout = draw ? VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL : VK_IMAGE_LAYOUT_UNDEFINED;
@@ -341,14 +359,14 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		CmdBeginRenderPass(cmd, &render, VK_SUBPASS_CONTENTS_INLINE);
 		if (draw) {
 			CmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics);
-			const VkDeviceSize offsets[2] = {kPositionsOffsetBytes, 8};
+			const VkDeviceSize offsets[2] = {plan?plan->position_offset:kPositionsOffsetBytes, plan?plan->uv_offset:8};
 			const VkBuffer buffers[2] = {output.buffer, texture.uv.buffer};
 			CmdBindVertexBuffers(cmd, 0, textured ? 2 : 1, buffers, offsets);
-			if (textured) { CmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, &texture.sampled_set, 0, nullptr); }
-			CmdBindIndexBuffer(cmd, output.buffer, kIndicesOffsetBytes, VK_INDEX_TYPE_UINT32);
+			if (textured && !bundle) { CmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, &texture.sampled_set, 0, nullptr); }
+			CmdBindIndexBuffer(cmd, output.buffer, plan?plan->index_offset:kIndicesOffsetBytes, VK_INDEX_TYPE_UINT32);
 			// Fixture allocation is fixed before dispatch; no CPU geometry readback
 			// gates this draw. Zero-output fixtures issue a zero-index draw.
-			CmdDrawIndexed(cmd, scenario.primitive_count * 3, 1, 0, 0, 0);
+			if(!plan || plan->draw_indexed)CmdDrawIndexed(cmd, plan?plan->index_count:scenario.primitive_count * 3, 1, 0, 0, 0);
 		}
 		CmdEndRenderPass(cmd);
 		image_barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
