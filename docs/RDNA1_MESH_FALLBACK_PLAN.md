@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 4.2. **Overall status:** S-041 native RX actual frontend triangle/permuted/zero gate PASS; all fifteen stages, eight strict selections/cleanups and images exact. Bounded frontend UV export next; production/game integration remains open.
+> **Last edited:** 2026-10-29. **Plan revision:** 4.3. **Overall status:** S-041 native RX actual frontend triangle/permuted/zero gate PASS; all fifteen stages, eight strict selections/cleanups and images exact. Bounded frontend UV export next; production/game integration remains open.
 
 ## 0. Mission and boundaries
 
@@ -881,6 +881,12 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 - Complete snapshot `_Build/p0-s012/p3-s042-pre-build-01/`; two-job build PASS; 29 serial focused cases21 PASS/8 strict SKIPPED/0 FAIL (4.48 s). Logs/dumps/XML `_Build/p3-s042/`. Compilation/unit/SPIR-V PASS; existing Intel auxiliary Vulkan regressions PASS; new frontend UV GPU/RX/game NOT RUN. Position/index ABI and production defaults unchanged.
 - Next local task actual frontend UV/zero textured execution with complete geometry/UV/image oracles and validation through cleanup; continue authorized commits D-033, no push.
 
+### Session S-043 — 2026-10-29 — Actual frontend textured runtime
+
+- Input6f0a2e1d; actual frontend UV/zero modules generated for strict1.3 and separately auxiliary1.2. Opt-in frontend-texture modes reuse isolated generated-UV path: same-dispatch geometry/UV, all544-byte UV and1840-byte geometry outputs checked, compute-to-vertex/index visibility and complete sampled image oracle. Two CTests added; native/default renderer unchanged.
+- Full snapshot `_Build/p0-s012/p3-s043-pre-build-01/`, two-job build PASS;31 serial cases22 PASS/9 strict SKIPPED/0 FAIL(4.42s). Actual Intel auxiliary frontend texture/zero all outputs/pixels exact, zero validation messages through both cleanups. Both images hash-match independently verified references. Valid wrong-UV module FAILS complete UV oracle; missing strict module FAILS before discovery. Logs/XML/images/isolated mutants `_Build/p3-s043/`.
+- Compilation/unit/SPIR-V PASS, Intel1.2 Vulkan PASS/strict1.3 SKIPPED; new native frontend texture/RDNA1 and Astro Bot NOT RUN. Next consolidate this completed frontend geometry+UV milestone in one clean package with31 tests and relocated integrity/negative/API/device verification, then stop for native strict acceptance under D-028/D-033. No push.
+
 ## 8. Change history (append-only)
 
 | Date | Plan revision | Sections | Reason / evidence |
@@ -944,6 +950,8 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 | 2026-10-29 | 4.1 | checkpoint/P3/evidence/handoff; AGENTS/native report | S-041 accepts native actual frontend geometry and selects bounded frontend UV export next |
 
 | 2026-10-29 | 4.2 | frontend UV fixture/plan/AGENTS | S-042 proves actual frontend UV offline with independent guarded binary oracle and rejection coverage |
+
+| 2026-10-29 | 4.3 | frontend UV runtime/CMake/plan/AGENTS | S-043 executes actual frontend geometry/UV textured and zero controls; native gate pending |
 
 ## 9. Quick commands (reference; verify before running)
 

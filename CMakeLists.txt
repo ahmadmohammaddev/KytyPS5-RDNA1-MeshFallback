@@ -979,7 +979,7 @@ add_custom_command(OUTPUT ${mesh_ir_uv_modules}
 add_custom_target(mesh_ir_uv_generated_shaders DEPENDS ${mesh_ir_uv_modules})
 set(mesh_frontend_modules)
 foreach(api IN ITEMS 12 13)
-  foreach(name IN ITEMS frontend frontend_permuted frontend_zero)
+  foreach(name IN ITEMS frontend frontend_permuted frontend_zero frontend_uv frontend_uv_zero)
     list(APPEND mesh_frontend_modules "${mesh_proto_generated_dir}/mesh_ir_${name}_vk${api}.spv")
   endforeach()
 endforeach()
@@ -1505,6 +1505,11 @@ if(BUILD_TESTING)
 	add_test(NAME mesh_ir_uv_rejections COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --uv-reject)
 	add_test(NAME mesh_ir_frontend_compatibility COMMAND $<TARGET_FILE:mesh_ir_frontend_tests>)
 	set_tests_properties(mesh_ir_frontend_compatibility PROPERTIES TIMEOUT 120)
+  add_test(NAME mesh_frontend_textured_draw COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --frontend-texture
+    --image-output "${PROJECT_BINARY_DIR}/mesh-frontend-texture-vk13.ppm")
+  add_test(NAME mesh_frontend_textured_draw_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --frontend-texture-vulkan12
+    --image-output "${PROJECT_BINARY_DIR}/mesh-frontend-texture-vk12.ppm")
+  set_tests_properties(mesh_frontend_textured_draw mesh_frontend_textured_draw_vk12 PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 41)
   add_test(NAME mesh_frontend_draw COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --frontend-draw
     --image-output "${PROJECT_BINARY_DIR}/mesh-frontend-vk13.ppm")
   add_test(NAME mesh_frontend_draw_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --frontend-draw-vulkan12

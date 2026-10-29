@@ -149,3 +149,6 @@ Native actual frontend triangle/permuted/zero strict1.3 gate PASS on RX5700XT AP
 
 ## Current checkpoint S-042
 Actual frontend UV/zero export offline PASS through complete graph and independent136-word binary oracle; rejection and valid wrong-UV mutation checked. Build PASS;29 cases21 PASS/8 strict SKIPPED/0 FAIL(4.48s), full snapshot/logs retained. New frontend UV runtime/RX/game NOT RUN. Next actual frontend UV textured runtime with exact buffers/images and validation through cleanup; D-033 sequential commits, no push.
+
+## Current checkpoint S-043
+Actual frontend UV/zero textured runtime PASS Intel1.2: full geometry/UV and pixels exact, zero validation through cleanup.31 cases22 PASS/9 strict SKIPPED/0 FAIL(4.42s), wrong valid UV/missing strict mutants fail correctly, full provenance retained. Next clean consolidated frontend geometry+UV package/relocation/integrity/API/device verification then native strict gate. No production/game claim or push; D-033 continuation.

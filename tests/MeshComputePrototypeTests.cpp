@@ -595,7 +595,7 @@ int CheckHostFixtures() {
 // Core-and-synchronization-validated dispatch at the explicitly requested API level.
 // A single registered skip code covers missing runtime prerequisites, never API failures.
 int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem::path& image_path = {}, bool textured = false, const char* ir_variant = nullptr) {
-	const bool ir_uv = ir_variant && (std::strcmp(ir_variant, "uv") == 0 || std::strcmp(ir_variant, "uv_zero") == 0);
+	const bool ir_uv = ir_variant && (std::strcmp(ir_variant, "uv") == 0 || std::strcmp(ir_variant, "uv_zero") == 0 || std::strcmp(ir_variant, "frontend_uv") == 0 || std::strcmp(ir_variant, "frontend_uv_zero") == 0);
 	void* loader = LoadLoaderLibrary();
 	if (loader == nullptr) {
 		PrintLine1("SKIP: the vulkan-1 system loader cannot be loaded; the dispatch part cannot "
@@ -1378,7 +1378,7 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 	std::vector<Scenario> scenarios;
 	if (ir_variant) {
 		Scenario one; one.name = std::string("ir-") + ir_variant; one.initial.Init();
-		one.vertex_count = (std::strcmp(ir_variant,"zero") == 0 || std::strcmp(ir_variant,"uv_zero") == 0 || std::strcmp(ir_variant,"frontend_zero") == 0) ? 0 : 3;
+		one.vertex_count = (std::strcmp(ir_variant,"zero") == 0 || std::strcmp(ir_variant,"uv_zero") == 0 || std::strcmp(ir_variant,"frontend_zero") == 0 || std::strcmp(ir_variant,"frontend_uv_zero") == 0) ? 0 : 3;
 		one.primitive_count = one.vertex_count ? 1 : 0;
 		const float pos[12] = {-.5f,-.5f,0,1,.5f,-.5f,0,1,-.5f,.484375f,0,1};
 		one.payload_positions.assign(kPositionWords,0); std::memcpy(one.payload_positions.data(),pos,sizeof(pos));
@@ -1542,12 +1542,13 @@ int RunMain(int argc, char** argv) {
 		return g_failures == 0 ? 0 : 1;
 	}
 	const std::string mode = argc >= 2 ? argv[1] : "";
-	const bool ir_texture = mode == "--ir-texture" || mode == "--ir-texture-vulkan12";
+	const bool frontend_texture = mode == "--frontend-texture" || mode == "--frontend-texture-vulkan12";
+	const bool ir_texture = frontend_texture || mode == "--ir-texture" || mode == "--ir-texture-vulkan12";
 	const bool ir_frontend = mode == "--frontend-draw" || mode == "--frontend-draw-vulkan12";
 	const bool ir_draw = ir_frontend || mode == "--ir-draw" || mode == "--ir-draw-vulkan12";
 	const bool ir_add = mode == "--ir-add" || mode == "--ir-add-vulkan12";
 	const bool ir_mode = ir_texture || ir_draw || ir_add || mode == "--ir" || mode == "--ir-vulkan12";
-	const std::vector<const char*> ir_variants = ir_frontend ? std::vector<const char*>{"frontend", "frontend_permuted", "frontend_zero"} : ir_texture ? std::vector<const char*>{"uv", "uv_zero"} : ir_add ? std::vector<const char*>{"add", "wrap"} : std::vector<const char*>{"triangle", "permuted", "zero"};
+	const std::vector<const char*> ir_variants = frontend_texture ? std::vector<const char*>{"frontend_uv", "frontend_uv_zero"} : ir_frontend ? std::vector<const char*>{"frontend", "frontend_permuted", "frontend_zero"} : ir_texture ? std::vector<const char*>{"uv", "uv_zero"} : ir_add ? std::vector<const char*>{"add", "wrap"} : std::vector<const char*>{"triangle", "permuted", "zero"};
 	const bool textured = ir_texture || mode == "--texture" || mode == "--texture-vulkan12";
 	const bool draw = ir_draw || textured || mode == "--draw" || mode == "--draw-vulkan12";
 	std::filesystem::path image_path;
@@ -1560,10 +1561,10 @@ int RunMain(int argc, char** argv) {
 	if (mode == "--validate-draw-spirv") { return ValidateDrawShaders() ? 0 : 1; }
 	if (mode == "--check-host-fixtures") { return CheckHostFixtures(); }
 	const bool validate_only = mode == "--validate-spirv";
-	const bool runtime13 = mode == "--frontend-draw" || mode == "--run" || mode == "--draw" || mode == "--texture" || mode == "--ir" || mode == "--ir-add" || mode == "--ir-draw" || mode == "--ir-texture";
-	const bool runtime12 = mode == "--frontend-draw-vulkan12" || mode == "--run-vulkan12" || mode == "--draw-vulkan12" || mode == "--texture-vulkan12" || mode == "--ir-vulkan12" || mode == "--ir-add-vulkan12" || mode == "--ir-draw-vulkan12" || mode == "--ir-texture-vulkan12";
+	const bool runtime13 = mode == "--frontend-texture" || mode == "--frontend-draw" || mode == "--run" || mode == "--draw" || mode == "--texture" || mode == "--ir" || mode == "--ir-add" || mode == "--ir-draw" || mode == "--ir-texture";
+	const bool runtime12 = mode == "--frontend-texture-vulkan12" || mode == "--frontend-draw-vulkan12" || mode == "--run-vulkan12" || mode == "--draw-vulkan12" || mode == "--texture-vulkan12" || mode == "--ir-vulkan12" || mode == "--ir-add-vulkan12" || mode == "--ir-draw-vulkan12" || mode == "--ir-texture-vulkan12";
 	if (!validate_only && !runtime13 && !runtime12) {
-		std::printf("[p41] usage: %s --validate-spirv | --run | --run-vulkan12 | --check-host-fixtures | --validate-module-vk13 FILE | --draw | --draw-vulkan12 [--image-output FILE] | --check-draw-oracle | --validate-draw-spirv | --texture | --texture-vulkan12 [--image-output FILE] | --check-texture-fixtures | --validate-texture-spirv | --ir | --ir-vulkan12 | --ir-add | --ir-add-vulkan12 | --ir-draw | --ir-draw-vulkan12 | --ir-texture | --ir-texture-vulkan12 | --frontend-draw | --frontend-draw-vulkan12 [--image-output FILE]\n", argv[0]);
+		std::printf("[p41] usage: %s --validate-spirv | --run | --run-vulkan12 | --check-host-fixtures | --validate-module-vk13 FILE | --draw | --draw-vulkan12 [--image-output FILE] | --check-draw-oracle | --validate-draw-spirv | --texture | --texture-vulkan12 [--image-output FILE] | --check-texture-fixtures | --validate-texture-spirv | --ir | --ir-vulkan12 | --ir-add | --ir-add-vulkan12 | --ir-draw | --ir-draw-vulkan12 | --ir-texture | --ir-texture-vulkan12 | --frontend-draw | --frontend-draw-vulkan12 | --frontend-texture | --frontend-texture-vulkan12 [--image-output FILE]\n", argv[0]);
 		return 1;
 	}
 	if (!RunOfflineValidation() || (draw && !ValidateDrawShaders()) || (textured && !ValidateTextureShaders())) {
