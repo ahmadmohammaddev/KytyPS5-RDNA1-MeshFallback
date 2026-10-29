@@ -191,3 +191,6 @@ Actual generated stages combined draw PASS Intel1.2: complete geometry/UV/RGBA/c
 
 ## S-053 package preparation
 CombinedMilestone launcher/runner prepared:19 stages/12 native strict cases/cleanups/images. Clean source commit then41-test package build and relocation/integrity/auxiliary/strict/RX guard verification. Full native pixel compiler producer not shipped, actual generated modules included. Append final evidence and deliver one ZIP/command, stop for native gate; no push.
+
+## Current checkpoint S-053 — stop for native combined-stage gate
+Clean sourcead57feab7d794b7cedb855a6fb5411ca76881200/build20261029T122933634Z package verified.41 cases31 PASS/10 strict SKIPPED/0 FAIL(5.11s),16 expected package/negative outcomes;19 auxiliary stages/12 images/full buffers/cleanups exact and zero validation.36 previous modules identical. ZIP2,780,495 bytes SHA2567DC0B74CB00106E63B706B14F15C6311D6C38318A78E652487BF1F98799F6469. Report docs/RDNA1_COMBINED_PACKAGE_S053.md. Next only RX Run-Combined-Milestone.cmd -IsolateImplicitLayers,19 stages/12 strict native cases+cleanups/exact complete outputs/images/zero warnings+errors; return full result folder. New native paired/game NOT RUN; no renderer activation or push. Stop D-033.

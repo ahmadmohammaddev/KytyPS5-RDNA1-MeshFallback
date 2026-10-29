@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 5.3. **Overall status:** S-051 actual production pixel compiler/vertex bridge offline pairing PASS, independent interface validation and rejection coverage. Combined generated-stage runtime is next; production renderer/game still unimplemented.
+> **Last edited:** 2026-10-29. **Plan revision:** 5.3. **Overall status:** S-053 clean combined actual-stage package verified locally; stop for native RX strict combined compute/bridge/production-pixel gate. No production renderer/game integration.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
-| Current subtask | S-051 actual emitted pixel/bridge offline pairing DONE; combined generated-stage runtime next |
+| Current subtask | S-053 clean combined-stage package DONE locally; native strict gate pending |
 | Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
-| Last verified git commit | S-047 input05f38700 (HEAD); all S-048 edits pending review in working tree; package/native sourcea183c190 unchanged |
+| Last verified git commit | Clean package source `ad57feab7d794b7cedb855a6fb5411ca76881200`, build20261029T122933634Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | Clean committed package source; pinned ancestry and all 14 recursive submodules matching/clean; S-048 dirty tree captured before builds (`_Build/p0-s012/p2-s048-pre-build-01/`, 16 files + 7 untracked) |
-| Build status | S-048 focused 2-job build PASS; `kyty_emulator` incremental build+link PASS with the moved adapter sources; no memory retry/PGO/IPO |
+| Build status | S-053 clean2-job focused package/producer build PASS; no memory retry/PGO/IPO |
 | Native RDNA1 smoke test | S-045 actual frontend geometry+UV/zero and prior generated regressions PASS RX5700XT API1.4.308 AMD25.6.1 retained; no new hardware run or package |
-| Passing tests | S-048 byte-compat 33/33 baseline modules exact; 15 focused serial ctests PASS/0 FAIL, four Intel1.2 auxiliary runtime PASS, four strict1.3 SKIPPED (VK_LAYER_PATH process-local `_Build/p4-s013/tools/validationlayers`) |
+| Passing tests | S-05341 cases31 PASS/10 strict SKIPPED/0 FAIL(5.11s);16 expected package/negative outcomes,12 independent images exact |
 | Known blockers / limits | Adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache/bridge/scheduler/production/game remain open; S-048 not committed until user review |
-| Next single actionable task | Isolated harness actual frontend geometry/UV + generated bridge + actual public production pixel fragment; independent full outputs/RGBA/zero controls and cleanup validation, strict vs auxiliary separate |
+| Next single actionable task | On RX run clean S-053 ZIP: Run-Combined-Milestone.cmd -IsolateImplicitLayers; require19 stages/12 native strict selections+cleanups/complete buffers+images/zero validation and correct identity; return full results |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -1076,3 +1076,11 @@ Change history5.2: combined actual frontend compute/generated bridge/native pixe
 
 - Inputc887ddd3; add CombinedMilestone runner/strict required-RX launcher.19 stages/12 native selections+cleanups/images, new paired oracle/module validation/runtime alongside prior modes. Clean package41-test inventory, eight paired modules and corresponding public source/bridge/oracle dependencies. Full compiler test runs only at build time; not distributed as emulator executable. Existing runner/API/device truth preserved.
 - Windows PowerShell parsing/diff checked; commit source then clean build/relocation/integrity/API/device verification before native handoff. Native combined gate and game NOT RUN; no push.
+
+#### Final S-053 verification and stop
+
+- Sourcead57feab7d794b7cedb855a6fb5411ca76881200/build20261029T122933634Z clean ZIP2,780,495 bytes SHA256 `7DC0B74CB00106E63B706B14F15C6311D6C38318A78E652487BF1F98799F6469`, matching sidecar.90 payload files,44 modules and all36 prior module bytes preserved; report docs/RDNA1_COMBINED_PACKAGE_S053.md.
+-41 focused clean cases31 PASS/10 strict SKIPPED/0 FAIL(5.11s).15 expected relocated package outcomes plus valid wrong bridge expected failure verified(16 total); actual19 auxiliary stages PASS,12 exact images/full outputs and12 zero-error/warning cleanups. All images match independent references(49,152 pixels). Compilation/unit/SPIR-V/Intel auxiliary Vulkan scoped PASS; new native combined RX/game NOT RUN. Evidence `_Build/p3-s053/` and package -evidence retained; no push.
+- Next only normal-user RX `Run-Combined-Milestone.cmd -IsolateImplicitLayers`:19 stages/12 native strict1.3 selections+cleanups, exact geometry/UV/RGBA/12 images, zero validation messages and source/build identity. Return complete folder. Stop D-028/D-033, no next integration work.
+
+Change history5.3: S-053 verified clean consolidated actual-stage package and native handoff.
