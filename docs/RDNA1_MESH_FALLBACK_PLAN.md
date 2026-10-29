@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 3.3. **Overall status:** S-033 actual generated IR geometry and UVs feed textured indexed drawing on Intel auxiliary: full buffers/images exact, zero validation errors/warnings through cleanup. Local P3.6 gate DONE; consolidated native RX generated draw/textured milestone pending under D-028.
+> **Last edited:** 2026-10-29. **Plan revision:** 3.4. **Overall status:** S-033 actual generated IR geometry and UVs feed textured indexed drawing on Intel auxiliary: full buffers/images exact, zero validation errors/warnings through cleanup. Local P3.6 gate DONE; consolidated native RX generated draw/textured milestone pending under D-028.
 
 ## 0. Mission and boundaries
 
@@ -795,6 +795,12 @@ Next task: transfer ZIP and sidecar, verify hash/extract fresh, run `Run-IR-Add.
 - Two complete pre-build dirty snapshots retained; two 2-job builds PASS, existing warnings. Final 26-case suite 19 PASS/7 strict SKIPPED/0 FAIL (3.39 s). Actual Intel auxiliary generated textured and zero draws validation-clean through cleanup; independent RGB counts/hashes exact. Wrong UV/status/fragment and missing strict module each correctly FAIL. Details, six categories and commands in `docs/RDNA1_IR_TEXTURE_S033.md`.
 - P3.6 local gate DONE. New strict RX generated draw/textured milestone and Astro Bot NOT RUN; coherent memory only, no performance claim. D-028 batching now selects one consolidated clean package/runner covering generated draw plus generated texture, all 26 tests, required source/modules/images, hashes/license/import audit and relocation/negative/RX guard checks. Next task not started; commit and stop, no push.
 
+### Session S-034 — 2026-10-29 — Consolidated generated draw package
+
+- Input `0594e60b67734d2ec07cfc4c750cc705707b8902`, clean correct branch, pinned ancestry/all 14 matching submodules verified. Selected single subtask: consolidate generated draw/texture milestone under D-028. Runner adds mutually exclusive `-IrMilestone` and strict required-RX launcher; two runtime stages cover all five device selections and images. Stage evidence/cleanup/API/images required; FAIL takes precedence over SKIPPED. All previous modes retained.
+- Package inventory expands to all 26 tests, 14 generated modules, UV oracle source dependency and new launcher; manifest build command corrected to include the actual IR target. Windows PowerShell 5.1 parsing PASS. No new compile/GPU tests yet at this preparation checkpoint; source commit precedes clean build/transfer verification. See `docs/RDNA1_IR_PACKAGE_S034.md`.
+- Within this same subtask: build clean package, verify Unicode relocation, independent images/blobs, integrity/skip/failure/RX identity guards and previous modes; append actual results before handoff. Native RX milestone/Astro Bot remain NOT RUN. No next phase or push.
+
 ## 8. Change history (append-only)
 
 | Date | Plan revision | Sections | Reason / evidence |
@@ -840,6 +846,8 @@ Next task: transfer ZIP and sidecar, verify hash/extract fresh, run `Run-IR-Add.
 | 2026-10-29 | 3.2 | checkpoint/P3/decision/experiment/handoff; isolated code/tests/report; AGENTS | S-032 proves bounded UV parameter offline with independent binary oracle; generated textured runtime next, RX batched |
 
 | 2026-10-29 | 3.3 | checkpoint/P3/experiment/handoff; runtime/draw/texture/tests/report; AGENTS | S-033 generated geometry and UV textured draw passes locally; next consolidate milestone package before RX |
+
+| 2026-10-29 | 3.4 | package runner/builder/launcher/README; plan/AGENTS/report | S-034 consolidates generated draw and textured-UV transfer under D-028, with per-stage evidence and clean package verification |
 
 ## 9. Quick commands (reference; verify before running)
 

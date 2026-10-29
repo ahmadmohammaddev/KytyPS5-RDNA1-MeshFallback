@@ -10,10 +10,12 @@ param(
     [switch]$Texture,
     [switch]$Ir,
     [switch]$IrAdd,
+    [switch]$IrMilestone,
     [switch]$IsolateImplicitLayers
 )
 $ErrorActionPreference = 'Stop'
 if ($Texture) { $Draw = $true }
+if ($IrMilestone -and ($Ir -or $IrAdd -or $Draw)) { Write-Host "FAIL: choose milestone or another runtime mode"; exit 1 }
 if (($Ir -and $IrAdd) -or (($Ir -or $IrAdd) -and $Draw)) { Write-Host "FAIL: choose IR or draw/texture mode"; exit 1 }
 $root = [IO.Path]::GetFullPath($PSScriptRoot)
 function FileHash([string]$Path) {
@@ -126,21 +128,28 @@ try {
         $run = RunCheck -Name $check.name -Exe $check.exe -Arguments $check.arguments
         if ($run.record.exit -ne 0) { $preflightOk = $false; break }
     }
-    if ($preflightOk -and ($Ir -or $IrAdd)) {
+    if ($preflightOk -and ($Ir -or $IrAdd -or $IrMilestone)) {
         foreach ($argument in @('--positive','--reject')) {
             $name = if ($argument -eq '--positive') { 'ir-positive' } else { 'ir-rejections' }
             $run = RunCheck -Name $name -Exe 'mesh_ir_compute_tests.exe' -Arguments @($argument)
             if ($run.record.exit -ne 0) { $preflightOk = $false; break }
         }
     }
-    if ($preflightOk -and $Draw) {
+    if ($preflightOk -and $IrMilestone) {
+        foreach ($argument in @('--uv-positive','--uv-reject')) {
+            $name = if ($argument -eq '--uv-positive') { 'uv-positive' } else { 'uv-rejections' }
+            $run = RunCheck -Name $name -Exe 'mesh_ir_compute_tests.exe' -Arguments @($argument)
+            if ($run.record.exit -ne 0) { $preflightOk = $false; break }
+        }
+    }
+    if ($preflightOk -and ($Draw -or $IrMilestone)) {
         foreach ($argument in @('--check-draw-oracle','--validate-draw-spirv')) {
             $name = if ($argument -eq '--check-draw-oracle') { 'draw-oracle' } else { 'draw-spirv' }
             $run = RunCheck -Name $name -Exe 'mesh_compute_proto_tests.exe' -Arguments @($argument)
             if ($run.record.exit -ne 0) { $preflightOk = $false; break }
         }
     }
-    if ($preflightOk -and $Texture) {
+    if ($preflightOk -and ($Texture -or $IrMilestone)) {
         foreach ($argument in @('--check-texture-fixtures','--validate-texture-spirv')) {
             $name = if ($argument -eq '--check-texture-fixtures') { 'texture-fixtures' } else { 'texture-spirv' }
             $run = RunCheck -Name $name -Exe 'mesh_compute_proto_tests.exe' -Arguments @($argument)
@@ -149,33 +158,76 @@ try {
     }
     $runtimeStatus = 'NOT RUN'
     $runtimeIdentity = @()
+    $runtimeStages = [Collections.Generic.List[object]]::new()
+    $imageRecords = [Collections.Generic.List[object]]::new()
     $overall = if ($preflightOk) { 'PASS' } else { 'FAIL' }
     if ($preflightOk -and $Mode -ne 'Offline') {
-        $argument = if ($Mode -eq 'Strict') { '--run' } else { '--run-vulkan12' }
-        if ($Ir) { $argument = if ($Mode -eq 'Strict') { '--ir' } else { '--ir-vulkan12' } }
-        if ($IrAdd) { $argument = if ($Mode -eq 'Strict') { '--ir-add' } else { '--ir-add-vulkan12' } }
-        $arguments = @($argument)
-        if ($Draw) {
-            $argument = if ($Mode -eq 'Strict') { '--draw' } else { '--draw-vulkan12' }
-            if ($Texture) { $argument = if ($Mode -eq 'Strict') { '--texture' } else { '--texture-vulkan12' } }
-            $arguments = @($argument, '--image-output', (Join-Path $results 'triangle.ppm'))
+        $plans = @()
+        if ($IrMilestone) {
+            $suffix = if ($Mode -eq 'Strict') { '' } else { '-vulkan12' }
+            $plans = @(
+                @{name='runtime-ir-draw'; arguments=@("--ir-draw$suffix",'--image-output',(Join-Path $results 'ir-draw.ppm')); devices=3;
+                  images=@('ir-draw-triangle.ppm','ir-draw-permuted.ppm','ir-draw-zero.ppm')},
+                @{name='runtime-ir-texture'; arguments=@("--ir-texture$suffix",'--image-output',(Join-Path $results 'ir-texture.ppm')); devices=2;
+                  images=@('ir-texture-uv.ppm','ir-texture-uv_zero.ppm')}
+            )
+        } else {
+            $argument = if ($Mode -eq 'Strict') { '--run' } else { '--run-vulkan12' }
+            if ($Ir) { $argument = if ($Mode -eq 'Strict') { '--ir' } else { '--ir-vulkan12' } }
+            if ($IrAdd) { $argument = if ($Mode -eq 'Strict') { '--ir-add' } else { '--ir-add-vulkan12' } }
+            $arguments = @($argument)
+            $expectedImages = @()
+            if ($Draw) {
+                $argument = if ($Mode -eq 'Strict') { '--draw' } else { '--draw-vulkan12' }
+                if ($Texture) { $argument = if ($Mode -eq 'Strict') { '--texture' } else { '--texture-vulkan12' } }
+                $arguments = @($argument, '--image-output', (Join-Path $results 'triangle.ppm'))
+                $expectedImages = @('triangle.ppm')
+                if ($Texture) { $expectedImages += 'untextured.ppm' }
+            }
+            $devices = if ($IrAdd) { 2 } elseif ($Ir) { 3 } else { 1 }
+            $plans = @(@{name='runtime'; arguments=$arguments; devices=$devices; images=$expectedImages})
         }
-        $run = RunCheck -Name 'runtime' -Exe 'mesh_compute_proto_tests.exe' -Arguments $arguments
-        $runtimeStatus = $run.record.status
-        $runtimeIdentity = @($run.lines | Where-Object { $_ -match 'physical-devices:|\[\d+\].*type=|selected:|selected-driver:|dispatch-module:|summary after cleanup:|offscreen.*pixels|DRAW RESULT:|TEXTURE RESULT:|UV boundary|UV full-buffer:|IR case:|IR RESULT:' })
-        $overall = $runtimeStatus
-        $selectedDevices = @($run.lines | Where-Object { $_ -match '^\[p41\] selected:' })
-        $rxDevices = @($selectedDevices | Where-Object { $_ -match 'RX\s*5700\s*XT' })
-        $expectedDevices = if ($IrAdd) { 2 } elseif ($Ir) { 3 } else { 1 }
-        if ($RequireRx5700Xt -and $runtimeStatus -eq 'PASS' -and
-            ($selectedDevices.Count -ne $expectedDevices -or $rxDevices.Count -ne $expectedDevices)) {
-            $overall = 'FAIL'
-            Write-Host 'FAIL: runtime completed but the selected device was not identified as RX 5700 XT'
+        foreach ($plan in $plans) {
+            $run = RunCheck -Name $plan.name -Exe 'mesh_compute_proto_tests.exe' -Arguments $plan.arguments
+            $identity = @($run.lines | Where-Object { $_ -match 'physical-devices:|\[\d+\].*type=|selected:|selected-driver:|dispatch-module:|summary after cleanup:|offscreen.*pixels|DRAW RESULT:|TEXTURE RESULT:|UV boundary|UV full-buffer:|IR case:|IR RESULT:' })
+            $runtimeIdentity += $identity
+            $selectedDevices = @($run.lines | Where-Object { $_ -match '^\[p41\] selected:' })
+            $rxDevices = @($selectedDevices | Where-Object { $_ -match 'RX\s*5700\s*XT' })
+            $targetStatus = $run.record.status
+            if ($run.record.status -eq 'PASS') {
+                if ($RequireRx5700Xt -and ($selectedDevices.Count -ne $plan.devices -or $rxDevices.Count -ne $plan.devices)) {
+                    $targetStatus = 'FAIL'
+                    Write-Host 'FAIL: runtime completed but every selected device was not identified as RX 5700 XT'
+                }
+                if ($IrMilestone) {
+                    $cleanups = @($run.lines | Where-Object { $_ -match 'summary after cleanup: scenarios=1 failures=0 validation-errors=0 validation-warnings=0$' })
+                    $apiPattern = if ($Mode -eq 'Strict') { 'dispatch-module: vulkan1[.]3 ' } else { 'dispatch-module: vulkan1[.]2 ' }
+                    $dispatches = @($run.lines | Where-Object { $_ -match $apiPattern })
+                    if ($selectedDevices.Count -ne $plan.devices -or $cleanups.Count -ne $plan.devices -or $dispatches.Count -ne $plan.devices) {
+                        $targetStatus = 'FAIL'
+                        Write-Host 'FAIL: incomplete milestone device/API/clean-validation evidence'
+                    }
+                }
+            }
+            foreach ($file in $plan.images) {
+                $imagePath = Join-Path $results $file
+                if (Test-Path -LiteralPath $imagePath -PathType Leaf) {
+                    $imageRecords.Add([pscustomobject]@{stage=$plan.name; file=$file; sha256=(FileHash $imagePath)})
+                } elseif ($run.record.status -eq 'PASS') {
+                    $targetStatus = 'FAIL'
+                    Write-Host "FAIL: missing expected image $file"
+                }
+            }
+            $runtimeStages.Add([pscustomobject]@{name=$plan.name; status=$run.record.status; targetStatus=$targetStatus;
+                expectedDevices=$plan.devices; selectedDevices=$selectedDevices.Count; rxDevices=$rxDevices.Count; deviceEvidence=$identity})
         }
+        $runtimeStatus = if (@($runtimeStages | Where-Object { $_.status -eq 'FAIL' }).Count) { 'FAIL' }
+            elseif (@($runtimeStages | Where-Object { $_.status -eq 'SKIPPED' }).Count) { 'SKIPPED' } else { 'PASS' }
+        $overall = if (@($runtimeStages | Where-Object { $_.targetStatus -eq 'FAIL' }).Count) { 'FAIL' } else { $runtimeStatus }
     }
     $summary = [ordered]@{schema=1; gitCommit=$manifest.gitCommit; buildId=$manifest.buildId;
-        mode=$Mode; ir=[bool]$Ir; irAdd=[bool]$IrAdd; draw=[bool]$Draw; texture=[bool]$Texture; isolateImplicitLayers=[bool]$IsolateImplicitLayers; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
-        runs=@($runs.ToArray()); deviceEvidence=$runtimeIdentity;
+        mode=$Mode; ir=[bool]$Ir; irAdd=[bool]$IrAdd; irMilestone=[bool]$IrMilestone; draw=[bool]$Draw; texture=[bool]$Texture; isolateImplicitLayers=[bool]$IsolateImplicitLayers; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
+        runs=@($runs.ToArray()); runtimeStages=@($runtimeStages.ToArray()); images=@($imageRecords.ToArray()); deviceEvidence=$runtimeIdentity;
         environment=@{VK_LAYER_PATH=$env:VK_LAYER_PATH; VK_INSTANCE_LAYERS=$env:VK_INSTANCE_LAYERS;
             VK_DRIVER_FILES=$env:VK_DRIVER_FILES; VK_ICD_FILENAMES=$env:VK_ICD_FILENAMES;
             VK_IMPLICIT_LAYER_PATH=$env:VK_IMPLICIT_LAYER_PATH; VK_ADD_IMPLICIT_LAYER_PATH=$env:VK_ADD_IMPLICIT_LAYER_PATH};

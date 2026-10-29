@@ -51,7 +51,10 @@ Request native RX testing when a defined milestone acceptance gate is ready, whe
 
 Intel Vulkan 1.2 and native RX strict Vulkan 1.3 evidence remain distinct. Never mark an RX gate complete from local results. Report PASS, FAIL, SKIPPED and NOT RUN accurately, retain failures and all provenance requirements. The one-selected-subtask rule still bounds each development session; it does not require a hardware handoff after every session.
 
-## Current next task (checkpoint S-033)
+## Current next task (checkpoint S-034 preparation)
+Consolidated milestone runner/launcher/package inventory implemented; Windows PowerShell 5.1 parse PASS. Complete this same task by building a clean committed-source package, verifying relocation/integrity/negative/RX guards and old modes, then append exact artifact identity and results. Do not request hardware execution until the package is verified. Native RX generated draw/texture milestone remains NOT RUN; no push.
+
+## Retained checkpoint S-033
 P3.6 actual generated geometry/UV now feed standalone textured draw. Intel Vulkan 1.2 auxiliary nonzero/zero images and both full guarded buffers exact; zero validation errors/warnings including cleanup. Two 2-job builds PASS; 26-case suite 19 PASS/7 strict SKIPPED/0 FAIL (3.39 s). Four negative probes correctly FAIL; independent RGB images exact. See `docs/RDNA1_IR_TEXTURE_S033.md`; full snapshots/logs retained. New native RX generated draw/textured milestone and Astro Bot NOT RUN.
 
 Next single task: one clean committed-source package/runner for accumulated generated draw and textured UV milestone under D-028. Cover all 26 focused cases, UV modules and oracle source dependency, per-mode images/buffers and required-RX identity for every strict device. Gate provenance/manifests/checksums/import/license audit, Unicode relocation, exact images/blobs and intended integrity/fail/skip/RX-guard outcomes before hardware handoff. Preserve native/default path; no game integration or push. Commit and stop.

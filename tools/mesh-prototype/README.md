@@ -125,3 +125,22 @@ The IR fixture executable additionally imports `MSVCP140_ATOMIC_WAIT.dll` from t
 ## IR arithmetic
 
 Run `Run-IR-Add.cmd -IsolateImplicitLayers` on the RX desktop. This runs the add and wrap generated modules with strict Vulkan 1.3, full-buffer checks and validation including cleanup. Keep all result logs and result.json. This is synthetic research, not emulator or game compatibility evidence.
+
+## Consolidated generated-IR draw milestone
+
+Run `Run-IR-Milestone.cmd -IsolateImplicitLayers` as a normal user on RX. One run
+checks host/IR/UV/draw/texture preflights, then three untextured generated modules
+(triangle, permuted, zero) and two generated-UV textured modules (UV, zero). All
+five strict Vulkan 1.3 selections must be RX 5700 XT, with complete buffers, all
+pixels and zero validation errors/warnings through cleanup.
+
+Return the entire results folder: result.json, all logs (including
+runtime-ir-draw.log and runtime-ir-texture.log), and five PPM images. JSON records
+per-stage device/status evidence and image SHA-256 values. No window opens.
+Offline mode: `Run-Prototype.ps1 -Mode Offline -IrMilestone`. Local auxiliary
+mode: `Run-Prototype.ps1 -Mode Vulkan12 -IrMilestone`; this is separate from
+native strict evidence. FAIL takes precedence over SKIPPED; both runtime stages
+are attempted after preflight succeeds. Old launchers retain their modes.
+
+This package batches the generated draw and textured UV research milestone.
+Production guest translation, emulator integration and Astro Bot are separate.
