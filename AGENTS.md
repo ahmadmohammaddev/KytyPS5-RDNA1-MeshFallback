@@ -234,3 +234,9 @@ strict/auxiliary/RX guards and valid-wrong-module failures. Next only verified
 native RX Run-Combined-Milestone.cmd -IsolateImplicitLayers with19 stages,
 12 native cleanups, exact buffers/coverage/permitted UNORM+bounded float and
 12 PPM/2 CSV artifacts. Do not close native gate from Intel. No push/game/wiring.
+
+## Current checkpoint S-058 — STOP for native portable acceptance
+
+Clean source9081c154137440411ba516e38fab984b4b6fd63e/build20261029T132623339Z, ZIP2,794,884 bytes SHA256 `3A0089400C4BAD3367E4A64CA025501C13D4ED9AA8C961E0A9815A006F9238AA`, matching sidecar.43 clean cases32 PASS/11 strict SKIPPED/0 FAIL(5.58s).22 expected relocation/integrity/API/device/negative outcomes verified; actual Intel auxiliary19 stages/12 validation-clean cleanups,12 exact reference PPMs/2 complete bounded float CSVs;44 modules unchanged. Report docs/RDNA1_ACCEPTANCE_PACKAGE_S058.md, evidence `_Build/p3-s058/`. New native acceptance/game NOT RUN; no push.
+
+Next ONLY RX fresh extraction Run-Combined-Milestone.cmd -IsolateImplicitLayers. Require19 stages PASS/12 native RX strict selections+zero-error/warning cleanups, full geometry/UV/coverage/clear/zero, permitted UNORM sets and bounded numeric float checks. Return whole folder19 logs+JSON+12 PPMs+paired-frontend_uv.csv/paired-frontend_uv_zero.csv(4096 rows each). Nonzero nearest-different alone is not failure; permitted-set-invalid/numeric errors must be0. Preserve prior native failures. No renderer wiring until independent gate.

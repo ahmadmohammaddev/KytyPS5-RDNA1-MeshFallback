@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 5.7. **Overall status:** S-057 portable UNORM and bounded float acceptance PASS locally; fresh strict RX acceptance pending.
+> **Last edited:** 2026-10-29. **Plan revision:** 5.8. **Overall status:** S-058 clean portable acceptance package verified; STOP for fresh native RX acceptance. No renderer/game integration.
 
 ## 0. Mission and boundaries
 
@@ -36,7 +36,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
-| Current subtask | S-057 portable paired acceptance implemented/tested locally; historical native failure retained |
+| Current subtask | S-058 clean portable acceptance package verified locally; native acceptance pending |
 | Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | Clean package source `ad57feab7d794b7cedb855a6fb5411ca76881200`, build20261029T122933634Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
@@ -45,7 +45,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Native RDNA1 smoke test | S-056 same native RX/API/driver: float triangle+zero PASS, maxerror1.1920929e-7, zero validation; original paired RGBA8 FAIL58, original paired zero NOT RUN |
 | Passing tests | S-05543 cases32 PASS/11 strict SKIPPED/0 FAIL(5.73s);21 expected transfer/negative outcomes,12 exact PPMs/2 complete CSVs/44 unchanged modules |
 | Known blockers / limits | Nearest-only UNORM oracle stronger than portable guarantee; numeric float acceptance not implemented; original native combined gate remains FAIL; adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache wiring/scheduler/production/game remain open |
-| Next single actionable task | Clean consolidated acceptance package with mandatory float CSV inventory, relocation/integrity/API/negative verification, then fresh strict RX acceptance |
+| Next single actionable task | On RX fresh extraction run Run-Combined-Milestone.cmd -IsolateImplicitLayers; require19 stages/12 RX strict cleanups, full buffers/UNORM+float checks,12 PPM/2 CSV; return complete folder |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -1140,3 +1140,18 @@ strict/auxiliary/RX guards and valid-wrong-module failures. Next only verified
 native RX Run-Combined-Milestone.cmd -IsolateImplicitLayers with19 stages,
 12 native cleanups, exact buffers/coverage/permitted UNORM+bounded float and
 12 PPM/2 CSV artifacts. Do not close native gate from Intel. No push/game/wiring.
+
+### Final S-058 verification / Experiment E-058
+
+## Final actual results and stop
+
+Clean source `9081c154137440411ba516e38fab984b4b6fd63e`, build `20261029T132623339Z`.
+ZIP2,794,884 bytes, SHA-256 `3A0089400C4BAD3367E4A64CA025501C13D4ED9AA8C961E0A9815A006F9238AA`, matching sidecar. Artifact under ignored `_Build/mesh-prototype-packages/`; provenance/toolchain/cache/import/license/test logs in corresponding -evidence directory. Clean2-job package build PASS, no memory retry/PGO/IPO.43 focused CTests32 PASS/11 strict1.3 SKIPPED/0 FAIL(5.58s).
+
+Relocated Unicode path/unrelated CWD verification:20 expected integrity/legacy/API/device/launcher/diagnostic outcomes PASS. Normal combined Intel auxiliary19 stages PASS,12 native Intel selections/cleanups zero validation errors/warnings,12 PPMs independently byte/hash-identical to references plus2 complete ordered4096-row CSVs, independently checked every RGBA value within2^-20. Diagnostic runner20 stages/16 artifacts PASS. Two additional packaged-executable valid-wrong-bridge probes correctly FAIL independently under UNORM and float gates with zero validation errors/warnings after failure cleanup (22 expected verification outcomes total).44 SPIR-V modules byte-identical to S-053; no hidden shader rewrite. SHA-256 sidecar checked. Evidence `_Build/p3-s058/`.
+
+Six categories: Compilation scoped PASS; Unit tests PASS; Shader compilation/SPIR-V PASS/44 unchanged; Vulkan integration Intel1.2 auxiliary PASS/strict1.3 SKIPPED locally; new RDNA1 acceptance NOT RUN; Astro Bot NOT RUN. No local limitation beyond missing strict1.3/RX hardware; native gate requires independent execution. Old native nearest-only failures retained unchanged.
+
+Next single hardware task: transfer this ZIP+sidecar, extract fresh on RX, run `Run-Combined-Milestone.cmd -IsolateImplicitLayers`. Require19 stages PASS,12 independently identified native RX strict1.3 selections and validation-clean cleanup summaries; full geometry/UV buffers, exact coverage/clear/zero, permitted per-channel UNORM sets and bounded numerical float triangle/zero. Return complete result folder with19 logs,result.json,12 PPMs and paired-frontend_uv.csv/paired-frontend_uv_zero.csv. Each CSV must contain4096 ordered pixels. Nearest-different58 may be reported without failure when permitted-set-invalid0 and float gate passes; no blanket tolerance. Any actual failed gate remains FAIL, unavailable prerequisites SKIPPED, unexecuted cases NOT RUN. Stop for RX; no renderer wiring/game work/push.
+
+Change history5.8: S-058 verified clean portable acceptance transfer and mandatory float artifacts; stop for independent native acceptance.
