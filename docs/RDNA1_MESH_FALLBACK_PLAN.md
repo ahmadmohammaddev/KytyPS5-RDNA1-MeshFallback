@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 6.0. **Overall status:** S-060 isolated atomic compile bundle locally verified; S-059 standalone RX acceptance retained; production execution planning/scheduler open.
+> **Last edited:** 2026-10-29. **Plan revision:** 6.3. **Overall status:** S-063 clean compiler-bundle execution package verified locally; STOP for native RX gate. No production renderer/scheduler activation.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
-| Current subtask | S-060 atomic isolated compile bundle DONE locally; renderer integration not activated |
+| Current subtask | S-063 clean consolidated bundle execution transfer DONE locally; native gate pending |
 | Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
-| Last verified git commit | Clean package source `ad57feab7d794b7cedb855a6fb5411ca76881200`, build20261029T122933634Z |
+| Last verified git commit | Clean package source `b2b9cb4c13f3f770bad0339d31fe33cae0c718d7`, build20261029T141854777Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | Clean committed package source; pinned ancestry and all 14 recursive submodules matching/clean; S-048 dirty tree captured before builds (`_Build/p0-s012/p2-s048-pre-build-01/`, 16 files + 7 untracked) |
-| Build status | S-055 clean2-job diagnostic package/producer build PASS; no memory retry/PGO/IPO |
+| Build status | S-063 clean2-job focused package/fixture compiler build PASS; no memory retry/PGO/IPO |
 | Native RDNA1 smoke test | S-059 RX5700XT API1.4.308 AMD25.6.1:19 stages PASS,12 native strict selections/cleanups zero errors/warnings; full paired triangle+zero accepted |
-| Passing tests | S-05543 cases32 PASS/11 strict SKIPPED/0 FAIL(5.73s);21 expected transfer/negative outcomes,12 exact PPMs/2 complete CSVs/44 unchanged modules |
-| Known blockers / limits | Standalone native portable combined gate PASS; production bundle/scheduler/descriptors/lifetime wiring remains open; adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache wiring/scheduler/production/game remain open |
-| Next single actionable task | Expose proven static output counts and derive pure ABI/buffer/binding/range/dependency execution plan for triangle and zero; reject unproven counts, no command recording |
+| Passing tests | S-06346 cases34 PASS/12 strict SKIPPED/0 FAIL(7.01s);27 expected package/negative outcomes;15 exact PPMs/5 complete bounded float CSVs/44 unchanged modules |
+| Known blockers / limits | New bundle execution RX gate pending; production scheduler/cache/lifetime activation, indexed/dynamic/CFG/LDS/resources/noncoherent broader coverage and game remain open |
+| Next single actionable task | On RX fresh extraction Run-Bundle-Milestone.cmd -IsolateImplicitLayers; require21 stages/15 native strict cleanups, full buffers/pixels/float gates and complete42-file result folder |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -54,12 +54,12 @@ Never change a phase to `DONE` without a command/test/log and its actual result.
 
 | Validation category | Current evidence in this fork |
 | --- | --- |
-| Compilation | S-048 focused 2-job build PASS and `kyty_emulator` incremental build+link PASS (adapter sources inside the emulator glob); earlier clean package builds retained |
-| Unit tests | S-048 15 focused serial ctests 15 PASS/0 FAIL (7 non-GPU plus 4 Intel1.2 runtime and 4 strict1.3 SKIP); earlier host/IR/UV/oracle preflights retained |
-| Shader compilation and SPIR-V validation | S-048 byte-compat 33/33 baseline modules exact; runtime SPIR-V shape/valid checks PASS in both auxiliary cases; no desktop GLSL source compile |
-| Vulkan integration tests | S-048/retained Intel auxiliary runtime cases PASS with zero-error gate; strict1.3 SKIPPED on Intel API1.2.172; S-035 five generated strict RX cases PASS retained |
-| RDNA1 hardware tests | S-045 native generated untextured/textured frontend UV milestone PASS on RX5700XT retained; no new RX experiment |
-| Astro Bot compatibility tests | NOT RUN; pre-fork observations retained separately |
+| Compilation | S-063 clean2-job focused package/fixture compiler build PASS; prior emulator build retained separately |
+| Unit tests | S-063 CPU/offline compiler/identity/plan tests PASS; mixed focused inventory46 cases34 PASS/12 strict SKIPPED/0 FAIL |
+| Shader compilation and SPIR-V validation | S-063 public compiler/generated module validation and explicit API-specific assembly PASS;44 old module bytes unchanged |
+| Vulkan integration tests | S-063 actual Intel1.2 bundle+legacy regressions PASS, all15 milestone cleanups zero errors/warnings; strict1.3 SKIPPED locally |
+| RDNA1 hardware tests | S-059 native standalone paired portable acceptance PASS retained; new S-063 in-process bundle/plan execution gate NOT RUN |
+| Astro Bot compatibility tests | NOT RUN; no production renderer/scheduler activation |
 
 ## 2. Operating protocol for Codex (mandatory)
 
@@ -1205,3 +1205,20 @@ D-033 continuation: next clean consolidated bundle execution package/runner with
 ### S-063 compiler-bundle package preparation
 
 D-033 authorized continuation after tested S-062: BundleMilestone runner/strict RX launcher adds offline proof tests and3 actual bundle cases to combined suite.21 stages/15 native strict selections+cleanups/15 PPMs+5 floatCSV required. Commit source then clean46-case build, relocation/integrity/auxiliary/strict/RX guards/wrong-module verification; deliver verifiedZIP+onecommand and STOP for native gate. No renderer/game activation or push. Actual final evidence appended after verification.
+
+### Final S-063 handoff
+
+## Final S-063 verification / Experiment E-063 — stop for native RX
+
+Clean source `b2b9cb4c13f3f770bad0339d31fe33cae0c718d7`, build `20261029T141854777Z`.
+ZIP3,267,899 bytes, SHA256 `A025D83E17083EA6756BF217AA2E55CFDFDAEC930A95D20ABEC1F5107962A1AE`, matching sidecar. Under ignored `_Build/mesh-prototype-packages/`; full provenance/flags/toolchain/submodules/import/license/CTest logs in corresponding -evidence directory. Clean2-job build PASS,46 serial cases34 PASS/12 strict1.3 SKIPPED/0 FAIL(7.01s), no memory retry/PGO/IPO. No new emulator activation/build claim.
+
+Relocated Unicode/unrelated-CWD verification:25 expected integrity/legacy/strict/auxiliary/RX-guard/conflict/launcher outcomes PASS. Actual BundleMilestone Intel1.2 auxiliary21 stages/15 physical selections/15 cleanup summaries zero errors/warnings;15 PPMs exact against independent reference hashes,5 complete4096-row ordered finite RGBA CSVs independently checked within2^-20,44 existing shader modules byte-identical. Three bundle cases compile in-process and consume the immutable proof/plan; zero records no indexed draw. Two additional packaged-executable negative probes correctly FAIL: valid xy-swapped native pixel488 pixels/zero validation through cleanup; missing required fragment before device discovery.27 expected package/negative outcomes total. Negative local fixtures are not the distributed archive.
+
+Initial verification script incorrectly compared FileHash command output with a SHA string; retained failure in verification.log, all actual artifacts independently rehashed correctly. Fixed helper uses explicit Get-FileHash.Hash and fresh extraction verification-02; complete rerun PASS. Archive/source unchanged by checker repair. Evidence `_Build/p3-s063/verification-02/`, verification02.log, independent-checks.txt and packaged-negative logs retained. ZIP+sidecar hashes checked again after all tests.
+
+Six categories: Compilation scopedPASS; Unit/offline compiler/proof testsPASS; Shader compilation/SPIR-VPASS/44 unchanged; Vulkan integration Intel1.2 auxiliaryPASS/strict1.3SKIPPED locally; new bundle execution RDNA1NOT RUN; AstroBotNOT RUN. S-059 previous native standalone paired acceptance remains distinct. No performance/FPS measurement; no push.
+
+Next single hardware task: fresh extraction on RX, normal user `Run-Bundle-Milestone.cmd -IsolateImplicitLayers`. Require21 stagesPASS,15 independently identified native RX5700XT strict1.3 selections/zero-error+warning cleanup summaries, complete geometry/UV/coverage/clear/zero checks, permitted UNORM and bounded float triangle/permuted/zero results. Return full folder:21 logs,result.json,15 PPMs,5 CSVs (42 files), including bundle-frontend_uv*, bundle-frontend_uv_permuted*, bundle-frontend_uv_zero*. Missing prerequisites SKIPPED; any actual failure FAIL; unexecuted cases NOT RUN. Compiler reference policy is not runtime-device admission. STOP under D-028/D-033; no production scheduler wiring/game work before independent gate.
+
+Change history6.3: clean consolidated bundle/plan execution milestone verified and stop for native gate; sequential local work S-061/S-062/S-063 complete, no push.

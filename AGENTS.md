@@ -282,3 +282,9 @@ D-033 continuation: next clean consolidated bundle execution package/runner with
 ### S-063 compiler-bundle package preparation
 
 D-033 authorized continuation after tested S-062: BundleMilestone runner/strict RX launcher adds offline proof tests and3 actual bundle cases to combined suite.21 stages/15 native strict selections+cleanups/15 PPMs+5 floatCSV required. Commit source then clean46-case build, relocation/integrity/auxiliary/strict/RX guards/wrong-module verification; deliver verifiedZIP+onecommand and STOP for native gate. No renderer/game activation or push. Actual final evidence appended after verification.
+
+## Current checkpoint S-063 — STOP for native bundle execution gate
+
+Clean sourceb2b9cb4c13f3f770bad0339d31fe33cae0c718d7/build20261029T141854777Z ZIP3,267,899 bytes SHA256 `A025D83E17083EA6756BF217AA2E55CFDFDAEC930A95D20ABEC1F5107962A1AE`, matching sidecar.46 cases34PASS/12 strictSKIPPED/0FAIL(7.01s);27 expected package/negative outcomes, actual21 auxiliary stages/15 Intel cleanups validation-clean,15 independent PPM references/5 bounded full CSVs/44 unchanged modules. Initial verifier hash-output comparison failure retained/fixed; fresh verification-02 PASS, archive unchanged. Report docs/RDNA1_BUNDLE_PACKAGE_S063.md; evidence `_Build/p3-s063/`. New bundle RX/gameNOT RUN, S-059 prior native evidence separate; no push.
+
+Next ONLY RX normal-user fresh extraction Run-Bundle-Milestone.cmd -IsolateImplicitLayers. Require21 stagesPASS/15 actual native RX strict1.3 selections+zero-error/warning cleanups, full geometry/UV/coverage/UNORM/numeric float triangle/permuted/zero gates. Return whole42-file folder:21 logs+JSON+15 PPMs+5 CSVs including bundle-frontend_uv*,bundle-frontend_uv_permuted*,bundle-frontend_uv_zero*. Stop D-028/D-033; no production scheduler activation before this independent gate.
