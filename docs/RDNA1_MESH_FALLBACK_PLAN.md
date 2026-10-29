@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 4.5. **Overall status:** S-045 actual frontend geometry+UV native strict RX milestone PASS: all16 stages/ten native selections and cleanups, complete outputs/ten images exact. Next define source-backed production adapter boundary; general P3/P5/game remain open.
+> **Last edited:** 2026-10-29. **Plan revision:** 4.6. **Overall status:** S-045 actual frontend geometry+UV native strict RX milestone PASS: all16 stages/ten native selections and cleanups, complete outputs/ten images exact. Next define source-backed production adapter boundary; general P3/P5/game remain open.
 
 ## 0. Mission and boundaries
 
@@ -36,7 +36,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P3 IN_PROGRESS: bounded IR geometry/arithmetic/UV and generated draw native gates verified; real frontend/NGG compatibility remains open** |
-| Current subtask | S-045 native actual frontend UV acceptance DONE with evidence |
+| Current subtask | S-046 production adapter boundary contract DONE; pure capability/draw candidate policy next |
 | Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | S-045 inputaee91fe8; package source `a183c1904f11e9c6f6c035ad58432d3456f859e0`, build20261029T095304950Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
@@ -45,7 +45,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Native RDNA1 smoke test | S-045 actual frontend geometry+UV/zero and prior generated regressions PASS RX5700XT API1.4.308 AMD25.6.1; ten strict1.3 selections/zero-error-warning cleanups |
 | Passing tests | S-045 all16 desktop stages PASS,0 FAIL/SKIPPED; ten images match independent references and complete output checks pass |
 | Known blockers / limits | No blocker for local adapter mapping; indexed/dynamic/CFG/LDS/resources/noncoherent/production/game/timer remain open |
-| Next single actionable task | Source-backed production adapter contract: actual compiler/draw metadata/interface/cache/synchronization boundaries, fail-closed unsupported states and OFF/native unchanged gates; identify one smallest implementation patch/test gate |
+| Next single actionable task | P2.2a isolated production-owned pure mesh fallback capability/draw candidate policy and CPU tests; OFF/native preference, strict supported bounds and precise fail-closed reasons, no renderer activation or RX rerun |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -906,6 +906,12 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 - Scoped host/SPIR-V/Vulkan/RDNA1 PASS; desktop compile/GLSL/auxiliary1.2/game NOT RUN. Raw buffers/desktop ZIP hash/OS/ICD/performance/noncoherent not supplied; prior failures retained. Bounded actual frontend texture gate DONE, broader phases remain open.
 - Next one local task: source-backed production integration boundary/adapter contract, map current compiler/draw metadata/resource/fragment/cache/synchronization requirements and unsupported state rejection, require OFF/native unchanged and identify one smallest implementation/test gate. No new hardware run for mapping; no production implementation started in this evidence review.
 
+### Session S-046 — 2026-10-29 — Source-backed adapter boundary
+
+- Input6ffc82dd clean correct branch/all14 submodules verified. Mapped actual device feature truth, early serial/speculative/prewarm rejection, compiler prefix/resource boundary, native/disk caches, guest fragment interface, draw scheduling/render scope and GPU lifetime. Report `docs/RDNA1_ADAPTER_CONTRACT_S046.md` documents verified paths/symbols and why simply calling the lowerer cannot implement fallback.
+- Initial bounded admission/rejection and all baked draw/cache/ABI requirements explicit. Next smallest P2.2a pure candidate selector and CPU tests, production-owned but unwired; default/native unchanged. Subsequent compiler/cache/bridge/scheduler gates remain separate, no feature spoofing or skip-as-success.
+- Documentation diff checked; all six execution categories NOT RUN this mapping-only session. Prior native S-045 evidence retained. P5 NOT_STARTED. Commit mapping before implementation under D-033; no RX transfer for policy-only changes or push.
+
 ## 8. Change history (append-only)
 
 | Date | Plan revision | Sections | Reason / evidence |
@@ -975,6 +981,8 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 | 2026-10-29 | 4.4 | consolidated frontend UV package/runner/README/plan/AGENTS | S-044 extends coherent frontend native acceptance to texture/zero with full regressions |
 
 | 2026-10-29 | 4.5 | checkpoint/P3/evidence/handoff; AGENTS/native UV report | S-045 accepts actual frontend UV native milestone; selects production adapter boundary mapping |
+
+| 2026-10-29 | 4.6 | adapter boundary contract/plan/AGENTS | S-046 maps production gates and defines smallest pure capability/draw policy implementation |
 
 ## 9. Quick commands (reference; verify before running)
 

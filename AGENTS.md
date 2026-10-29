@@ -161,3 +161,6 @@ Clean sourcea183c1904f11e9c6f6c035ad58432d3456f859e0/build20261029T095304950Z pa
 
 ## Current checkpoint S-045
 Actual frontend geometry+UV native strict RX milestone PASS: sourcea183c190/build20261029T095304950Z,16/16 stages PASS, ten native RX5700XT API1.4.308 AMD25.6.1 selections/cleanups zero errors/warnings, full outputs/ten images exact.27 files copied/hash-verified `_Build/p3-s045/`; report docs/RDNA1_RX_FRONTEND_UV_S045.md. No production/game claim. Next single local task source-backed production adapter boundary contract: current compiler/draw metadata/resource/fragment/cache/synchronization mapping, precise unsupported-state rejection, OFF/native unchanged gate and one smallest implementation patch/test plan. No RX request for mapping; P5 not implemented; no push.
+
+## Current checkpoint S-046
+Source-backed adapter contract docs/RDNA1_ADAPTER_CONTRACT_S046.md DONE. Production rejects missing mesh before frontend and assumes native modules/draw/cache; all gates mapped. Next P2.2a production-owned pure candidate selector+CPU tests: OFF/non-mesh/native preference/strict Vulkan+compute limits/direct bounded draw state, precise fail-closed reasons. Unwired candidate is not renderer readiness. No RX rerun for policy-only patch. Six execution categories NOT RUN mapping-only; native S-045 retained. P5 not implemented; D-033 continuation, no push.
