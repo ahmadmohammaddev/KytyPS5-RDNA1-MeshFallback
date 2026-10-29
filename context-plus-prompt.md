@@ -1,3 +1,5 @@
+> Superseded: the user cancelled external delegation and resumed implementation in this repository. Retained as historical handoff context.
+
 # Context + implementation prompt — bounded mesh execution plan
 
 ## Your assignment and delivery boundary

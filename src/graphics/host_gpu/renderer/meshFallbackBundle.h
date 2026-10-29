@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #pragma once
 #include "graphics/host_gpu/renderer/meshFallbackPolicy.h"
+#include "graphics/host_gpu/renderer/meshFallbackExecutionPlan.h"
 #include "graphics/shader/recompiler/MeshComputeCacheKey.h"
 #include "graphics/shader/recompiler/MeshVertexBridge.h"
 
@@ -11,9 +12,10 @@ struct CompileBundleResult {
   std::vector<uint32_t> compute,vertex,fragment;
   std::vector<uint8_t> key,interface_identity;
   size_t geometry_bytes=0,uv_bytes=0;
+  std::optional<ExecutionPlan> plan;
   Decision decision{Route::Unsupported,Reason::None};
   std::string error;
-  explicit operator bool() const {return error.empty() && !compute.empty() && !vertex.empty() && !fragment.empty() && !key.empty();}
+  explicit operator bool() const {return error.empty() && plan.has_value() && !compute.empty() && !vertex.empty() && !fragment.empty() && !key.empty();}
 };
 // source_identity remains the caller's complete canonical source/frontend-options
 // identity, not a hash. Exact generated modules are additionally part of the key.
@@ -39,11 +41,14 @@ inline CompileBundleResult CompileBundle(Mode mode,const Capabilities& caps,cons
   request.specialization=&context;
   auto compiled=M::Compile(source,request);
   if(!compiled)return reject("bundle compute: "+compiled.error);
+  const auto plan=CheckedExecutionLayout(compiled.vertices,compiled.primitives,request.mesh.max_vertices,
+      request.mesh.max_primitives,request.enable_uv,request.uv_capacity);
+  if(!plan)return reject("bundle output proof violates execution layout");
   std::vector<uint8_t> identity(source_identity.begin(),source_identity.end());
   auto word=[&](uint32_t w){for(unsigned i=0;i<4;++i)identity.push_back(uint8_t(w>>(i*8)));};
   // Unambiguous length prefix for the opaque identity and every exact module.
   std::vector<uint8_t> full;full.swap(identity);
-  word(0x424e444c);word(1); // bundle identity domain/version
+  word(0x424e444c);word(2); // bundle identity domain/version
   word(uint32_t(uint64_t(full.size())));word(uint32_t(uint64_t(full.size())>>32));
   identity.insert(identity.end(),full.begin(),full.end());
   for(auto module:{std::span<const uint32_t>(compiled.binary),std::span<const uint32_t>(bridge.binary),fragment}) {
@@ -52,6 +57,7 @@ inline CompileBundleResult CompileBundle(Mode mode,const Capabilities& caps,cons
   }
   auto key=M::BuildCacheKey(M::Backend::Compute,request,identity,bridge.interface_identity);
   // Publish only once EVERY compiler/interface/identity step succeeds.
+  out.plan=plan;
   out.compute=std::move(compiled.binary);out.vertex=std::move(bridge.binary);
   out.fragment.assign(fragment.begin(),fragment.end());out.key=std::move(key);
   out.interface_identity=std::move(bridge.interface_identity);

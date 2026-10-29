@@ -1189,3 +1189,9 @@ boundary, overriding sequential implementation for the delegated task. Compilati
 unit, SPIR-V, Vulkan, RX and game tests NOT RUN (documentation only); diff checkPASS.
 Next: external agent delivers full patch against declared base, owner reviews/applies
 it. No scheduler activation or automatic continuation in this session.
+
+### S-061 — In-repository work resumed / pure execution layout
+
+User cancelled external-agent delivery restriction; context-plus-prompt.md retained as superseded history. Lowerer already proves vertices/primitives, now atomically propagated into optional checked execution layout; readiness requires plan, bundle identity version2. Generated set0 binding1 geometry/binding2UV, no payload binding0; exact guarded allocation/active ranges,3/1 vs0/0 draw gating and initialization/dependency/lifetime requirements. No allocation or commands. Full snapshots -01/-02,2-job buildsPASS;43 cases32PASS/11 strictSKIPPED/0FAIL(6.60s), final readiness-only frontend1PASS(0.14s),44 modules unchanged. Evidence `_Build/p3-s061/`, report docs/RDNA1_EXECUTION_PLAN_S061.md. New plan GPU/RX/gameNOT RUN; existing Intel regressions and S-059 native standalone evidence distinct. No push.
+
+Next bounded task consume bundle/plan in isolated Vulkan harness with actual module identity, count/range-driven triangle/permuted/zero+UV draw, independent output and cleanup/synchronization checks. No production renderer activation. D-033 sequential authorization remains active; consolidate RX only at coherent execution milestone.
