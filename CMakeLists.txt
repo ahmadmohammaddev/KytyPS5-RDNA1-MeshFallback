@@ -1541,6 +1541,11 @@ if(BUILD_TESTING)
 	add_test(NAME mesh_ir_frontend_compatibility COMMAND $<TARGET_FILE:mesh_ir_frontend_tests>)
 	set_tests_properties(mesh_ir_frontend_compatibility PROPERTIES TIMEOUT 120)
   add_test(NAME mesh_paired_oracle COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --check-paired-oracle)
+  add_test(NAME mesh_paired_float_diagnostic COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --paired-float-diagnostic
+    --image-output "${PROJECT_BINARY_DIR}/mesh-paired-float-vk13.csv")
+  add_test(NAME mesh_paired_float_diagnostic_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --paired-float-diagnostic-vulkan12
+    --image-output "${PROJECT_BINARY_DIR}/mesh-paired-float-vk12.csv")
+  set_tests_properties(mesh_paired_float_diagnostic mesh_paired_float_diagnostic_vk12 PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 41)
   add_test(NAME mesh_paired_spirv COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --validate-paired-spirv)
   add_test(NAME mesh_paired_draw COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --paired-draw
     --image-output "${PROJECT_BINARY_DIR}/mesh-paired-vk13.ppm")

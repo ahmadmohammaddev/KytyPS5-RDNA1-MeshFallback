@@ -158,3 +158,23 @@ The frontend milestone also executes actual frontend parameter0.xy UV/zero expor
 Run `Run-Combined-Milestone.cmd -IsolateImplicitLayers` on RX5700XT as a normal user. In addition to the frontend milestone it executes frontend geometry+UV compute, generated vertex bridge and production-compiled public pixel fragment together. Require19 stages PASS,12 strict native selections and zero-error/warning cleanups, complete geometry/UV/RGBA expectations and12 PPM images. Preserve the entire result folder. Float32 signed-zero/Inf/NaN preservation is required; missing prerequisite SKIPPED is not acceptance. The new fragment displays interpolated UV colors, not texture sampling or a game frame.
 
 Native pixel and bridge modules are generated/validated during the clean build; the full emulator-linked compiler test executable is not distributed. Source identity and public fixture source are retained in the package. Existing launchers keep their previous modes; standalone harness is not an emulator.
+
+## Paired color precision diagnostic (S-055)
+
+Run `Run-Paired-Diagnostic.cmd -IsolateImplicitLayers` on the native RX target.
+This runs the unchanged combined suite then captures actual production pixel
+output to RGBA32F, before UNORM conversion, for both UV and zero controls.
+The float stage still runs if the original paired RGBA8 stage fails. Return the
+complete results folder including both paired-float CSVs, all logs and JSON.
+Original paired failure stays FAIL; successful capture is diagnostic evidence,
+not color acceptance. No numeric tolerance was added to the paired gate.
+
+The strict launcher requires RX identity; Intel auxiliary is explicit via
+`Run-Prototype.ps1 -Mode Vulkan12 -PairedPrecisionDiagnostic` and cannot close
+native gates. Missing prerequisites SKIP; missing artifacts/API/check failures
+FAIL. Each CSV has 4096 rows, all four un-clamped channels and mathematical UVs.
+`python Analyze-PairedPrecision.py paired-frontend_uv.ppm paired-float-frontend_uv.csv`
+independently reports ideal nearest differences and correlation with float
+capture. Python is optional analysis on the development host, not required to
+run the desktop capture. Separate-format draws can interpolate differently, so
+correlation alone does not prove identical values in the RGBA8 draw.

@@ -87,7 +87,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
                       VkQueue queue, VkCommandBuffer cmd, VkFence fence,
                       VkPipeline compute, VkPipelineLayout compute_layout, VkDescriptorSet set,
                       GpuBuffer& output, GpuBuffer& payload, const std::filesystem::path& image_path, bool textured = false,
-                      const Scenario* generated = nullptr, GpuBuffer* generated_uv = nullptr, bool paired = false) {
+                      const Scenario* generated = nullptr, GpuBuffer* generated_uv = nullptr, bool paired = false, bool float_diagnostic = false) {
 	// Resolve every entry point, including teardown, before creating any draw objects.
 #define DRAW_PROC(name) auto name = reinterpret_cast<PFN_vk##name>(proc(device, "vk" #name)); \
 	if (name == nullptr) { Expect(false, "draw entry point vk" #name); return false; }
@@ -136,7 +136,8 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 	VkImageCreateInfo image_info = {};
 	image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	image_info.imageType = VK_IMAGE_TYPE_2D;
-	image_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+	image_info.format = float_diagnostic ? VK_FORMAT_R32G32B32A32_SFLOAT : VK_FORMAT_R8G8B8A8_UNORM;
+	const size_t readback_bytes = kDrawBytes * (float_diagnostic ? sizeof(float) : 1);
 	image_info.extent = {kDrawSize, kDrawSize, 1};
 	image_info.mipLevels = image_info.arrayLayers = 1;
 	image_info.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -252,7 +253,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 	graphics_info.layout = layout;
 	graphics_info.renderPass = pass;
 	if (!CheckVk(CreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &graphics_info, nullptr, &graphics), "graphics pipeline")) { return false; }
-	if (AllocateMappedBuffer(device, proc, memory, kDrawBytes, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	if (AllocateMappedBuffer(device, proc, memory, readback_bytes, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 	                         readback, "image-readback") != 0) { return false; }
 	// Two sequential GPU submissions: clear-only control, then freshly dispatched
@@ -278,7 +279,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		// IR-generated geometry must not be supplied by the host payload. Poison it
 		// independently of the expected output before the fresh draw dispatch.
 		if (generated) { std::memset(payload.mapped, 0xA5, (kPositionWords + kIndexWords) * 4); }
-		std::memset(readback.mapped, 0xA5, kDrawBytes);
+		std::memset(readback.mapped, 0xA5, readback_bytes);
 		for (auto* buffer: {&output, &payload, &readback}) {
 			if (buffer->noncoherent) {
 				VkMappedMemoryRange range = {};
@@ -387,6 +388,26 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		std::memcpy(actual.words.data(), output.mapped, kTotalBytes);
 		CompareBlobWords(actual, draw ? scenario.expected : scenario.initial, "draw exact full output blob including guards");
 		if (textured && !texture.Check(draw, scenario.vertex_count)) { return false; }
+        if (float_diagnostic) {
+            const bool has_triangle = draw && scenario.primitive_count != 0;
+            const auto stats = InspectPairedFloat(static_cast<const float*>(readback.mapped),has_triangle);
+            PrintLine1("paired-float diagnostic: draw=%u covered=%zu structural-errors=%zu max-ideal-error=%.9g (observation only; no numeric acceptance tolerance)",has_triangle,stats.covered,stats.structural_errors,stats.max_error);
+            Expect(stats.structural_errors==0,"diagnostic finite values, channel pairing and exact clear controls");
+            if(draw && !image_path.empty()) {
+                auto csv_path=image_path;csv_path.replace_extension(".csv");
+                std::ofstream csv(csv_path,std::ios::trunc);
+                csv << "x,y,r,g,b,a,ideal_u,ideal_v,covered\n" << std::setprecision(17);
+                const auto* values=static_cast<const float*>(readback.mapped);
+                for(uint32_t y=0;y<64;++y)for(uint32_t x=0;x<64;++x) {
+                    const auto ideal=PairedFloatIdeal(x,y,has_triangle);const auto at=(y*64+x)*4;
+                    csv<<x<<','<<y;
+                    for(unsigned c=0;c<4;++c)csv<<','<<values[at+c];
+                    csv<<','<<ideal[0]<<','<<ideal[1]<<','<<(has_triangle&&TrianglePixel(x,y))<<'\n';
+                }
+                csv.close();Expect(!csv.fail(),"complete diagnostic CSV saved");
+                PrintLine1("paired-float artifact: %s",PathText(csv_path).c_str());
+            }
+        } else {
 		const size_t mismatches = paired ? PairedMismatches(static_cast<const uint8_t*>(readback.mapped),draw && scenario.primitive_count!=0) : textured ? TextureMismatches(static_cast<const uint8_t*>(readback.mapped), draw && scenario.primitive_count != 0)
 		                                    : PixelMismatches(static_cast<const uint8_t*>(readback.mapped), draw && scenario.primitive_count != 0);
 		PrintLine1("offscreen %s: 64x64 RGBA pixels mismatched=%zu/4096; full blob checked",
@@ -402,6 +423,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 			Expect(!file.fail(), "offscreen PPM artifact saved");
 			PrintLine1("offscreen-image: %s", PathText(image_path).c_str());
 		}
+        }
 		if (g_failures != 0 || g_validation_errors != 0) { return false; }
 	}
 	if (textured && !generated_uv && !texture.CheckBoundaries(cmd, queue, fence)) { return false; }

@@ -13,9 +13,12 @@ param(
     [switch]$IrMilestone,
     [switch]$FrontendMilestone,
     [switch]$CombinedMilestone,
+    [switch]$PairedPrecisionDiagnostic,
     [switch]$IsolateImplicitLayers
 )
 $ErrorActionPreference = 'Stop'
+if ($PairedPrecisionDiagnostic -and ($CombinedMilestone -or $FrontendMilestone -or $IrMilestone -or $Ir -or $IrAdd -or $Draw -or $Texture)) { Write-Host 'FAIL: choose precision diagnostic or another mode'; exit 1 }
+if ($PairedPrecisionDiagnostic) { $CombinedMilestone = $true }
 if ($CombinedMilestone -and ($FrontendMilestone -or $IrMilestone -or $Ir -or $IrAdd -or $Draw -or $Texture)) { Write-Host 'FAIL: choose combined milestone or another mode'; exit 1 }
 if ($CombinedMilestone) { $FrontendMilestone = $true }
 if ($FrontendMilestone -and ($IrMilestone -or $Ir -or $IrAdd -or $Draw -or $Texture)) { Write-Host 'FAIL: choose frontend milestone or another mode'; exit 1 }
@@ -214,9 +217,15 @@ try {
             $plans += @{name='runtime-paired'; arguments=@("--paired-draw$suffix",'--image-output',(Join-Path $results 'paired.ppm')); devices=2;
               images=@('paired-frontend_uv.ppm','paired-frontend_uv_zero.ppm')}
         }
+        if ($PairedPrecisionDiagnostic) {
+            # Always run after the original paired stage, even if that stage fails.
+            # Capture success does not override the original color failure.
+            $plans += @{name='runtime-paired-float'; arguments=@("--paired-float-diagnostic$suffix",'--image-output',(Join-Path $results 'paired-float.csv')); devices=2;
+              images=@('paired-float-frontend_uv.csv','paired-float-frontend_uv_zero.csv')}
+        }
         foreach ($plan in $plans) {
             $run = RunCheck -Name $plan.name -Exe 'mesh_compute_proto_tests.exe' -Arguments $plan.arguments
-            $identity = @($run.lines | Where-Object { $_ -match 'physical-devices:|\[\d+\].*type=|selected:|selected-driver:|dispatch-module:|summary after cleanup:|offscreen.*pixels|DRAW RESULT:|TEXTURE RESULT:|UV boundary|UV full-buffer:|IR case:|IR RESULT:|PAIRED RESULT:|paired native' })
+            $identity = @($run.lines | Where-Object { $_ -match 'physical-devices:|\[\d+\].*type=|selected:|selected-driver:|dispatch-module:|summary after cleanup:|offscreen.*pixels|DRAW RESULT:|TEXTURE RESULT:|UV boundary|UV full-buffer:|IR case:|IR RESULT:|PAIRED RESULT:|paired native|paired-float|DIAGNOSTIC RESULT:' })
             $runtimeIdentity += $identity
             $selectedDevices = @($run.lines | Where-Object { $_ -match '^\[p41\] selected:' })
             $rxDevices = @($selectedDevices | Where-Object { $_ -match 'RX\s*5700\s*XT' })
@@ -253,7 +262,7 @@ try {
         $overall = if (@($runtimeStages | Where-Object { $_.targetStatus -eq 'FAIL' }).Count) { 'FAIL' } else { $runtimeStatus }
     }
     $summary = [ordered]@{schema=1; gitCommit=$manifest.gitCommit; buildId=$manifest.buildId;
-        mode=$Mode; ir=[bool]$Ir; irAdd=[bool]$IrAdd; irMilestone=[bool]$IrMilestone; frontendMilestone=[bool]$FrontendMilestone; combinedMilestone=[bool]$CombinedMilestone; draw=[bool]$Draw; texture=[bool]$Texture; isolateImplicitLayers=[bool]$IsolateImplicitLayers; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
+        mode=$Mode; ir=[bool]$Ir; irAdd=[bool]$IrAdd; irMilestone=[bool]$IrMilestone; frontendMilestone=[bool]$FrontendMilestone; combinedMilestone=[bool]$CombinedMilestone; pairedPrecisionDiagnostic=[bool]$PairedPrecisionDiagnostic; draw=[bool]$Draw; texture=[bool]$Texture; isolateImplicitLayers=[bool]$IsolateImplicitLayers; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
         runs=@($runs.ToArray()); runtimeStages=@($runtimeStages.ToArray()); images=@($imageRecords.ToArray()); deviceEvidence=$runtimeIdentity;
         environment=@{VK_LAYER_PATH=$env:VK_LAYER_PATH; VK_INSTANCE_LAYERS=$env:VK_INSTANCE_LAYERS;
             VK_DRIVER_FILES=$env:VK_DRIVER_FILES; VK_ICD_FILENAMES=$env:VK_ICD_FILENAMES;

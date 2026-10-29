@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 5.4. **Overall status:** S-054 native RX combined gate FAIL: 58 paired color pixel mismatches; diagnose before further integration. No production renderer/game integration.
+> **Last edited:** 2026-10-29. **Plan revision:** 5.5. **Overall status:** S-055 local paired float diagnosis/capture implemented; prepare clean diagnostic transfer; S-054 RX combined FAIL remains open. No production renderer/game integration.
 
 ## 0. Mission and boundaries
 
@@ -36,7 +36,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
-| Current subtask | S-054 supplied native strict combined evidence reviewed: 18 stages PASS, paired stage FAIL |
+| Current subtask | S-055 independent precision analysis and RGBA32F diagnostic locally verified; clean transfer verification pending |
 | Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | Clean package source `ad57feab7d794b7cedb855a6fb5411ca76881200`, build20261029T122933634Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
@@ -45,7 +45,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Native RDNA1 smoke test | S-054 RX5700XT API1.4.308 AMD25.6.1: ten prior cases PASS, paired frontend_uv FAIL 58 pixels; paired zero NOT RUN |
 | Passing tests | S-05341 cases31 PASS/10 strict SKIPPED/0 FAIL(5.11s);16 expected package/negative outcomes,12 independent images exact |
 | Known blockers / limits | Native paired color mismatch unresolved; adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache wiring/scheduler/production/game remain open |
-| Next single actionable task | Diagnose S-054 paired 58-pixel mismatch with independent numerical controls; retain exact output/negative gates and establish justified correction before a strict RX rerun |
+| Next single actionable task | Run verified clean S-055 diagnostic package on RX; retain original RGBA8 FAIL and collect both RGBA32F CSVs before source-backed correction/precision contract |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -1092,3 +1092,13 @@ Input f1d687c1 clean branch; pinned ancestry and 14 matching recursive submodule
 No build/code/new Vulkan execution this review. Desktop host/offline/module preflights PASS; native combined Vulkan/RDNA1 gate FAIL; Astro Bot NOT RUN. Intel auxiliary PASS remains separate. Next one local task diagnose interpolation/conversion/expectation with independent discriminating controls; acceptance is explained observed values and independently tested correction/precision contract preserving full comparisons and negative checks, followed by strict RX rerun before closing gate. No silent tolerance relaxation, renderer wiring, package/push or next phase in S-054.
 
 Change history5.4: retain native combined failure and redirect next bounded task to its diagnosis; prior successful gates unchanged.
+
+### Session S-055 / Experiment E-055 — 2026-10-29 — Paired precision diagnostic
+
+Inputa331489c clean branch/14 submodules. Independent Fraction analysis reproduces58 RX differences, all within ideal floor/ceil; actual RX float interpolation still unknown. Official Vulkan conversion permits either adjacent integer (nearest recommended), so nearest-only expectation is stronger than portable conversion; do not change tolerance or infer driver correctness. Added opt-in same-native-stage RGBA32F full readback/CSV, clear/zero/finite/channel controls and observational max errors; no numeric tolerance or paired-color PASS. Failure cleanup warning/error summary added. Strict diagnostic launcher preserves original failure and continues float capture. Report docs/RDNA1_PAIRED_PRECISION_S055.md.
+
+Full dirty snapshots -01/-02 retained, focused2-job build PASS;43 serial cases32 PASS/11 strict SKIPPED/0 FAIL(6.57s). Actual Intel1.2 float triangle/zero validation-clean, max ideal error1.17317078e-7;44 shaders byte-identical, swapped bridge expectedFAIL488pixels and zero cleanup errors/warnings; independent analyzer rejects truncation/out-of-bracket corruption. No native RX diagnosis result or game. Source commit then clean package/relocation/API/integrity checks before RX handoff; no push.
+
+Next one hardware task clean Run-Paired-Diagnostic.cmd -IsolateImplicitLayers; retain20-stage logs/JSON/PPMs and2 complete float CSVs even when original paired stage fails. Actual RX values and source-backed correction/precision contract required before closing failed combined gate. No production renderer integration.
+
+Change history5.5: S-055 independent precision analysis and isolated float capture; preserves prior native failure and strict/auxiliary separation.
