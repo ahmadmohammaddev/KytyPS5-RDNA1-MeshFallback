@@ -179,3 +179,6 @@ User approved committing original adapter promotion plus verified repairs. Emula
 
 ## Current checkpoint S-049
 Canonical adapter byte-key helper/CPU tests PASS: exact domain/backend/version/full source+interface/mesh/UV/draw identities, no pointer/padding/hash-only equality. No production cache/renderer wiring.33 cases24 PASS/9 strict SKIPPED/0 FAIL(4.45s), full snapshot/logs retained; report docs/RDNA1_CACHE_IDENTITY_S049.md. Next bounded conventional vertex bridge matching actual guest fragment parameter0.xy; explicit unsupported type/interpolation/component rejection, independent SPIR-V interface checks and focused regressions. No RX rerun for identity-only work, no push.
+
+## Current checkpoint S-050
+Bounded reflected vertex bridge offline PASS (actual guest ABI float4 vs authored harness float2). Strict1.3 position/UV bridge, native-shaped fragment xy proof/rejection and independent binary mutant oracle; no production activation.34 tests25 PASS/9 strict SKIPPED/0 FAIL(4.37s), three snapshots and fixture failures retained `_Build/p3-s050/`. Report docs/RDNA1_VERTEX_BRIDGE_S050.md. Next single local task actual public pixel ISA through production emitter paired with bridge, exact interface/dataflow/rejection/SPIR-V tests; current authored fragments alone do not complete this gate. New bridge runtime/RX/game NOT RUN; no RX transfer or push.

@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 4.9. **Overall status:** S-049 isolated canonical adapter cache identity and CPU field/boundary tests PASS. No production cache/renderer activation; bounded native frontend evidence retained. Next conventional vertex/guest-fragment bridge.
+> **Last edited:** 2026-10-29. **Plan revision:** 5.0. **Overall status:** S-050 isolated bounded vertex bridge offline PASS against validated native-shaped float4 fragment interfaces. Actual production-emitted pixel pairing and runtime bridge remain open; native frontend evidence retained.
 
 ## 0. Mission and boundaries
 
@@ -36,7 +36,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
-| Current subtask | S-049 canonical cache identity DONE locally; conventional bridge next |
+| Current subtask | S-050 reflected vertex bridge offline DONE; actual emitted guest pixel pairing next |
 | Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | S-047 input05f38700 (HEAD); all S-048 edits pending review in working tree; package/native sourcea183c190 unchanged |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
@@ -45,7 +45,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Native RDNA1 smoke test | S-045 actual frontend geometry+UV/zero and prior generated regressions PASS RX5700XT API1.4.308 AMD25.6.1 retained; no new hardware run or package |
 | Passing tests | S-048 byte-compat 33/33 baseline modules exact; 15 focused serial ctests PASS/0 FAIL, four Intel1.2 auxiliary runtime PASS, four strict1.3 SKIPPED (VK_LAYER_PATH process-local `_Build/p4-s013/tools/validationlayers`) |
 | Known blockers / limits | Adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache/bridge/scheduler/production/game remain open; S-048 not committed until user review |
-| Next single actionable task | Bounded conventional vertex bridge with actual guest fragment parameter0.xy contract, fail-closed unsupported interfaces and independent SPIR-V validation/tests |
+| Next single actionable task | Public pixel ISA through actual production emitter into bridge; strict1.3 interface/dataflow validation, xy acceptance and unsupported-use/type/interpolation rejection; no runtime claim |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -1045,3 +1045,12 @@ User authorized commit after repair verification. Final source snapshot and23 PA
 - Next single local task bounded conventional vertex bridge matching actual guest fragment parameter0.xy, explicit unsupported interpolation/type/component rejection and independent interface SPIR-V checks. Cache wiring/scheduler remain subsequent gates; no RX rerun for isolated identity.
 
 Change history4.9: S-049 canonical identity helper/tests; source/interface canonical identity remains an explicit caller obligation, not a hash-only shader key.
+
+### Session S-050 — 2026-10-29 — Bounded conventional vertex bridge
+
+- Input91cc5194 clean correct branch/14 submodules. Actual emitter uses float4 guest pixel parameters, authored harness used float2. New reflected Fragment-main interface gate and strict1.3 conventional vertex generator admit no inputs or smooth float4 parameter0 with proven xy-only scalar reads; reject other types/locations/interpolation/whole vectors/z/w/pointer uses. Position forwards directly, float2 UV expands to float4 with zero padding unused by admitted fragment. Canonical interface identity emitted; no production renderer/cache wiring.
+- Three complete snapshots/builds(2jobs) retained. Initial authored fixture duplicate type FAIL and subsequent invalid Component1 FAIL retained/fixed. Final bridge validation/oracle/mutation PASS;34 focused cases25 PASS/9 strict SKIPPED/0 FAIL(4.37s). Logs/modules `_Build/p3-s050/`, report `docs/RDNA1_VERTEX_BRIDGE_S050.md`.
+- Compilation/unit/new offline SPIR-V PASS; existing Intel1.2 Vulkan regressions PASS/strict SKIP; new bridge runtime/RX/game NOT RUN. Actual production-emitted pixel pairing not tested: current independent fragments are authored native-shaped fixtures, not a guest shader integration result.
+- Next one local task public pixel ISA actual frontend/emitter pairing through bridge with independent interface/dataflow and rejection coverage. Combined runtime follows separately; no package/push/new RX request.
+
+Change history5.0: S-050 adds isolated reflected bridge and offline tests; explicitly retains actual production pixel pairing as next gate.
