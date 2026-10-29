@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 4.3. **Overall status:** S-041 native RX actual frontend triangle/permuted/zero gate PASS; all fifteen stages, eight strict selections/cleanups and images exact. Bounded frontend UV export next; production/game integration remains open.
+> **Last edited:** 2026-10-29. **Plan revision:** 4.4. **Overall status:** S-041 native RX actual frontend triangle/permuted/zero gate PASS; all fifteen stages, eight strict selections/cleanups and images exact. Bounded frontend UV export next; production/game integration remains open.
 
 ## 0. Mission and boundaries
 
@@ -887,6 +887,10 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 - Full snapshot `_Build/p0-s012/p3-s043-pre-build-01/`, two-job build PASS;31 serial cases22 PASS/9 strict SKIPPED/0 FAIL(4.42s). Actual Intel auxiliary frontend texture/zero all outputs/pixels exact, zero validation messages through both cleanups. Both images hash-match independently verified references. Valid wrong-UV module FAILS complete UV oracle; missing strict module FAILS before discovery. Logs/XML/images/isolated mutants `_Build/p3-s043/`.
 - Compilation/unit/SPIR-V PASS, Intel1.2 Vulkan PASS/strict1.3 SKIPPED; new native frontend texture/RDNA1 and Astro Bot NOT RUN. Next consolidate this completed frontend geometry+UV milestone in one clean package with31 tests and relocated integrity/negative/API/device verification, then stop for native strict acceptance under D-028/D-033. No push.
 
+### Session S-044 — 2026-10-29 — Complete bounded frontend package
+
+- Input95f89587; extend existing FrontendMilestone with actual frontend UV/zero textured stage, four API-specific modules and31-case suite. One existing launcher now covers16 stages, ten native selections/cleanups/images, all complete geometry/UV/pixel expectations and zero validation messages. Windows PowerShell syntax checked. Clean source commit precedes build; final package/relocation/integrity/Intel/strict/RX guard results pending below. No native new UV/game claim or push.
+
 ## 8. Change history (append-only)
 
 | Date | Plan revision | Sections | Reason / evidence |
@@ -952,6 +956,8 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 | 2026-10-29 | 4.2 | frontend UV fixture/plan/AGENTS | S-042 proves actual frontend UV offline with independent guarded binary oracle and rejection coverage |
 
 | 2026-10-29 | 4.3 | frontend UV runtime/CMake/plan/AGENTS | S-043 executes actual frontend geometry/UV textured and zero controls; native gate pending |
+
+| 2026-10-29 | 4.4 | consolidated frontend UV package/runner/README/plan/AGENTS | S-044 extends coherent frontend native acceptance to texture/zero with full regressions |
 
 ## 9. Quick commands (reference; verify before running)
 

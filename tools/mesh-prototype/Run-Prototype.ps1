@@ -197,6 +197,8 @@ try {
         if ($FrontendMilestone) {
             $plans += @{name='runtime-frontend'; arguments=@("--frontend-draw$suffix",'--image-output',(Join-Path $results 'frontend.ppm')); devices=3;
               images=@('frontend-frontend.ppm','frontend-frontend_permuted.ppm','frontend-frontend_zero.ppm')}
+            $plans += @{name='runtime-frontend-texture'; arguments=@("--frontend-texture$suffix",'--image-output',(Join-Path $results 'frontend-texture.ppm')); devices=2;
+              images=@('frontend-texture-frontend_uv.ppm','frontend-texture-frontend_uv_zero.ppm')}
         }
         foreach ($plan in $plans) {
             $run = RunCheck -Name $plan.name -Exe 'mesh_compute_proto_tests.exe' -Arguments $plan.arguments
