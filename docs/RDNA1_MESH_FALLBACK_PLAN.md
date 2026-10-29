@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 4.8. **Overall status:** S-048 moved the bounded lowering/specialization/ABI into a production-owned isolated compiler adapter under `src` with shared actual pre-resource preparation; byte-for-byte module compatibility and focused/auxiliary regressions PASS locally. **All S-048 work is uncommitted and pending user review** (nothing committed or pushed). S-047 policy and S-045 native frontend geometry+UV milestone retained. Renderer wiring/cache/bridge/scheduler not started.
+> **Last edited:** 2026-10-29. **Plan revision:** 4.9. **Overall status:** S-049 isolated canonical adapter cache identity and CPU field/boundary tests PASS. No production cache/renderer activation; bounded native frontend evidence retained. Next conventional vertex/guest-fragment bridge.
 
 ## 0. Mission and boundaries
 
@@ -36,7 +36,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
-| Current subtask | S-048 production-owned isolated compiler adapter implemented locally, UNCOMMITTED and under review; no call sites, no renderer/default behavior change |
+| Current subtask | S-049 canonical cache identity DONE locally; conventional bridge next |
 | Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | S-047 input05f38700 (HEAD); all S-048 edits pending review in working tree; package/native sourcea183c190 unchanged |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
@@ -45,7 +45,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Native RDNA1 smoke test | S-045 actual frontend geometry+UV/zero and prior generated regressions PASS RX5700XT API1.4.308 AMD25.6.1 retained; no new hardware run or package |
 | Passing tests | S-048 byte-compat 33/33 baseline modules exact; 15 focused serial ctests PASS/0 FAIL, four Intel1.2 auxiliary runtime PASS, four strict1.3 SKIPPED (VK_LAYER_PATH process-local `_Build/p4-s013/tools/validationlayers`) |
 | Known blockers / limits | Adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache/bridge/scheduler/production/game remain open; S-048 not committed until user review |
-| Next single actionable task | User review/commit of the S-048 working tree (or corrected fixes), then separate cache/bridge/scheduler gate — none started this session; no RX package
+| Next single actionable task | Bounded conventional vertex bridge with actual guest fragment parameter0.xy contract, fail-closed unsupported interfaces and independent SPIR-V validation/tests |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -1037,3 +1037,11 @@ Full final source capture `_Build/p0-s012/p2-s048-fix-pre-build-03/` matches fin
 ### S-048 final commit handoff
 
 User authorized commit after repair verification. Final source snapshot and23 PASS/9 strict SKIPPED/0 FAIL(4.35s), emulator build and33 byte-identical modules retained; final diff check PASS, no code changes or redundant tests in this commit-only handoff. Historical failed builds/review repros/provenance limits preserved. Adapter promotion and fixes committed together; no push. Next single local task define and test canonical backend/draw-context/ABI cache identity for the isolated adapter, including native-vs-compute separation and distinct baked-context keys; no renderer activation or RX transfer for this CPU-only boundary.
+
+### Session S-049 — 2026-10-29 — Canonical cache identity
+
+- Inputc9233c21 clean branch,14 matching submodules verified. Added production-owned isolated canonical byte key and CPU target/test. Domain/backend/compiler/ABI/bridge versions, length-prefixed full source/interface identities, complete mesh/UV request and specialization presence/all draw fields. Exact byte equality required; no struct padding/hash-only/pointer identity. Existing native cache/default renderer untouched; no lookup/insertion call sites.
+- Full snapshot `_Build/p0-s012/p3-s049-pre-build-01/`;2-job build PASS;33 serial focused cases24 PASS/9 strict SKIPPED/0 FAIL(4.45s). Logs `_Build/p3-s049/`, report `docs/RDNA1_CACHE_IDENTITY_S049.md`. Compilation/unit/existing SPIR-V and Intel1.2 regressions PASS; new RX/game NOT RUN; no package or push.
+- Next single local task bounded conventional vertex bridge matching actual guest fragment parameter0.xy, explicit unsupported interpolation/type/component rejection and independent interface SPIR-V checks. Cache wiring/scheduler remain subsequent gates; no RX rerun for isolated identity.
+
+Change history4.9: S-049 canonical identity helper/tests; source/interface canonical identity remains an explicit caller obligation, not a hash-only shader key.

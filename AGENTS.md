@@ -176,3 +176,6 @@ Adapter now compiles a private clone of const raw frontend IR, validates wave/CF
 
 ## S-048 final committed checkpoint
 User approved committing original adapter promotion plus verified repairs. Emulator/focused build PASS;23 PASS/9 strict SKIPPED/0 FAIL;33 modules exact; final source snapshot retained. No renderer activation/new RX/game/package or push. Next single local task canonical backend/draw-context/ABI cache identity tests, native/compute separation and changed baked contexts distinct; no RX transfer for this CPU-only task. Historical uncommitted/review entries above are retained history, superseded by this checkpoint.
+
+## Current checkpoint S-049
+Canonical adapter byte-key helper/CPU tests PASS: exact domain/backend/version/full source+interface/mesh/UV/draw identities, no pointer/padding/hash-only equality. No production cache/renderer wiring.33 cases24 PASS/9 strict SKIPPED/0 FAIL(4.45s), full snapshot/logs retained; report docs/RDNA1_CACHE_IDENTITY_S049.md. Next bounded conventional vertex bridge matching actual guest fragment parameter0.xy; explicit unsupported type/interpolation/component rejection, independent SPIR-V interface checks and focused regressions. No RX rerun for identity-only work, no push.

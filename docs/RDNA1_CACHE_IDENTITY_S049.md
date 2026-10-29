@@ -1,0 +1,11 @@
+# S-049 canonical adapter cache identity
+
+Input c9233c21, branch feature/rdna1-mesh-fallback, initially clean; fourteen matching submodules verified. Adds isolated MeshComputeCacheKey.h and CPU test/CTest. No production cache lookup/insertion or renderer activation.
+
+Key owns canonical little-endian bytes: domain tag, schema/backend/compiler/geometry ABI/UV ABI/bridge versions; length-prefixed full source identity and export/fragment interface identity; every current mesh request field, UV opt-in/capacity, explicit specialization presence and all ten draw context dwords. No raw struct bytes, padding, pointer addresses or lossy digest equality. Full bytes must decide equality even if a later cache uses hashing for indexing. Opaque source identity must be the complete canonical source/frontend-options identity, never just shader hash; interface identity must carry exact export/fragment layout. This helper deliberately does not admit shaders, encode IR, validate requests or change existing native cache formats. The native backend enum is a namespace discriminator, not a replacement native cache implementation.
+
+CPU checks: deterministic identity; backend separation; all metadata/draw/version fields individually distinguished; UV/presence differences; equal pointed-to draw values at different addresses equal; source/interface values and ambiguous concatenation boundaries distinguished; known little-endian prefix checked. Existing native paths unchanged by absence of call sites.
+
+Full snapshot `_Build/p0-s012/p3-s049-pre-build-01/`; two-job focused build PASS (existing shader.h warnings).33-case serial focused suite24 PASS/9 strict1.3 SKIPPED/0 FAIL,4.45s. Logs/XML `_Build/p3-s049/`. Compilation and CPU unit scoped PASS; existing offline SPIR-V and Intel1.2 auxiliary regressions PASS, strict1.3 SKIPPED; new RDNA1 and Astro Bot NOT RUN. No package/full emulator rebuild or push.
+
+Next single local task: bounded conventional vertex bridge matching actual guest fragment parameter0.xy interface, with explicit unsupported interpolation/type/component rejection, independent SPIR-V interface validation and focused regressions. Cache wiring remains deferred until backend compiler identity, bridge and scheduler can form a coherent fail-closed production bundle. No RX request for this CPU-only identity helper.

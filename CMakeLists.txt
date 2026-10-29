@@ -928,6 +928,8 @@ add_custom_target(mesh_texture_shaders DEPENDS ${mesh_texture_modules})
 # P3.1 isolated offline research: actual repository IR, no native emitter/renderer changes.
 # S-048: the lowering/specialization/ABI/adapter live in src/graphics/shader/recompiler
 # (MeshComputeLowering/Specialization/Abi/Adapter); tests only consume them.
+add_executable(mesh_compute_cache_key_tests EXCLUDE_FROM_ALL "${KYTY_TESTS_DIR}/MeshComputeCacheKeyTests.cpp")
+target_include_directories(mesh_compute_cache_key_tests PRIVATE ${inc_headers})
 add_executable(mesh_fallback_policy_tests EXCLUDE_FROM_ALL "${KYTY_TESTS_DIR}/MeshFallbackPolicyTests.cpp")
 target_include_directories(mesh_fallback_policy_tests PRIVATE ${inc_headers})
 add_executable(mesh_ir_compute_tests EXCLUDE_FROM_ALL
@@ -1508,6 +1510,7 @@ if(BUILD_TESTING)
 		TIMEOUT 180)
 	add_test(NAME vram_budget COMMAND $<TARGET_FILE:vram_budget_tests>)
 	add_test(NAME device_compat COMMAND $<TARGET_FILE:device_compat_tests>)
+  add_test(NAME mesh_compute_cache_key COMMAND $<TARGET_FILE:mesh_compute_cache_key_tests>)
   add_test(NAME mesh_fallback_policy COMMAND $<TARGET_FILE:mesh_fallback_policy_tests>)
 	add_test(NAME mesh_output_contract COMMAND $<TARGET_FILE:mesh_output_contract_tests>)
 	add_test(NAME mesh_ir_compute_positive COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --positive)
@@ -2701,6 +2704,7 @@ if(BUILD_TESTING)
 		pipeline_list_tests
 		vram_budget_tests
 		device_compat_tests
+		mesh_compute_cache_key_tests
 		mesh_fallback_policy_tests
 		mesh_output_contract_tests
 		mesh_compute_proto_tests
