@@ -2,7 +2,14 @@
 // Compile-only boundary: checks the REAL Buffer adapter, not a mock
 // declaration.
 #include "graphics/host_gpu/renderer/meshFallbackBuffers.h"
+#include "graphics/host_gpu/renderer/meshFallbackRecording.h"
 #include "graphics/host_gpu/renderer/meshFallbackResources.h"
+Libs::Graphics::MeshFallback::RecordingResources CheckMeshRetentionBoundary(
+    Libs::Graphics::CommandScheduler &scheduler,
+    Libs::Graphics::MeshFallback::DrawResources &&resources) {
+  return Libs::Graphics::MeshFallback::RetainResourcesBeforeUse(
+      scheduler, std::move(resources));
+}
 Libs::Graphics::MeshFallback::DrawResources CheckMeshResourcesBoundary(
     Libs::Graphics::GraphicContext &graphics,
     Libs::Graphics::CommandScheduler &scheduler,

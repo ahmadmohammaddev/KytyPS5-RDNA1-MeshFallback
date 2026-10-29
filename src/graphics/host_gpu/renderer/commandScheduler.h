@@ -69,6 +69,12 @@ public:
 	// KYTY_PRIORITY_WAIT_SPIN_US (default 0): first spin that long for the priority runner.
 	void                      WaitPriorityOperations(uint64_t tick);
 	void                      DeferOperation(Common::UniqueFunction<void>&& operation);
+	// Recording producer only, BEFORE the first use of the retained resource.
+	// On refusal leaves operation owned by the caller. Never invokes it inline.
+	// Shutdown cannot accept a new recording lease; expected_tick prevents reuse
+	// across Submit. No wait, flush or command recording is performed here.
+	[[nodiscard]] bool TryRetainForRecording(uint64_t expected_tick,
+	                                        Common::UniqueFunction<void>& operation);
 	void                      DeferPriorityOperation(
 	    Common::UniqueFunction<void>&& operation,
 	    PriorityOperationKind kind = PriorityOperationKind::Generic);

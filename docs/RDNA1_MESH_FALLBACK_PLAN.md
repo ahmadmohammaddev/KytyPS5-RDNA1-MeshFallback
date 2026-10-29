@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 6.7. **Overall status:** S-066 recoverable unsubmitted Buffer allocation/rollback verified locally; native S-064 bundle gate retained; descriptor/completion ownership remains open.
+> **Last edited:** 2026-10-29. **Plan revision:** 6.8. **Overall status:** S-068 isolated recoverable resource/completion protocol verified locally; actual scheduler runtime/renderer activation remain open; strict native resource gate pending.
 
 ## 0. Mission and boundaries
 
@@ -36,7 +36,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
-| Current subtask | S-067 unsubmitted Buffer+dedicated descriptor transaction PASS; completion ownership open |
+| Current subtask | S-068 isolated resource completion protocol PASS locally; real scheduler runtime NOT RUN |
 | Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | Clean package source `b2b9cb4c13f3f770bad0339d31fe33cae0c718d7`, build20261029T141854777Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
@@ -45,7 +45,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Native RDNA1 smoke test | S-064 RX5700XT API1.4.308 AMD25.6.1:21 stages PASS,15 native strict selections/cleanups zero errors/warnings; bundle triangle/permuted/zero accepted |
 | Passing tests | S-06346 cases34 PASS/12 strict SKIPPED/0 FAIL(7.01s);27 expected package/negative outcomes;15 exact PPMs/5 complete bounded float CSVs/44 unchanged modules |
 | Known blockers / limits | Native isolated bundle/plan gate PASS; production resource ownership/descriptors/lifetime/scheduler/cache activation and wider indexed/dynamic/CFG/LDS/resource/game support remain open |
-| Next single actionable task | Scheduler recording admission/retention through final use; delayed exact-once cleanup, wrong-tick/inactive/shutdown rejection and controlled/actual completion tests; no renderer activation |
+| Next single actionable task | Clean consolidated resource milestone package/relocation/integrity/API/RX guards, then one native strict1.3 RX resource gate and stop |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -1258,3 +1258,13 @@ Input511a96f3, clean branch feature/rdna1-mesh-fallback/all14 matching submodule
 Full source snapshots -01/-02 (final) under _Build/p0-s012/, logs _Build/p2-s067/, report docs/RDNA1_DESCRIPTOR_OWNERSHIP_S067.md. Both2-job focused/emulator+link buildsPASS;49 focused36PASS/13strictSKIPPED/0FAIL(7.71s). Actual Intel API1.2.17216 zero/nonzero/UV/layout/pool/set scenariosPASS:24 real buffers freed once,four exact updates, all failure partials removed before return, zero live layouts/pools/VMA allocations, zero core/sync errors/warnings including cleanup. Malformed plan and empty success-coded buffers rejected before Vulkan/factory. Existing allocation/CPU/SPIR-V/draw regressionsPASS; no new shader semantics. Six categories: compilationPASS/unitPASS/shader-SPIR-V regressionsPASS/VulkanPASS Intel1.2 + strict1.3SKIPPED/RDNA1NOT RUN/AstroBotNOT RUN. Prior S-064 native isolated gate unchanged. No physical OOM/noncoherent/completion claim, package or push.
 
 Next single task scheduler admission/retention before first GPU reference through last compute+graphics use of same recording: reject inactive/draining/closed/wrong tick, avoid partial views and per-draw waits, prove delayed exact-once cleanup/no reuse/abandonment/shutdown. Actual scheduler tests distinct from CPU completion model and Intel allocator evidence. Change history6.7: dedicated isolated descriptor ownership closes setup-rollback prerequisite; completion remains open.
+
+### Session S-068 / E-068 — isolated resource retention protocol
+
+Input7c893a25, feature/rdna1-mesh-fallback, D-033 continuation. Added real scheduler TryRetainForRecording: active/open/valid same-tick producer admission only, no inline callback, no wait/flush/commands, rejection preserves callback; bad_alloc restores ownership, noexcept pending move asserted. Existing normal completion queue/queued completion-preservation reused; native DeferOperation unchanged. RetainBeforeUse and real RetainResourcesBeforeUse transfer complete unsubmitted resources before first reference and return non-owning same-recording views. Caller must serialize recording/shutdown and finish all compute+graphics uses in that tick/queue. No cancellation after use or cross-queue guarantee, no renderer activation.
+
+Full snapshots01–05(final12 files), ignored evidence _Build/p2-s068/, report docs/RDNA1_RESOURCE_RETENTION_S068.md. Final build05 emulator/focused+link PASS exit0. Final49 cases36PASS/13strictSKIPPED/0FAIL(7.39s),44 generated modules exact. CPU actual helper completion model/abandonment/refusal/bad_alloc PASS; independent missing-owner-capture mutant correctly FAIL. Real Intel1.2 timeline-blocked five frontend geometry/UV dispatch/copy/readback scenarios PASS: exact460/136 words, pending live allocations, fence alone does not release, explicit drain exact-once,44 native buffers created/destroyed/18 injected refusals across allocator/descriptors/GPU tests. Zero validation errors/warnings through cleanup. Valid wrong zero module/missing strict module/RX guard correctly FAIL; relocation PASS. Strict1.3 SKIPPED. Actual CommandScheduler runtime NOT RUN (compile/link only), no graphics draw through new owner. Six categories compilationPASS/unitPASS/shader-SPIRV PASS/VulkanPASS Intel1.2 auxiliary + strictSKIPPED/newRDNA1NOT RUN/AstroBotNOT RUN. S-064 native bundle retained.
+
+Retain build02 Windows MemoryBarrier macro collision and first actual GPU test exit321 (Upload passed to legacy Download-only Invalidate). Fixed harness with explicit GPU transfer to poisoned Download buffer/dependencies/fence/invalidate, not by changing legacy semantics. Exploratory unbuilt full-harness scheduler regression diff preserved outside Git and safely removed after automatic-review initially required preservation; no user work discarded. Final source hashes match05; docs added after build. No package or push in S-068.
+
+Decision D-037: consolidate the complete isolated allocation/descriptor/completion protocol with S-064 bundle regressions as the next native strict1.3 resource milestone, before renderer recording integration. Real fence adapter evidence is distinct from real CommandScheduler runtime. Next single task clean package+manifest/checksums/Unicode relocation/negative and API/RX guard verification; deliver ZIP/one RX command and stop D-028/D-033. Change history6.8: recoverable resource setup and isolated retention protocol locally verified, native resource gate pending; actual scheduler execution/recording/state restoration/cache/guest/game remain open.

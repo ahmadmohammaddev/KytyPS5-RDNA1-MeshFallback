@@ -12,8 +12,9 @@ struct BufferAttempt {
 	std::unique_ptr<Resource> resource;
 	VkResult                  error = VK_ERROR_INITIALIZATION_FAILED;
 };
-// Allocation-only owner, for UNSUBMITTED resources. Not safe to record GPU work
-// until submission/completion ownership is implemented. No retirement claim.
+// Direct owner of UNSUBMITTED resources. Before recording GPU references,
+// transfer the complete owner to a completion lease (meshFallbackRetention.h).
+// This type alone makes no retirement claim; destruction is immediate.
 template <class Resource>
 struct PreparedBuffers {
 	std::unique_ptr<Resource> geometry, uv;

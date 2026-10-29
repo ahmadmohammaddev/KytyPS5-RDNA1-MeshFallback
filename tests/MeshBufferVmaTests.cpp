@@ -6,6 +6,14 @@
 #include "graphics/host_gpu/renderer/cache/streamBuffer.h"
 #include "graphics/host_gpu/renderer/meshFallbackBufferPreparation.h"
 #include "graphics/host_gpu/renderer/meshFallbackResources.h"
+#include "graphics/host_gpu/renderer/meshFallbackRetention.h"
+#include <filesystem>
+#include <fstream>
+#include <spirv-tools/libspirv.hpp>
+#ifdef _WIN32
+#include <windows.h>
+#undef MemoryBarrier
+#endif
 #include <algorithm>
 #include <atomic>
 #include <cstdio>
@@ -175,7 +183,7 @@ struct Runtime {
     if (graphics->instance)
       graphics->instance.destroy();
   }
-  int Init(bool api13) {
+  int Init(bool api13, bool require_rx) {
     auto get = loader.getProcAddress<PFN_vkGetInstanceProcAddr>(
         "vkGetInstanceProcAddr");
     if (!get) {
@@ -268,6 +276,16 @@ struct Runtime {
           VK_API_VERSION_MAJOR(props.apiVersion),
           VK_API_VERSION_MINOR(props.apiVersion),
           VK_API_VERSION_PATCH(props.apiVersion), props.driverVersion);
+      vk::PhysicalDeviceDriverProperties driver{};
+      vk::PhysicalDeviceProperties2 details{};
+      details.pNext = &driver;
+      physical.getProperties2(&details);
+      std::printf("[vma] driver: %s / %s / id=%u\n", driver.driverName.data(),
+                  driver.driverInfo.data(), uint32_t(driver.driverID));
+      if (require_rx && (props.vendorID != 0x1002 ||
+                         !std::strstr(props.deviceName.data(), "RX 5700 XT") ||
+                         driver.driverID != vk::DriverId::eAmdProprietary))
+        continue;
       if (props.apiVersion < api)
         continue;
       uint32_t queues = 0;
@@ -275,7 +293,9 @@ struct Runtime {
       std::vector<vk::QueueFamilyProperties> families(queues);
       physical.getQueueFamilyProperties(&queues, families.data());
       for (uint32_t i = 0; i < queues; ++i)
-        if (families[i].queueFlags & vk::QueueFlagBits::eGraphics) {
+        if ((families[i].queueFlags &
+             (vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute)) ==
+            (vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute)) {
           graphics->physical_device = physical;
           graphics->queue_family = i;
           break;
@@ -284,6 +304,10 @@ struct Runtime {
         break;
     }
     if (!graphics->physical_device) {
+      if (require_rx) {
+        Check(false, "required native RX5700XT strict device unavailable");
+        return 1;
+      }
       std::puts(
           "[vma] SKIPPED: no device supports requested API (no downgrade)");
       return 41;
@@ -293,6 +317,16 @@ struct Runtime {
                 api13 ? "strict Vulkan1.3"
                       : "Vulkan1.2 AUXILIARY, not RDNA1/1.3 acceptance");
     float priority = 1;
+    vk::PhysicalDeviceVulkan12Features available{};
+    vk::PhysicalDeviceFeatures2 features{};
+    features.pNext = &available;
+    graphics->physical_device.getFeatures2(&features);
+    if (!available.timelineSemaphore) {
+      std::puts("[vma] SKIPPED: timeline semaphore feature unavailable");
+      return 41;
+    }
+    vk::PhysicalDeviceVulkan12Features enabled{};
+    enabled.timelineSemaphore = true;
     vk::DeviceQueueCreateInfo queue{};
     queue.sType = vk::StructureType::eDeviceQueueCreateInfo;
     queue.queueFamilyIndex = graphics->queue_family;
@@ -300,6 +334,7 @@ struct Runtime {
     queue.pQueuePriorities = &priority;
     vk::DeviceCreateInfo device{};
     device.sType = vk::StructureType::eDeviceCreateInfo;
+    device.pNext = &enabled;
     device.queueCreateInfoCount = 1;
     device.pQueueCreateInfos = &queue;
     if (graphics->physical_device.createDevice(
@@ -308,6 +343,7 @@ struct Runtime {
       return 1;
     }
     VULKAN_HPP_DEFAULT_DISPATCHER.init(graphics->device);
+    graphics->queue = graphics->device.getQueue(graphics->queue_family, 0);
     real_create = VULKAN_HPP_DEFAULT_DISPATCHER.vkCreateBuffer;
     real_destroy = VULKAN_HPP_DEFAULT_DISPATCHER.vkDestroyBuffer;
     VmaVulkanFunctions functions{};
@@ -523,19 +559,60 @@ void DescriptorCases(GraphicContext &graphics) {
               "layouts=%d pools=%d\n",
               layouts, pools);
 }
+#include "MeshResourceCompletion.h"
 } // namespace
 int main(int argc, char **argv) {
-  if (argc != 2 || (std::strcmp(argv[1], "--vulkan13") &&
-                    std::strcmp(argv[1], "--vulkan12")))
+  if ((argc != 2 && argc != 3) || (std::strcmp(argv[1], "--vulkan13") &&
+                                   std::strcmp(argv[1], "--vulkan12")))
+    return 1;
+  if (argc == 3 && std::strcmp(argv[2], "--require-rx5700xt"))
     return 1;
   const bool api13 = std::strcmp(argv[1], "--vulkan13") == 0;
+  std::filesystem::path executable;
+#ifdef _WIN32
+  std::wstring buffer(32768, L'\0');
+  const auto length =
+      GetModuleFileNameW(nullptr, buffer.data(), DWORD(buffer.size()));
+  if (!length || length >= buffer.size()) {
+    Check(false, "executable path discovery");
+    return 1;
+  }
+  buffer.resize(length);
+  executable = std::filesystem::path(buffer);
+#else
+  std::error_code error;
+  executable = std::filesystem::read_symlink("/proc/self/exe", error);
+  if (error)
+    executable = std::filesystem::absolute(argv[0], error);
+  if (error) {
+    Check(false, "executable path discovery");
+    return 1;
+  }
+#endif
+  const auto shaders = executable.parent_path() / "gpu_mesh_proto_shaders";
+  if (!ValidateCompletionModules(shaders, api13))
+    return 1;
   int result;
   {
     Runtime runtime;
-    result = runtime.Init(api13);
+    result = runtime.Init(api13, argc == 3);
     if (!result) {
       Cases(*runtime.graphics);
       DescriptorCases(*runtime.graphics);
+      CompletionCase(*runtime.graphics, shaders, api13, "frontend", false,
+                     false, false);
+      CompletionCase(*runtime.graphics, shaders, api13, "frontend_permuted",
+                     false, false, true);
+      CompletionCase(*runtime.graphics, shaders, api13, "frontend_zero", true,
+                     false, false);
+      CompletionCase(*runtime.graphics, shaders, api13, "frontend_uv", false,
+                     true, false);
+      CompletionCase(*runtime.graphics, shaders, api13, "frontend_uv_zero",
+                     true, true, false);
+      Check(created == destroyed && created == 44 && refused == 18,
+            "all allocation, descriptor and dispatch resources retired");
+      std::printf("[vma] total: created=%d destroyed=%d refusals=%d\n", created,
+                  destroyed, refused);
     }
   }
   if (failures || errors || warnings)

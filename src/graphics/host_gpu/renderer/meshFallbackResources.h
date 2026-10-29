@@ -6,7 +6,8 @@ namespace Libs::Graphics::MeshFallback {
 enum class DescriptorFailure { None, InvalidInput, HostAllocation, Layout, Pool, Set };
 
 // Dedicated pool: never shares DescriptorHeap reuse or its fatal failure paths.
-// Unsubmitted ownership only; device must outlive this object and its buffers.
+// Direct destruction requires unsubmitted/completed work. A completion lease
+// must retain this object and its buffers in flight; device must outlive both.
 class ComputeDescriptors {
 public:
 	~ComputeDescriptors();

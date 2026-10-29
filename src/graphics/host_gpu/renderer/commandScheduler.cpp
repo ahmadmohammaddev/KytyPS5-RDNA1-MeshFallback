@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <optional>
+#include <new>
 #include <thread>
 
 #if defined(_M_X64) || defined(__x86_64__)
@@ -396,6 +397,27 @@ void CommandScheduler::DeferOperation(Common::UniqueFunction<void>&& operation) 
 	                           [this] { return m_operation_state == OperationState::Closed; });
 	lock.unlock();
 	operation();
+}
+
+bool CommandScheduler::TryRetainForRecording(uint64_t expected_tick,
+                                            Common::UniqueFunction<void>& operation) {
+	if (!operation || !Active() || DrawPrep::IsWorkerThread() || InDeferredOperation()) return false;
+	std::unique_lock lock(m_operation_mutex);
+	if (m_operation_state != OperationState::Open || m_command.IsInvalid() ||
+	    expected_tick != CurrentTick()) return false;
+	// Keep the temporary alive through a failed queue allocation so ownership
+	// can be restored. PendingOperation's move cannot throw.
+	static_assert(std::is_nothrow_move_constructible_v<PendingOperation>);
+	PendingOperation pending{std::move(operation), expected_tick};
+	try {
+		m_pending_operations.push(std::move(pending));
+	} catch (const std::bad_alloc&) {
+		operation = std::move(pending.callback);
+		return false;
+	}
+	if (m_graphics.submission_queue.Enabled()) m_preserve_current_completion = true;
+	if (Profiler::AggregateEnabled()) m_diagnostic_generic_completion = true;
+	return true;
 }
 
 void CommandScheduler::DeferPriorityOperation(Common::UniqueFunction<void>&& operation,

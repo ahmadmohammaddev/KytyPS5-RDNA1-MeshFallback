@@ -961,7 +961,7 @@ add_executable(mesh_buffer_vma_tests EXCLUDE_FROM_ALL
   "${KYTY_SOURCE_DIR}/graphics/host_gpu/vramBudget.cpp"
   "${KYTY_SOURCE_DIR}/graphics/host_gpu/queueSubmission.cpp")
 target_include_directories(mesh_buffer_vma_tests PRIVATE ${inc_headers})
-target_link_libraries(mesh_buffer_vma_tests PRIVATE common Vulkan::Headers ${CMAKE_DL_LIBS})
+target_link_libraries(mesh_buffer_vma_tests PRIVATE common Vulkan::Headers spirv-tools ${CMAKE_DL_LIBS})
 if(MSVC)
   target_compile_options(mesh_buffer_vma_tests PRIVATE /Gy /Gw)
   target_link_options(mesh_buffer_vma_tests PRIVATE /OPT:REF)
@@ -1028,6 +1028,7 @@ add_custom_command(OUTPUT ${mesh_frontend_modules}
   COMMAND $<TARGET_FILE:mesh_ir_frontend_tests> --emit "${mesh_proto_generated_dir}"
   DEPENDS mesh_ir_frontend_tests VERBATIM)
 add_custom_target(mesh_frontend_generated_shaders DEPENDS ${mesh_frontend_modules})
+add_dependencies(mesh_buffer_vma_tests mesh_frontend_generated_shaders)
 set(mesh_paired_modules)
 foreach(api IN ITEMS 12 13)
   foreach(kind IN ITEMS plain uv)

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 #include "graphics/host_gpu/renderer/cache/bufferAllocationRetry.h"
 #include "graphics/host_gpu/renderer/meshFallbackBufferPreparation.h"
+#include "graphics/host_gpu/renderer/meshFallbackRetention.h"
 #include <iostream>
 #include <vector>
 using namespace Libs::Graphics;
@@ -17,6 +18,80 @@ struct Resource {
   ~Resource() { ++*destroyed; }
 };
 int main() {
+  {
+    // Controlled completion adapter tests the actual retention helper. This is
+    // NOT execution of CommandScheduler or proof about an arbitrary GPU fence.
+    struct Pending {
+      uint64_t tick;
+      Common::UniqueFunction<void> cleanup;
+    };
+    std::vector<Pending> pending;
+    bool open = true;
+    uint64_t recording = 7;
+    int destroyed = 0;
+    auto admit = [&](uint64_t tick, Common::UniqueFunction<void> &cleanup) {
+      if (!open || tick != recording)
+        return false;
+      pending.push_back({tick, std::move(cleanup)});
+      return true;
+    };
+    auto poll = [&](uint64_t completed) {
+      for (auto i = pending.begin(); i != pending.end();) {
+        if (i->tick > completed) {
+          ++i;
+          continue;
+        }
+        i->cleanup();
+        i = pending.erase(i);
+      }
+    };
+    auto first = std::make_unique<Resource>(&destroyed);
+    const auto *first_address = first.get();
+    Check(B::RetainBeforeUse(7, std::move(first), admit) && !first &&
+              destroyed == 0 && pending.size() == 1,
+          "accepted recording holds resource after producer scope");
+    poll(6);
+    Check(destroyed == 0, "incomplete work cannot release owner");
+    recording = 8;
+    auto second = std::make_unique<Resource>(&destroyed);
+    Check(second.get() != first_address, "in-flight storage not reused");
+    Check(B::RetainBeforeUse(8, std::move(second), admit),
+          "next recording separate owner");
+    auto stale = std::make_unique<Resource>(&destroyed);
+    Check(!B::RetainBeforeUse(7, std::move(stale), admit) && destroyed == 1 &&
+              pending.size() == 2,
+          "stale registration cleans unsubmitted owner, keeps earlier pending");
+    poll(7);
+    Check(destroyed == 2 && pending.size() == 1,
+          "only first completed tick retires");
+    poll(7);
+    Check(destroyed == 2, "repeated completion cannot double free");
+    open = false;
+    auto closed = std::make_unique<Resource>(&destroyed);
+    Check(!B::RetainBeforeUse(8, std::move(closed), admit) && destroyed == 3 &&
+              pending.size() == 1,
+          "closed admission cannot publish or free in-flight owner");
+    poll(8);
+    Check(destroyed == 4 && pending.empty(), "drain releases last owner once");
+    std::unique_ptr<Resource> invalid;
+    Check(!B::RetainBeforeUse(8, std::move(invalid), admit) && destroyed == 4,
+          "empty owner rejects");
+    open = true;
+    recording = 9;
+    auto abandoned = std::make_unique<Resource>(&destroyed);
+    Check(B::RetainBeforeUse(9, std::move(abandoned), admit),
+          "accepted without recorded use");
+    Check(destroyed == 4, "abandoned recording retained until drain");
+    poll(9);
+    Check(destroyed == 5 && pending.empty(),
+          "completed empty recording cleanup");
+    auto no_queue_memory = std::make_unique<Resource>(&destroyed);
+    Check(!B::RetainBeforeUse(9, std::move(no_queue_memory),
+                              [](uint64_t, Common::UniqueFunction<void> &)
+                                  -> bool { throw std::bad_alloc(); }) &&
+              destroyed == 6,
+          "admission allocation failure cleans owner before any GPU use");
+  }
   for (int succeeds = 1; succeeds <= 4; ++succeeds) {
     int calls = 0, trim = 0, relax = 0, reports = 0;
     std::vector<int> order;
@@ -151,8 +226,9 @@ int main() {
   });
   Check(!null && null.error == VK_ERROR_INITIALIZATION_FAILED,
         "success with null resource rejects");
-  std::cout << (failures ? "FAIL" : "PASS")
-            << ": shared retries and unsubmitted resource rollback (CPU "
-               "injected allocation results; no VMA/GPU execution)\n";
+  std::cout
+      << (failures ? "FAIL" : "PASS")
+      << ": shared retries, rollback and controlled recording retention (CPU "
+         "injected allocation results; no VMA/GPU execution)\n";
   return failures ? 1 : 0;
 }
