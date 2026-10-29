@@ -1,4 +1,5 @@
 #include "common/emulatorConfig.h"
+#include "graphics/shader/recompiler/MeshVertexBridge.h"
 #include "common/logging/log.h"
 #include "common/stringUtils.h"
 #include "common/subsystems.h"
@@ -15849,6 +15850,8 @@ void TestRdna2LdsWaitcntBarrierAndFloatControls() {
         "float controls were declared without device support");
 }
 
+#include "MeshPixelBridgePairingTests.inc"
+
 } // namespace
 } // namespace Libs::Graphics
 
@@ -15856,6 +15859,9 @@ int main(int argc, char **argv) {
   using namespace Libs::Graphics;
 
   EnsureConfigInitialized();
+  if(argc==2 && std::strcmp(argv[1],"--mesh-pixel-bridge-only")==0) {
+    TestMeshPixelBridgePairing();return 0;
+  }
   if (argc == 2 && std::strcmp(argv[1], "--unused-pixel-inputs-only") == 0) {
     const uint32_t code[] = {0xbf810000u};
     ShaderPixelInputInfo pixel{};

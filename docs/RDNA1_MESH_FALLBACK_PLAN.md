@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 5.0. **Overall status:** S-050 isolated bounded vertex bridge offline PASS against validated native-shaped float4 fragment interfaces. Actual production-emitted pixel pairing and runtime bridge remain open; native frontend evidence retained.
+> **Last edited:** 2026-10-29. **Plan revision:** 5.1. **Overall status:** S-051 actual production pixel compiler/vertex bridge offline pairing PASS, independent interface validation and rejection coverage. Combined generated-stage runtime is next; production renderer/game still unimplemented.
 
 ## 0. Mission and boundaries
 
@@ -36,7 +36,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
-| Current subtask | S-050 reflected vertex bridge offline DONE; actual emitted guest pixel pairing next |
+| Current subtask | S-051 actual emitted pixel/bridge offline pairing DONE; combined generated-stage runtime next |
 | Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | S-047 input05f38700 (HEAD); all S-048 edits pending review in working tree; package/native sourcea183c190 unchanged |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
@@ -45,7 +45,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Native RDNA1 smoke test | S-045 actual frontend geometry+UV/zero and prior generated regressions PASS RX5700XT API1.4.308 AMD25.6.1 retained; no new hardware run or package |
 | Passing tests | S-048 byte-compat 33/33 baseline modules exact; 15 focused serial ctests PASS/0 FAIL, four Intel1.2 auxiliary runtime PASS, four strict1.3 SKIPPED (VK_LAYER_PATH process-local `_Build/p4-s013/tools/validationlayers`) |
 | Known blockers / limits | Adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache/bridge/scheduler/production/game remain open; S-048 not committed until user review |
-| Next single actionable task | Public pixel ISA through actual production emitter into bridge; strict1.3 interface/dataflow validation, xy acceptance and unsupported-use/type/interpolation rejection; no runtime claim |
+| Next single actionable task | Isolated harness actual frontend geometry/UV + generated bridge + actual public production pixel fragment; independent full outputs/RGBA/zero controls and cleanup validation, strict vs auxiliary separate |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -1054,3 +1054,12 @@ Change history4.9: S-049 canonical identity helper/tests; source/interface canon
 - Next one local task public pixel ISA actual frontend/emitter pairing through bridge with independent interface/dataflow and rejection coverage. Combined runtime follows separately; no package/push/new RX request.
 
 Change history5.0: S-050 adds isolated reflected bridge and offline tests; explicitly retains actual production pixel pairing as next gate.
+
+### Session S-051 — 2026-10-29 — Actual emitted pixel / bridge pairing
+
+- Input44095640 clean branch/all14 submodules verified. Added public pixel ISA fixtures to existing full shader_cfg_tests through dedicated --mesh-pixel-bridge-only/CTest. Actual TranslateProgram/resource materialization/CompileProgram/native emitter produces fragment, then bridge reflection/generation. Plain/xy accepted; z/w, remap, flat/no-perspective and missing UV reject. No production implementation changes.
+- Full pre-build snapshot p3-s051-pre-build-01 retained. First full target build2 jobs PASS (existing warnings, no memory retry);37 focused cases28 PASS/9 strict SKIPPED/0 FAIL(4.65s). Independent actual fragment/bridge binary interface matches and four artifacts/hashes retained. IR validation + SSA-use variant byte-equivalence pair PASS. Report docs/RDNA1_PIXEL_BRIDGE_S051.md, evidence `_Build/p3-s051/`.
+- Compilation/unit/actual pixel ISA/offline SPIR-V PASS; existing Intel1.2 Vulkan PASS/strict SKIPPED. New paired pipeline Vulkan/RX and Astro Bot NOT RUN. No new transfer/push.
+- Next single local task isolated combined actual frontend geometry/UV+generated bridge+native-emitted public pixel runtime, independent full buffers/RGBA/clear+zero controls and cleanup validation, strict1.3 vs auxiliary1.2 separated. Native transfer only at coherent combined-stage gate per D-028; no next implementation in S-051.
+
+Change history5.1: S-051 closes actual production pixel emitter offline pairing; retains actual combined pipeline runtime separately.

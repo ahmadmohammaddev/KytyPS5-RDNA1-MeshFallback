@@ -1363,6 +1363,8 @@ if(BUILD_TESTING)
 	# Bug A: sparse residency textures grown, retired and created while dispatches sample them.
 	add_test(NAME sparse_residency_stress COMMAND $<TARGET_FILE:sparse_residency_stress_tests> --iterations 400)
 	add_test(NAME unused_pixel_inputs COMMAND $<TARGET_FILE:shader_cfg_tests> --unused-pixel-inputs-only)
+  add_test(NAME mesh_pixel_bridge_pairing COMMAND $<TARGET_FILE:shader_cfg_tests> --mesh-pixel-bridge-only)
+  set_tests_properties(mesh_pixel_bridge_pairing PROPERTIES TIMEOUT 120)
 	add_test(NAME pixel_interface COMMAND $<TARGET_FILE:shader_cfg_tests> --pixel-interface-only)
 	add_test(NAME registered_shader_code_on COMMAND $<TARGET_FILE:shader_cfg_tests> --registered-shader-code-only)
 	set_tests_properties(registered_shader_code_on PROPERTIES ENVIRONMENT "KYTY_REGISTERED_SHADER_CODE=1")
