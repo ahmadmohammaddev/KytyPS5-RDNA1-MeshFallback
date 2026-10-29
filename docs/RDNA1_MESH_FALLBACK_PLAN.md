@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 3.4. **Overall status:** S-033 actual generated IR geometry and UVs feed textured indexed drawing on Intel auxiliary: full buffers/images exact, zero validation errors/warnings through cleanup. Local P3.6 gate DONE; consolidated native RX generated draw/textured milestone pending under D-028.
+> **Last edited:** 2026-10-29. **Plan revision:** 3.4. **Overall status:** S-034 clean consolidated generated draw/textured milestone package built and verified locally: 19 PASS/7 strict SKIP, all fifteen expected package outcomes verified. Native RX consolidated gate pending; package source `70a80620`, build `20261029T070921174Z`.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P3 IN_PROGRESS: P3.1, P3.2 and restricted P3.3 arithmetic gates DONE; broader semantics remain open** |
-| Current subtask | S-033 generated textured draw local gate DONE; consolidated transfer preparation next |
+| Current subtask | S-034 consolidated clean package DONE locally; native RX milestone run next |
 | Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
-| Last verified git commit | S-033 input `435f35ce89d888ba9e4acb67bcc85a3f5cea66ab`; complete dirty snapshots before both focused builds |
+| Last verified git commit | Clean package source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`; final handoff documentation only |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
-| Checkout evidence | S-033 clean input, pinned ancestry and all 14 matching recursive submodules verified |
-| Build status | S-033 two focused 2-job builds PASS; no PGO/IPO, existing warnings; no core/GUI rebuild |
+| Checkout evidence | S-034 clean input, pinned ancestry/all 14 submodules verified; package clean source/submodule/import provenance retained |
+| Build status | S-034 clean focused two-job package build PASS, no PGO/IPO; no core/GUI rebuild |
 | Native RDNA1 smoke test | PASS P4.1/P4.2/P4.3: native RX 5700 XT/API 1.4.308/AMD 25.6.1, strict 1.3 compute/plain/textured draw, exact buffers/images/UV boundaries, zero errors/warnings after cleanup. No guest/game claim |
-| Passing tests | S-033 final 26-case suite 19 PASS/7 strict SKIPPED/0 FAIL (3.39 s); four negative probes correctly FAIL, independent full RGB images exact |
-| Known blockers / limits | No local blocker; native generated draw/textured RX milestone pending. Real guest NGG/resources/CFG/LDS/dynamic counts, noncoherent/integration/game/timer remain open |
-| Next single actionable task | One clean consolidated generated draw/textured-UV package and runner with all 26 cases, modules/oracle dependency, image results, integrity/relocation and required-RX guards; then native strict milestone run |
+| Passing tests | Clean 26-case suite 19 PASS/7 strict SKIP/0 FAIL (3.21 s); 15 expected relocation/integrity/API/identity/legacy outcomes verified; all five images independently exact |
+| Known blockers / limits | Native generated draw/textured RX gate pending; Intel auxiliary does not close it. Real guest/emulator/game, noncoherent/performance/timer remain open |
+| Next single actionable task | Transfer verified source70a80620/build20261029T070921174Z ZIP+sidecar, run normal-user Run-IR-Milestone.cmd -IsolateImplicitLayers on RX; require all 13 stages/five native strict selections/full blobs/pixels/zero-error-warning cleanups and retain entire results folder |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -330,6 +330,8 @@ Status: **NOT_STARTED**
 
 | D-030 | 2026-10-29 | Scope UV lowering to opt-in parameter-0 xy raw float bits in a separate fixed 544-byte storage buffer, set 0/binding 2 | Preserve the proven geometry ABI and reuse the existing UV layout while adding independently checked metadata, coverage and compile-time capacity rejection; general varyings and dynamic allocation remain unsupported | Generated UV runtime/textured integration, then consolidated RX milestone |
 
+| D-031 | 2026-10-29 | Consolidate pending generated untextured and UV-textured RX gates in one launcher: three plain plus two textured cases | Apply D-028 batching to the completed local S-031–S-033 work; require expected device/API/cleanups and all images for every successful runtime stage, and preserve FAIL precedence over SKIPPED | Independent native RX milestone results; no emulator/game implication |
+
 ## 5. Experiments and evidence
 
 | ID | Environment / git SHA | Hypothesis and test | Actual observed result | Outcome / artifact |
@@ -375,6 +377,8 @@ Status: **NOT_STARTED**
 | E-032 | 2026-10-29; input `e61723216d314bd2b363bb6aafabb700c4efba64` plus three complete dirty snapshots; development laptop | Offline parameter-0 UV lowering, 17 rejection cases, complete binary UV oracle, eight valid SPIR-V mutations and focused regressions | Three builds PASS; final 18 PASS/6 strict SKIP/0 FAIL (3.53 s); UV 1.3/auxiliary1.2 validate; ten legacy modules identical. Existing Intel auxiliary tests PASS, new UV GPU NOT RUN | `docs/RDNA1_IR_UV_S032.md`; ignored `_Build/p3-s032/` and `_Build/p0-s012/p3-s032-*`; no new package/RX/game claim |
 
 | E-033 | 2026-10-29; input `435f35ce89d888ba9e4acb67bcc85a3f5cea66ab` plus two complete dirty snapshots; Intel Iris Xe API 1.2.172 | Actual generated geometry/UV to sampled draw, complete buffer/image checks and four negative probes | Two builds PASS; final 19 PASS/7 strict SKIP/0 FAIL (3.39 s); nonzero/zero textures and blobs exact, zero errors/warnings through cleanup. Four probes correctly FAIL, independent RGB images match | `docs/RDNA1_IR_TEXTURE_S033.md`; ignored `_Build/p3-s033/` and `_Build/p0-s012/p3-s033-*`; new native RX milestone/game NOT RUN |
+
+| E-034 | 2026-10-29; clean package source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`; Intel Iris Xe API1.2.172 | Clean consolidated package/build, 26 tests, five generated cases, Unicode relocation and fifteen expected outcomes | Build PASS; 19 PASS/7 strict SKIP/0 FAIL (3.21 s); auxiliary images/blobs exact and zero errors/warnings; required RX rejects Intel, missing/tampered files reject. All five RGB images independently verified | `docs/RDNA1_IR_PACKAGE_S034.md`, ignored `_Build/p3-s034/` and package evidence; ZIP SHA `3D78510DF6E474855ACBF89B39AEBF9329CEFB2C1BABE31898FA29A5D0DFBBAD`; native RX/game NOT RUN |
 
 New experiments MUST include real date, commit SHA, driver, device, exact command/config, time budget, result (PASS/FAIL/INCONCLUSIVE), and logs/artifact location. Hardware tests must also follow section 2.5 for package identity, screenshots and metrics (or explicit unavailability reasons). Avoid adding game code/assets to git.
 
@@ -800,6 +804,14 @@ Next task: transfer ZIP and sidecar, verify hash/extract fresh, run `Run-IR-Add.
 - Input `0594e60b67734d2ec07cfc4c750cc705707b8902`, clean correct branch, pinned ancestry/all 14 matching submodules verified. Selected single subtask: consolidate generated draw/texture milestone under D-028. Runner adds mutually exclusive `-IrMilestone` and strict required-RX launcher; two runtime stages cover all five device selections and images. Stage evidence/cleanup/API/images required; FAIL takes precedence over SKIPPED. All previous modes retained.
 - Package inventory expands to all 26 tests, 14 generated modules, UV oracle source dependency and new launcher; manifest build command corrected to include the actual IR target. Windows PowerShell 5.1 parsing PASS. No new compile/GPU tests yet at this preparation checkpoint; source commit precedes clean build/transfer verification. See `docs/RDNA1_IR_PACKAGE_S034.md`.
 - Within this same subtask: build clean package, verify Unicode relocation, independent images/blobs, integrity/skip/failure/RX identity guards and previous modes; append actual results before handoff. Native RX milestone/Astro Bot remain NOT RUN. No next phase or push.
+
+#### Final S-034 package / exact next hardware task
+
+Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. ZIP `Kyty-MeshPrototype-Windows-x64-70a80620c583037e1ed4fe372bdb89586dbd895a-20261029T070921174Z.zip`, 1,555,283 bytes, SHA-256 `3D78510DF6E474855ACBF89B39AEBF9329CEFB2C1BABE31898FA29A5D0DFBBAD`, matching `.zip.sha256`. 57 payload files plus manifest/checksum inventories, source/license notices and audited imports retained. Final documentation commit does not change package source identity.
+
+- Clean package 26-case suite 19 PASS/7 strict SKIP/0 FAIL (3.21 s). Fifteen expected integrity/offline/auxiliary/strict/RX-guard/legacy/conflict/missing/tamper/launcher outcomes verified after Unicode extraction and unrelated-CWD invocation. Auxiliary all five generated cases exact, zero errors/warnings through all cleanups; five independent RGB/hash checks exact. Initial local controller exit41 propagation error retained and corrected; fresh verification exits0. Full evidence in S-034 report.
+- Six categories: scoped compilation/unit/SPIR-V PASS; Intel auxiliary Vulkan PASS, strict locally SKIPPED; new RX milestone and Astro Bot NOT RUN. No package/system installation, GPU performance/noncoherent or game claim. No push.
+- Next one task: normal-user RX `Run-IR-Milestone.cmd -IsolateImplicitLayers` from this verified package. Gate all thirteen stages PASS, five native strict1.3 device selections, all buffers/pixels, zero errors/warnings including all cleanups, matching identity/logs/JSON/five images. Return entire result folder. No next phase started.
 
 ## 8. Change history (append-only)
 
