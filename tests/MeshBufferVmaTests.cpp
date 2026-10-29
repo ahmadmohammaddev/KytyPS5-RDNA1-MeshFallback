@@ -5,6 +5,7 @@
 #include "graphics/host_gpu/graphicContext.h"
 #include "graphics/host_gpu/renderer/cache/streamBuffer.h"
 #include "graphics/host_gpu/renderer/meshFallbackBufferPreparation.h"
+#include "graphics/host_gpu/renderer/meshFallbackResources.h"
 #include <algorithm>
 #include <atomic>
 #include <cstdio>
@@ -12,19 +13,23 @@
 #include <memory>
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 // Link-only guard for the legacy sparse constructor's fatal diagnostics. The
-// tested non-sparse/non-BDA factory MUST NEVER enter it. Emulator links the real
-// diagnostic implementation; no VMA/driver allocation function is stubbed here.
+// tested non-sparse/non-BDA factory MUST NEVER enter it. Emulator links the
+// real diagnostic implementation; no VMA/driver allocation function is stubbed
+// here.
 namespace Libs::Graphics {
 // Unreachable renderer device-loss reporter: the broker stays disabled here.
-void DumpDeviceLossDiagnostics(GraphicContext&,uint64_t,bool) {
-  std::fputs("FAIL: unexpected renderer device-loss reporter in allocation test\n",stderr);
+void DumpDeviceLossDiagnostics(GraphicContext &, uint64_t, bool) {
+  std::fputs(
+      "FAIL: unexpected renderer device-loss reporter in allocation test\n",
+      stderr);
   std::abort();
 }
-void RequireVulkanSuccess(vk::Result,const char*) {
-  std::fputs("FAIL: unexpected legacy sparse/fatal path in recoverable test\n",stderr);
+void RequireVulkanSuccess(vk::Result, const char *) {
+  std::fputs("FAIL: unexpected legacy sparse/fatal path in recoverable test\n",
+             stderr);
   std::abort();
 }
-}
+} // namespace Libs::Graphics
 namespace B = Libs::Graphics::MeshFallback;
 using namespace Libs::Graphics;
 namespace {
@@ -33,11 +38,92 @@ bool inject = false;
 std::atomic<int> errors = 0, warnings = 0;
 PFN_vkCreateBuffer real_create = nullptr;
 PFN_vkDestroyBuffer real_destroy = nullptr;
+PFN_vkCreateDescriptorSetLayout real_layout = nullptr;
+PFN_vkDestroyDescriptorSetLayout real_destroy_layout = nullptr;
+PFN_vkCreateDescriptorPool real_pool = nullptr;
+PFN_vkDestroyDescriptorPool real_destroy_pool = nullptr;
+PFN_vkAllocateDescriptorSets real_sets = nullptr;
+PFN_vkUpdateDescriptorSets real_update = nullptr;
+int descriptor_fail = 0, layouts = 0, pools = 0, updates = 0;
+int descriptor_count = 0;
+VkBuffer expected_buffers[2]{};
 void Check(bool ok, const char *why) {
   if (!ok) {
     ++failures;
     std::printf("[vma] FAIL: %s\n", why);
   }
+}
+VKAPI_ATTR VkResult VKAPI_CALL
+Layout(VkDevice d, const VkDescriptorSetLayoutCreateInfo *info,
+       const VkAllocationCallbacks *a, VkDescriptorSetLayout *out) {
+  Check(info->bindingCount == descriptor_count, "exact layout binding count");
+  for (uint32_t i = 0; i < info->bindingCount; ++i)
+    Check(info->pBindings[i].binding == i + 1 &&
+              info->pBindings[i].descriptorCount == 1 &&
+              info->pBindings[i].descriptorType ==
+                  VK_DESCRIPTOR_TYPE_STORAGE_BUFFER &&
+              info->pBindings[i].stageFlags == VK_SHADER_STAGE_COMPUTE_BIT,
+          "geometry1/UV2 storage-compute layout, no input0");
+  if (descriptor_fail == 1) {
+    *out = VK_NULL_HANDLE;
+    return VK_ERROR_OUT_OF_HOST_MEMORY;
+  }
+  auto r = real_layout(d, info, a, out);
+  if (r == VK_SUCCESS)
+    ++layouts;
+  return r;
+}
+VKAPI_ATTR void VKAPI_CALL DestroyLayout(VkDevice d, VkDescriptorSetLayout l,
+                                         const VkAllocationCallbacks *a) {
+  --layouts;
+  real_destroy_layout(d, l, a);
+}
+VKAPI_ATTR VkResult VKAPI_CALL Pool(VkDevice d,
+                                    const VkDescriptorPoolCreateInfo *info,
+                                    const VkAllocationCallbacks *a,
+                                    VkDescriptorPool *out) {
+  Check(info->maxSets == 1 && info->poolSizeCount == 1 &&
+            info->pPoolSizes[0].descriptorCount == descriptor_count &&
+            info->pPoolSizes[0].type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        "dedicated exact-size pool");
+  if (descriptor_fail == 2) {
+    *out = VK_NULL_HANDLE;
+    return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+  }
+  auto r = real_pool(d, info, a, out);
+  if (r == VK_SUCCESS)
+    ++pools;
+  return r;
+}
+VKAPI_ATTR void VKAPI_CALL DestroyPool(VkDevice d, VkDescriptorPool p,
+                                       const VkAllocationCallbacks *a) {
+  --pools;
+  real_destroy_pool(d, p, a);
+}
+VKAPI_ATTR VkResult VKAPI_CALL Sets(VkDevice d,
+                                    const VkDescriptorSetAllocateInfo *info,
+                                    VkDescriptorSet *out) {
+  if (descriptor_fail == 3) {
+    *out = VK_NULL_HANDLE;
+    return VK_ERROR_OUT_OF_POOL_MEMORY;
+  }
+  return real_sets(d, info, out);
+}
+VKAPI_ATTR void VKAPI_CALL Update(VkDevice d, uint32_t count,
+                                  const VkWriteDescriptorSet *writes,
+                                  uint32_t copies,
+                                  const VkCopyDescriptorSet *copy) {
+  ++updates;
+  Check(count == descriptor_count && copies == 0,
+        "exact descriptor update count");
+  for (uint32_t i = 0; i < count; ++i)
+    Check(writes[i].dstBinding == i + 1 && writes[i].descriptorCount == 1 &&
+              writes[i].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER &&
+              writes[i].pBufferInfo->buffer == expected_buffers[i] &&
+              writes[i].pBufferInfo->offset == 0 &&
+              writes[i].pBufferInfo->range == (i ? 544 : 1840),
+          "exact full guarded buffer ranges/handles bound");
+  real_update(d, count, writes, copies, copy);
 }
 VKAPI_ATTR VkResult VKAPI_CALL Create(VkDevice d, const VkBufferCreateInfo *i,
                                       const VkAllocationCallbacks *a,
@@ -98,9 +184,17 @@ struct Runtime {
     }
     VULKAN_HPP_DEFAULT_DISPATCHER.init(get);
     uint32_t count = 0;
-    if(vk::enumerateInstanceLayerProperties(&count, nullptr)!=vk::Result::eSuccess){Check(false,"layer enumeration count");return 1;}
+    if (vk::enumerateInstanceLayerProperties(&count, nullptr) !=
+        vk::Result::eSuccess) {
+      Check(false, "layer enumeration count");
+      return 1;
+    }
     std::vector<vk::LayerProperties> layers(count);
-    if(vk::enumerateInstanceLayerProperties(&count, layers.data())!=vk::Result::eSuccess){Check(false,"layer enumeration data");return 1;}
+    if (vk::enumerateInstanceLayerProperties(&count, layers.data()) !=
+        vk::Result::eSuccess) {
+      Check(false, "layer enumeration data");
+      return 1;
+    }
     if (std::none_of(layers.begin(), layers.end(), [](const auto &l) {
           return std::strcmp(l.layerName.data(),
                              "VK_LAYER_KHRONOS_validation") == 0;
@@ -155,9 +249,17 @@ struct Runtime {
       Check(false, "validation messenger");
       return 1;
     }
-    if(graphics->instance.enumeratePhysicalDevices(&count, nullptr)!=vk::Result::eSuccess){Check(false,"device enumeration count");return 1;}
+    if (graphics->instance.enumeratePhysicalDevices(&count, nullptr) !=
+        vk::Result::eSuccess) {
+      Check(false, "device enumeration count");
+      return 1;
+    }
     std::vector<vk::PhysicalDevice> devices(count);
-    if(graphics->instance.enumeratePhysicalDevices(&count, devices.data())!=vk::Result::eSuccess){Check(false,"device enumeration data");return 1;}
+    if (graphics->instance.enumeratePhysicalDevices(&count, devices.data()) !=
+        vk::Result::eSuccess) {
+      Check(false, "device enumeration data");
+      return 1;
+    }
     for (auto physical : devices) {
       auto props = physical.getProperties();
       std::printf(
@@ -301,6 +403,126 @@ void Cases(GraphicContext &graphics) {
   std::printf("[vma] created=%d destroyed=%d injected-refusals=%d\n", created,
               destroyed, refused);
 }
+void DescriptorCases(GraphicContext &graphics) {
+  auto &dispatch = VULKAN_HPP_DEFAULT_DISPATCHER;
+  real_layout = dispatch.vkCreateDescriptorSetLayout;
+  real_destroy_layout = dispatch.vkDestroyDescriptorSetLayout;
+  real_pool = dispatch.vkCreateDescriptorPool;
+  real_destroy_pool = dispatch.vkDestroyDescriptorPool;
+  real_sets = dispatch.vkAllocateDescriptorSets;
+  real_update = dispatch.vkUpdateDescriptorSets;
+  dispatch.vkCreateDescriptorSetLayout = Layout;
+  dispatch.vkDestroyDescriptorSetLayout = DestroyLayout;
+  dispatch.vkCreateDescriptorPool = Pool;
+  dispatch.vkDestroyDescriptorPool = DestroyPool;
+  dispatch.vkAllocateDescriptorSets = Sets;
+  dispatch.vkUpdateDescriptorSets = Update;
+  const auto before_created = created;
+  for (bool zero : {false, true})
+    for (bool uv : {false, true})
+      for (int fail : {0, 1, 2, 3}) {
+        descriptor_fail = fail;
+        descriptor_count = uv ? 2 : 1;
+        const auto plan = *B::CheckedExecutionLayout(zero ? 0 : 3, zero ? 0 : 1,
+                                                     64, 64, uv, 64);
+        auto buffers = B::PrepareBufferOwnership<Buffer>(
+            plan, [&](uint64_t size, bool is_uv) {
+              vk::Result error;
+              auto b = Buffer::TryCreate(
+                  graphics, nullptr, MemoryUsage::Upload,
+                  vk::BufferUsageFlagBits::eStorageBuffer |
+                      vk::BufferUsageFlagBits::eVertexBuffer |
+                      (is_uv ? vk::BufferUsageFlags{}
+                             : vk::BufferUsageFlagBits::eIndexBuffer),
+                  size, error);
+              return B::BufferAttempt<Buffer>{std::move(b), VkResult(error)};
+            });
+        Check(bool(buffers), "descriptor prerequisite real buffers");
+        if (!buffers)
+          continue;
+        auto invalid_plan = plan;
+        ++invalid_plan.index_offset;
+        vk::Result invalid_error;
+        B::DescriptorFailure invalid_failure;
+        auto invalid = B::ComputeDescriptors::TryCreate(
+            graphics.device, invalid_plan, buffers, invalid_error,
+            invalid_failure);
+        Check(!invalid &&
+                  invalid_error == vk::Result::eErrorInitializationFailed &&
+                  invalid_failure == B::DescriptorFailure::InvalidInput &&
+                  layouts == 0 && pools == 0,
+              "malformed layout rejected before Vulkan setup");
+        expected_buffers[0] = buffers.geometry->Handle();
+        expected_buffers[1] =
+            buffers.uv ? VkBuffer(buffers.uv->Handle()) : VK_NULL_HANDLE;
+        const auto destroyed_before = destroyed;
+        const auto updates_before = updates;
+        {
+          auto resources = B::AttachDescriptors<Buffer, B::ComputeDescriptors>(
+              std::move(buffers), [&](const auto &local, vk::Result &error,
+                                      B::DescriptorFailure &failure) {
+                return B::ComputeDescriptors::TryCreate(graphics.device, plan,
+                                                        local, error, failure);
+              });
+          Check(!buffers.geometry && !buffers.uv,
+                "buffer source ownership moved");
+          if (fail) {
+            const VkResult expected[] = {
+                VK_SUCCESS, VK_ERROR_OUT_OF_HOST_MEMORY,
+                VK_ERROR_OUT_OF_DEVICE_MEMORY, VK_ERROR_OUT_OF_POOL_MEMORY};
+            const B::DescriptorFailure stages[] = {
+                B::DescriptorFailure::None, B::DescriptorFailure::Layout,
+                B::DescriptorFailure::Pool, B::DescriptorFailure::Set};
+            Check(!resources && !resources.buffers.geometry &&
+                      !resources.buffers.uv && !resources.descriptors &&
+                      resources.error == expected[fail] &&
+                      resources.failure == stages[fail],
+                  "precise descriptor error, no usable partial resources");
+            Check(destroyed - destroyed_before == descriptor_count &&
+                      layouts == 0 && pools == 0 && updates == updates_before,
+                  "partial setup rollback before return, no update");
+          } else {
+            Check(bool(resources) && resources.descriptors->Set() &&
+                      resources.descriptors->Layout() && layouts == 1 &&
+                      pools == 1 && destroyed == destroyed_before &&
+                      updates == updates_before + 1,
+                  "successful setup owns all resources, one update");
+            auto moved = std::move(resources);
+            Check(bool(moved) && !resources, "complete owner move");
+          }
+        }
+        VmaTotalStatistics stats{};
+        vmaCalculateStatistics(graphics.allocator, &stats);
+        Check(layouts == 0 && pools == 0 &&
+                  destroyed - destroyed_before == descriptor_count &&
+                  stats.total.statistics.allocationCount == 0,
+              "exact-once complete descriptor/buffer cleanup");
+      }
+  descriptor_fail = 0;
+  int calls = 0;
+  B::PreparedBuffers<Buffer> empty;
+  empty.error = VK_SUCCESS;
+  auto invalid = B::AttachDescriptors<Buffer, B::ComputeDescriptors>(
+      std::move(empty),
+      [&](const auto &, vk::Result &, B::DescriptorFailure &) {
+        ++calls;
+        return std::unique_ptr<B::ComputeDescriptors>{};
+      });
+  Check(
+      !invalid && invalid.error == VK_ERROR_INITIALIZATION_FAILED && calls == 0,
+      "invalid buffers fail before descriptor factory even with success code");
+  dispatch.vkCreateDescriptorSetLayout = real_layout;
+  dispatch.vkDestroyDescriptorSetLayout = real_destroy_layout;
+  dispatch.vkCreateDescriptorPool = real_pool;
+  dispatch.vkDestroyDescriptorPool = real_destroy_pool;
+  dispatch.vkAllocateDescriptorSets = real_sets;
+  dispatch.vkUpdateDescriptorSets = real_update;
+  Check(created == destroyed && created - before_created == 24 && updates == 4,
+        "16 real descriptor scenarios:24 buffers/four successful updates");
+  std::printf("[vma] descriptors:16 scenarios,24 buffers,four updates; live "
+              "layouts=%d pools=%d\n",
+              layouts, pools);
+}
 } // namespace
 int main(int argc, char **argv) {
   if (argc != 2 || (std::strcmp(argv[1], "--vulkan13") &&
@@ -311,8 +533,10 @@ int main(int argc, char **argv) {
   {
     Runtime runtime;
     result = runtime.Init(api13);
-    if (!result)
+    if (!result) {
       Cases(*runtime.graphics);
+      DescriptorCases(*runtime.graphics);
+    }
   }
   if (failures || errors || warnings)
     result = 1;

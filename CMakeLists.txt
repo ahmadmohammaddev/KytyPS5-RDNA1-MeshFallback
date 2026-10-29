@@ -954,6 +954,7 @@ file(GLOB mesh_ir_frontend_sources CONFIGURE_DEPENDS
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/frontend/translate/*.cpp")
 add_executable(mesh_buffer_vma_tests EXCLUDE_FROM_ALL
   "${KYTY_TESTS_DIR}/MeshBufferVmaTests.cpp"
+    "${KYTY_SOURCE_DIR}/graphics/host_gpu/renderer/meshFallbackDescriptors.cpp"
   "${KYTY_SOURCE_DIR}/graphics/host_gpu/renderer/cache/bufferAllocation.cpp"
   "${KYTY_SOURCE_DIR}/graphics/host_gpu/vma.cpp"
   "${KYTY_SOURCE_DIR}/graphics/host_gpu/vramStats.cpp"
