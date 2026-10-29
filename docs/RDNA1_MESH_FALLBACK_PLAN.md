@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 4.1. **Overall status:** S-041 native RX actual frontend triangle/permuted/zero gate PASS; all fifteen stages, eight strict selections/cleanups and images exact. Bounded frontend UV export next; production/game integration remains open.
+> **Last edited:** 2026-10-29. **Plan revision:** 4.2. **Overall status:** S-041 native RX actual frontend triangle/permuted/zero gate PASS; all fifteen stages, eight strict selections/cleanups and images exact. Bounded frontend UV export next; production/game integration remains open.
 
 ## 0. Mission and boundaries
 
@@ -875,6 +875,12 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 - Scoped unit/SPIR-V/Vulkan/RDNA1 PASS; desktop compilation/GLSL compile/Vulkan1.2/game NOT RUN. Missing raw readback/ZIP hash/metrics/OS/ICD/noncoherent evidence recorded. Bounded frontend gate complete, broader P3/P5/game open.
 - Next one local task: actual frontend parameter0 xy UV export into existing544-byte guarded ABI, explicit metadata/mask rejection, independent values, strict SPIR-V validation and focused regressions/provenance; runtime integration follows separately under batched RX cadence. Evidence review stops here; no next implementation.
 
+### Session S-042 — 2026-10-29 — Actual frontend UV offline
+
+- Inputfbda4b4a clean branch/all14 submodules verified. Added authored parameter0.xy ISA export driven by real prologue vertex ID, three/zero output fixtures through complete frontend/SSA/specialization/lowerer. Existing independent binary oracle checks full136-word guarded UV layout/values/writes/count/status. Invalid opt-in, target/index/mask/compression/valid-mask/capacity/type and false allocated mask reject empty output; restoration byte-identical. Valid wrong-constant SPIR-V passes validation but fails independent oracle.
+- Complete snapshot `_Build/p0-s012/p3-s042-pre-build-01/`; two-job build PASS; 29 serial focused cases21 PASS/8 strict SKIPPED/0 FAIL (4.48 s). Logs/dumps/XML `_Build/p3-s042/`. Compilation/unit/SPIR-V PASS; existing Intel auxiliary Vulkan regressions PASS; new frontend UV GPU/RX/game NOT RUN. Position/index ABI and production defaults unchanged.
+- Next local task actual frontend UV/zero textured execution with complete geometry/UV/image oracles and validation through cleanup; continue authorized commits D-033, no push.
+
 ## 8. Change history (append-only)
 
 | Date | Plan revision | Sections | Reason / evidence |
@@ -936,6 +942,8 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 | 2026-10-29 | 4.0 | consolidated frontend package/runner/README/plan/AGENTS | S-040 prepares one coherent native frontend gate under D-028/D-033; clean package verification precedes handoff |
 
 | 2026-10-29 | 4.1 | checkpoint/P3/evidence/handoff; AGENTS/native report | S-041 accepts native actual frontend geometry and selects bounded frontend UV export next |
+
+| 2026-10-29 | 4.2 | frontend UV fixture/plan/AGENTS | S-042 proves actual frontend UV offline with independent guarded binary oracle and rejection coverage |
 
 ## 9. Quick commands (reference; verify before running)
 

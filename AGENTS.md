@@ -146,3 +146,6 @@ Clean package source87e912bd9786abd206b635ff7c68a832562f9b8a/build20261029T08115
 
 ## Current checkpoint S-041
 Native actual frontend triangle/permuted/zero strict1.3 gate PASS on RX5700XT API1.4.308 AMD25.6.1. Package source87e912bd/build20261029T081156341Z; all15 stages PASS, eight cleanups zero errors/warnings, full buffers/images exact. All24 files copied/hash-verified `_Build/p3-s041/`; see docs/RDNA1_RX_FRONTEND_S041.md. No production/game claim. Next one local task: bounded actual frontend parameter0 xy UV export into existing544-byte guarded ABI; public ISA/full graph, metadata/mask rejection, independent expected UVs, SPIR-V1.3 and focused regressions/provenance. Runtime integration follows separately; D-028 batched RX cadence, no push.
+
+## Current checkpoint S-042
+Actual frontend UV/zero export offline PASS through complete graph and independent136-word binary oracle; rejection and valid wrong-UV mutation checked. Build PASS;29 cases21 PASS/8 strict SKIPPED/0 FAIL(4.48s), full snapshot/logs retained. New frontend UV runtime/RX/game NOT RUN. Next actual frontend UV textured runtime with exact buffers/images and validation through cleanup; D-033 sequential commits, no push.
