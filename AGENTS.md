@@ -137,3 +137,6 @@ Bounded non-indexed single-group specialization and actual frontend triangle SPI
 
 ## Current checkpoint S-039
 Actual frontend-derived triangle/permuted/zero conventional draws PASS Intel1.2 auxiliary, all full buffers/pixels and zero validation messages through cleanup. 29 cases 21 PASS/8 strict SKIPPED/0 FAIL (4.00 s); wrong valid module/missing strict module correctly FAIL. Complete snapshots/logs `_Build/p3-s039/` and capture folders retained. New native frontend gate NOT RUN. Next clean consolidated frontend milestone package/runner, relocation/integrity/API/RX guard verification; then give ZIP and one RX command and stop under D-033. No production/game claim or push.
+
+## S-040 package preparation
+Frontend milestone runner/launcher and 29-case clean-source package inventory prepared. Commit source, build/verify package including Unicode relocation, checksums, auxiliary exact buffers/images, strict skip and RX guard; append actual results. Native acceptance requires 15 stages/eight strict RX selections/eight cleanups, exact blobs/images, zero errors/warnings. Then deliver ZIP/one command and stop under D-033. No push.

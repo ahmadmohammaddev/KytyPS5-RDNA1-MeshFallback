@@ -144,3 +144,9 @@ are attempted after preflight succeeds. Old launchers retain their modes.
 
 This package batches the generated draw and textured UV research milestone.
 Production guest translation, emulator integration and Astro Bot are separate.
+
+## Actual frontend milestone
+
+Run `Run-Frontend-Milestone.cmd -IsolateImplicitLayers` as a normal user on the RX 5700 XT. This includes the previous generated geometry/UV milestone plus actual authored guest-ISA decoder/frontend triangle, permuted indices and zero output. It requires all 15 stages PASS, eight native strict Vulkan 1.3 selections, exact complete buffers/images and zero validation errors/warnings through eight cleanups. Keep the complete result folder and eight PPM files.
+
+The draw context is explicitly specialized to non-indexed count3, base vertex0, first instance0, one wave32 workgroup and no first-group offset. This is isolated synthetic research, not emulator or game integration. `-Mode Vulkan12 -FrontendMilestone` on Run-Prototype.ps1 is auxiliary only. Missing strict prerequisites produce SKIPPED, never PASS. Indexed/multi-group/guest resources/arbitrary CFG/LDS remain unsupported.

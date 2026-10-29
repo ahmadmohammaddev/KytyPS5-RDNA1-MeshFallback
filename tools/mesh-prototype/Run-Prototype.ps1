@@ -11,9 +11,12 @@ param(
     [switch]$Ir,
     [switch]$IrAdd,
     [switch]$IrMilestone,
+    [switch]$FrontendMilestone,
     [switch]$IsolateImplicitLayers
 )
 $ErrorActionPreference = 'Stop'
+if ($FrontendMilestone -and ($IrMilestone -or $Ir -or $IrAdd -or $Draw -or $Texture)) { Write-Host 'FAIL: choose frontend milestone or another mode'; exit 1 }
+if ($FrontendMilestone) { $IrMilestone = $true }
 if ($Texture) { $Draw = $true }
 if ($IrMilestone -and ($Ir -or $IrAdd -or $Draw)) { Write-Host "FAIL: choose milestone or another runtime mode"; exit 1 }
 if (($Ir -and $IrAdd) -or (($Ir -or $IrAdd) -and $Draw)) { Write-Host "FAIL: choose IR or draw/texture mode"; exit 1 }
@@ -135,6 +138,10 @@ try {
             if ($run.record.exit -ne 0) { $preflightOk = $false; break }
         }
     }
+    if ($preflightOk -and $FrontendMilestone) {
+        $run = RunCheck -Name 'frontend-compatibility' -Exe 'mesh_ir_frontend_tests.exe' -Arguments @()
+        if ($run.record.exit -ne 0) { $preflightOk = $false }
+    }
     if ($preflightOk -and $IrMilestone) {
         foreach ($argument in @('--uv-positive','--uv-reject')) {
             $name = if ($argument -eq '--uv-positive') { 'uv-positive' } else { 'uv-rejections' }
@@ -187,6 +194,10 @@ try {
             $devices = if ($IrAdd) { 2 } elseif ($Ir) { 3 } else { 1 }
             $plans = @(@{name='runtime'; arguments=$arguments; devices=$devices; images=$expectedImages})
         }
+        if ($FrontendMilestone) {
+            $plans += @{name='runtime-frontend'; arguments=@("--frontend-draw$suffix",'--image-output',(Join-Path $results 'frontend.ppm')); devices=3;
+              images=@('frontend-frontend.ppm','frontend-frontend_permuted.ppm','frontend-frontend_zero.ppm')}
+        }
         foreach ($plan in $plans) {
             $run = RunCheck -Name $plan.name -Exe 'mesh_compute_proto_tests.exe' -Arguments $plan.arguments
             $identity = @($run.lines | Where-Object { $_ -match 'physical-devices:|\[\d+\].*type=|selected:|selected-driver:|dispatch-module:|summary after cleanup:|offscreen.*pixels|DRAW RESULT:|TEXTURE RESULT:|UV boundary|UV full-buffer:|IR case:|IR RESULT:' })
@@ -226,7 +237,7 @@ try {
         $overall = if (@($runtimeStages | Where-Object { $_.targetStatus -eq 'FAIL' }).Count) { 'FAIL' } else { $runtimeStatus }
     }
     $summary = [ordered]@{schema=1; gitCommit=$manifest.gitCommit; buildId=$manifest.buildId;
-        mode=$Mode; ir=[bool]$Ir; irAdd=[bool]$IrAdd; irMilestone=[bool]$IrMilestone; draw=[bool]$Draw; texture=[bool]$Texture; isolateImplicitLayers=[bool]$IsolateImplicitLayers; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
+        mode=$Mode; ir=[bool]$Ir; irAdd=[bool]$IrAdd; irMilestone=[bool]$IrMilestone; frontendMilestone=[bool]$FrontendMilestone; draw=[bool]$Draw; texture=[bool]$Texture; isolateImplicitLayers=[bool]$IsolateImplicitLayers; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
         runs=@($runs.ToArray()); runtimeStages=@($runtimeStages.ToArray()); images=@($imageRecords.ToArray()); deviceEvidence=$runtimeIdentity;
         environment=@{VK_LAYER_PATH=$env:VK_LAYER_PATH; VK_INSTANCE_LAYERS=$env:VK_INSTANCE_LAYERS;
             VK_DRIVER_FILES=$env:VK_DRIVER_FILES; VK_ICD_FILENAMES=$env:VK_ICD_FILENAMES;
