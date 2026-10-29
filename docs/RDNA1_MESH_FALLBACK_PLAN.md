@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 3.5. **Overall status:** S-035 native RX consolidated generated IR draw/textured milestone PASS: 13 stages, five strict1.3 device selections, exact buffers/images and zero errors/warnings through cleanup. Broader frontend/NGG and production integration remain open; next test the real mesh frontend/prologue boundary.
+> **Last edited:** 2026-10-29. **Plan revision:** 3.6. **Overall status:** S-036 real decoder/mesh frontend/normal pre-resource preparation fixtures PASS; complete IR is correctly rejected at the current one-block limit. Next close linear-chain compatibility locally, then the retained NGG semantic gaps; user authorized sequential commits until required RX handoff.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P3 IN_PROGRESS: bounded IR geometry/arithmetic/UV and generated draw native gates verified; real frontend/NGG compatibility remains open** |
-| Current subtask | S-035 native consolidated evidence review DONE; P3.7 real mesh frontend compatibility fixture next |
+| Current subtask | S-036 frontend compatibility diagnostic DONE; complete linear-chain lowering next |
 | Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
-| Last verified git commit | Package source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`; review input `175b737539d5a8994c049408e0db858ed00fb35e` |
+| Last verified git commit | S-036 input `136629d7ea9cd42dc7625c875fe984492f464672`; complete pre-build source snapshot retained |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | S-035 input clean, pinned ancestry and all 14 matching recursive submodules verified; nineteen desktop files copied/hash-checked |
-| Build status | No new desktop/local build in S-035; clean S-034 focused two-job build PASS retained |
+| Build status | S-036 standalone frontend two-job build PASS; no core/GUI/Vulkan initialization |
 | Native RDNA1 smoke test | S-035 PASS for generated triangle/permuted/zero and UV/UV-zero sampled draws: native RX5700XT API1.4.308 AMD25.6.1, strict1.3, all blobs/pixels exact and zero errors/warnings through all five cleanups |
-| Passing tests | S-035 desktop 13 stages PASS, no FAIL/SKIP; five images independently exact. Prior clean CTest19 PASS/7 SKIP retained; no new local CTest run |
+| Passing tests | S-036 five offline tests PASS, 0.16 s; two frontend probes explicitly UNSUPPORTED by compute lowerer, not a GPU success |
 | Known blockers / limits | Current research accepts authored IR, not the real frontend NGG prologue. Guest resources/CFG/LDS/dynamic counts, noncoherent/production/game/timer remain open |
-| Next single actionable task | P3.7 offline real mesh frontend/prologue fixture from public authored instructions; pass complete prepared IR to research lowerer, inventory actual gaps, require validated output or precise fail-closed unsupported regression without stripping prologue |
+| Next single actionable task | Accept complete acyclic linear IR chains with graph/SSA validation; lower constant real-frontend probe and preserve exact next vertex-ID semantic rejection; continue local commits under D-033 |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -334,6 +334,8 @@ Status: **NOT_STARTED**
 
 | D-032 | 2026-10-29 | After native generated draw/textured acceptance, select one real mesh-frontend/prologue compatibility fixture before production integration | All current lowerer inputs are authored IR; source frontend injects workgroup/draw-parameter/NGG semantics and normal IR passes that are not yet supported. A complete frontend-produced fixture exposes the next actual semantic gap without concealing it | Deterministic full-IR compatibility evidence and a bounded source-backed next lowering fix; retain D-028 batching |
 
+| D-033 | 2026-10-29 | User authorizes sequential related development, validation and individual commits until native RX testing is unavoidable; then provide one verified ZIP and one command and stop | Explicit user instruction supersedes the default stop after each selected subtask for this authorized run. Retain bounded scope per commit, complete evidence and D-028 batching; no pushes or fabricated hardware outcomes | Required native-only evidence after all useful authorized local work; user steering/cancellation overrides continuation |
+
 ## 5. Experiments and evidence
 
 | ID | Environment / git SHA | Hypothesis and test | Actual observed result | Outcome / artifact |
@@ -383,6 +385,8 @@ Status: **NOT_STARTED**
 | E-034 | 2026-10-29; clean package source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`; Intel Iris Xe API1.2.172 | Clean consolidated package/build, 26 tests, five generated cases, Unicode relocation and fifteen expected outcomes | Build PASS; 19 PASS/7 strict SKIP/0 FAIL (3.21 s); auxiliary images/blobs exact and zero errors/warnings; required RX rejects Intel, missing/tampered files reject. All five RGB images independently verified | `docs/RDNA1_IR_PACKAGE_S034.md`, ignored `_Build/p3-s034/` and package evidence; ZIP SHA `3D78510DF6E474855ACBF89B39AEBF9329CEFB2C1BABE31898FA29A5D0DFBBAD`; native RX/game NOT RUN |
 
 | E-035 | Run UTC2026-10-29T07:28:23Z; package source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`; native RX5700XT/API1.4.308/AMD25.6.1/loader1.4.309 | User strict required-RX consolidated milestone with process-local implicit isolation | 13 stages PASS, no FAIL/SKIP; five cases select native RX strict1.3, exact buffers/images and zero errors/warnings through cleanup. All 20,480 supplied RGB pixels and hashes independently exact; host stages0.4559741/0.177837 s | `docs/RDNA1_RX_IR_MILESTONE_S035.md`; nineteen raw copies/hashes/verification/preview in ignored `_Build/p3-s035/`; no raw buffer/desktop ZIP rehash/GPU metrics, new build, auxiliary desktop runtime or game run |
+
+| E-036 | 2026-10-29; input `136629d7ea9cd42dc7625c875fe984492f464672` plus dirty snapshot; development laptop | Actual authored ISA through decoder/mesh frontend/normal pre-resource passes, full IR to lowerer | Build PASS; five offline tests PASS (0.16 s); both whole programs reject at two-block structural limit. Vertex-ID inventory exposes live NGG/draw/resource semantics. No new compute binary/GPU run | `docs/RDNA1_FRONTEND_S036.md`; ignored `_Build/p3-s036/` and `_Build/p0-s012/p3-s036-pre-build-01/` |
 
 New experiments MUST include real date, commit SHA, driver, device, exact command/config, time budget, result (PASS/FAIL/INCONCLUSIVE), and logs/artifact location. Hardware tests must also follow section 2.5 for package identity, screenshots and metrics (or explicit unavailability reasons). Avoid adding game code/assets to git.
 
@@ -824,6 +828,12 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 - P3.4/P3.6 bounded native gates DONE; full P3/P4/P5 and Astro Bot remain open. Compilation and desktop Vulkan1.2 runtime NOT RUN; offline/host/Vulkan/RDNA1 scoped PASS. Raw buffers, independent desktop ZIP hash, GPU metrics/noncoherent/ICD/OS inventory unavailable. Historical failures and deferred timer retained.
 - D-032 selects next P3.7: one public authored mesh-frontend/prologue compatibility fixture with normal IR preparation, complete resulting blocks into the research lowerer, exact source-backed operation inventory and validated output or precise fail-closed unsupported regression. No manual IR/prologue stripping to fake support. Related fixes remain batched locally under D-028. No next task started; commit evidence and stop.
 
+### Session S-036 — 2026-10-29 — Real frontend structural boundary
+
+- Clean input136629d7, pinned ancestry/14 submodules verified. Added standalone actual decoder/frontend/IR prefix target and authored ISA fixtures; no renderer dependency or stubs. Complete normalized/validated graph retained. Constant and vertex-ID probes both reject the one-block limit with empty outputs; live opcode inventory/dumps expose next NGG requirements.
+- Two-job build PASS; five offline tests PASS (0.16 s). Complete dirty snapshot and build/dumps/logs retained. Existing shader validation tests PASS, new frontend compute output not generated; Vulkan/RDNA1/game NOT RUN. See `docs/RDNA1_FRONTEND_S036.md` for exact scope/limits.
+- D-033 records explicit user authorization to continue next bounded local task after each tested/documented commit, stopping only at necessary RX handoff with verified ZIP/one command. Next fix complete linear-chain validation/codegen, then address actual remaining semantic gaps; preserve native defaults/no push.
+
 ## 8. Change history (append-only)
 
 | Date | Plan revision | Sections | Reason / evidence |
@@ -873,6 +883,8 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 | 2026-10-29 | 3.4 | package runner/builder/launcher/README; plan/AGENTS/report | S-034 consolidates generated draw and textured-UV transfer under D-028, with per-stage evidence and clean package verification |
 
 | 2026-10-29 | 3.5 | checkpoint/P3/decision/experiment/handoff; AGENTS; native RX milestone report | S-035 accepts generated IR untextured/textured native gates; D-032 targets missing real frontend/NGG boundary next |
+
+| 2026-10-29 | 3.6 | frontend fixture/target, plan/AGENTS/report | S-036 proves real frontend boundary and structural rejection; D-033 records authorized sequential local commits |
 
 ## 9. Quick commands (reference; verify before running)
 

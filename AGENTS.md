@@ -51,7 +51,15 @@ Request native RX testing when a defined milestone acceptance gate is ready, whe
 
 Intel Vulkan 1.2 and native RX strict Vulkan 1.3 evidence remain distinct. Never mark an RX gate complete from local results. Report PASS, FAIL, SKIPPED and NOT RUN accurately, retain failures and all provenance requirements. The one-selected-subtask rule still bounds each development session; it does not require a hardware handoff after every session.
 
-## Current next task (checkpoint S-035)
+### Authorized sequential run (D-033)
+The user explicitly requests related steps one after another with a commit for each, until a native RX test is unavoidable. During this authorized run, continue after each bounded, tested and documented subtask rather than stopping automatically. At a necessary RX-only gate, first complete a verified clean consolidated ZIP, provide one experiment command and stop. This supersedes the default per-subtask stop for this run; D-028 batching, accurate statuses, source provenance and no-push remain mandatory. Later user steering/cancellation takes precedence.
+
+## Current next task (checkpoint S-036)
+Actual authored ISA decoder/mesh frontend plus normal pre-resource SSA/constant/identity/dead-code/read-lane preparation passes and validates. Both complete probes retain two IR blocks; research lowerer correctly rejects the structural limit with empty output. Five offline tests PASS, build PASS. Source-backed live vertex-ID inventory includes GetBuiltin/MeshDrawParameter and guarded guest index loads. See `docs/RDNA1_FRONTEND_S036.md` and ignored evidence.
+
+Next bounded local task: support complete acyclic linear IR block chains with strict graph/SSA order checks; reject forks/joins/cycles/incomplete graphs; lower the full constant frontend probe and retain the next precise vertex-ID semantic rejection. Continue subsequent local fixes/commits under D-033 until required native RX handoff; no production renderer change or push.
+
+## Retained checkpoint S-035
 Native RX consolidated generated draw/textured milestone PASS: 13 stages, five RX5700XT strict Vulkan1.3 selections, exact geometry/UV buffers and all images, zero errors/warnings through cleanup. Five supplied PPMs independently match every RGB pixel/hash. Package source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`; report `docs/RDNA1_RX_IR_MILESTONE_S035.md`, raw copies/hashes/verification under ignored `_Build/p3-s035/`. No game or complete frontend/NGG support claim.
 
 Next single task P3.7 (D-032): offline compatibility fixture through the real mesh frontend/prologue and normal IR preparation, using public authored guest instructions. Pass all resulting IR blocks/metadata to the research lowerer; do not manually replace or strip prologue/blocks to hide unsupported semantics. Gate successful frontend translation and source-backed required-operation inventory; then either independently validated compute output or deterministic empty-output rejection with the first real unsupported semantic and regression/next bounded fix. Production renderer defaults remain unchanged; no guest/proprietary captures in git. Batch related local fixes under D-028; commit and stop, no push.

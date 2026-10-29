@@ -935,6 +935,27 @@ add_executable(mesh_ir_compute_tests EXCLUDE_FROM_ALL
 )
 target_include_directories(mesh_ir_compute_tests PRIVATE ${inc_headers})
 target_link_libraries(mesh_ir_compute_tests PRIVATE common spirv-tools Vulkan::Headers)
+file(GLOB mesh_ir_frontend_sources CONFIGURE_DEPENDS
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/frontend/cfg/*.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/frontend/decode/*.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/frontend/translate/*.cpp")
+add_executable(mesh_ir_frontend_tests EXCLUDE_FROM_ALL
+  "${KYTY_TESTS_DIR}/MeshIrFrontendTests.cpp"
+  "${KYTY_TESTS_DIR}/research/MeshIrComputeLowering.cpp"
+  ${mesh_ir_frontend_sources}
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/CodegenOptions.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/Block.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/IREmitter.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/Program.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/Type.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/Value.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/opcodes/ValueOpcodes.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/passes/SsaRewrite.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/passes/ConstantPropagation.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/passes/DeadCodeElimination.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/passes/ReadLaneElimination.cpp")
+target_include_directories(mesh_ir_frontend_tests PRIVATE ${inc_headers})
+target_link_libraries(mesh_ir_frontend_tests PRIVATE common spirv-tools Vulkan::Headers)
 set(mesh_ir_generated_modules)
 foreach(api IN ITEMS 12 13)
   foreach(name IN ITEMS triangle permuted zero add wrap)
@@ -1472,6 +1493,8 @@ if(BUILD_TESTING)
 	add_test(NAME mesh_ir_compute_rejections COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --reject)
 	add_test(NAME mesh_ir_uv_positive COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --uv-positive)
 	add_test(NAME mesh_ir_uv_rejections COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --uv-reject)
+	add_test(NAME mesh_ir_frontend_compatibility COMMAND $<TARGET_FILE:mesh_ir_frontend_tests>)
+	set_tests_properties(mesh_ir_frontend_compatibility PROPERTIES TIMEOUT 120)
 	add_test(NAME mesh_ir_runtime COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir)
 	add_test(NAME mesh_ir_runtime_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir-vulkan12)
 	add_test(NAME mesh_ir_add_runtime COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir-add)
@@ -2650,6 +2673,7 @@ if(BUILD_TESTING)
 		mesh_output_contract_tests
 		mesh_compute_proto_tests
 		mesh_ir_compute_tests
+		mesh_ir_frontend_tests
 		shader_precompile_tests
 		shader_vertex_metadata_tests
 		resource_materialization_tests
