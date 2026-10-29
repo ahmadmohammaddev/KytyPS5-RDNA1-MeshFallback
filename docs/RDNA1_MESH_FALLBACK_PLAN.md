@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 4.0. **Overall status:** S-036 real decoder/mesh frontend/normal pre-resource preparation fixtures PASS; complete IR is correctly rejected at the current one-block limit. Next close linear-chain compatibility locally, then the retained NGG semantic gaps; user authorized sequential commits until required RX handoff.
+> **Last edited:** 2026-10-29. **Plan revision:** 4.0. **Overall status:** S-040 clean frontend milestone package verified locally; actual frontend triangle/permuted/zero PASS Intel1.2 auxiliary. Stop for the independent native strict RX frontend gate; no production/game integration.
 
 ## 0. Mission and boundaries
 
@@ -38,14 +38,14 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Current phase | **P3 IN_PROGRESS: bounded IR geometry/arithmetic/UV and generated draw native gates verified; real frontend/NGG compatibility remains open** |
 | Current subtask | S-039 actual frontend triangle/permuted/zero indexed draw PASS Intel auxiliary; consolidated native frontend gate pending |
 | Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
-| Last verified git commit | S-036 input `136629d7ea9cd42dc7625c875fe984492f464672`; complete pre-build source snapshot retained |
+| Last verified git commit | S-040 clean package source `87e912bd9786abd206b635ff7c68a832562f9b8a`, build20261029T081156341Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
-| Checkout evidence | S-035 input clean, pinned ancestry and all 14 matching recursive submodules verified; nineteen desktop files copied/hash-checked |
-| Build status | S-036 standalone frontend two-job build PASS; no core/GUI/Vulkan initialization |
+| Checkout evidence | Clean committed package source; pinned ancestry and all 14 recursive submodules matching/clean |
+| Build status | S-040 clean two-job focused package build PASS; no memory retry/PGO/IPO |
 | Native RDNA1 smoke test | S-035 PASS for generated triangle/permuted/zero and UV/UV-zero sampled draws: native RX5700XT API1.4.308 AMD25.6.1, strict1.3, all blobs/pixels exact and zero errors/warnings through all five cleanups |
-| Passing tests | S-037 27 focused tests: 20 PASS, 7 strict SKIPPED, 0 FAIL (3.45 s); constant frontend module validates offline; live vertex-ID prologue remains unsupported |
-| Known blockers / limits | Current research accepts authored IR, not the real frontend NGG prologue. Guest resources/CFG/LDS/dynamic counts, noncoherent/production/game/timer remain open |
-| Next single actionable task | Prepare clean committed-source frontend milestone package, verify relocation/integrity/Intel auxiliary and strict/RX guards, then stop for native RX gate |
+| Passing tests | S-040 29 cases: 21 PASS/8 strict SKIPPED/0 FAIL, 3.89 s; 15 expected relocation/integrity/runtime/guard outcomes verified |
+| Known blockers / limits | New native frontend strict RX gate pending; indexed/resources/CFG/LDS/dynamic counts/noncoherent/production/game/timer remain open |
+| Next single actionable task | Run verified ZIP on RX: Run-Frontend-Milestone.cmd -IsolateImplicitLayers; require 15 stages/eight native strict selections/cleanups, exact blobs/eight images and zero validation messages; return complete result folder |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -859,6 +859,12 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 
 - Input `b0d75617`; extend existing package/runner with one FrontendMilestone switch and required-RX strict launcher. Preserve prior modes. Include frontend host regression, six actual frontend modules, source specialization, PE import audit and all 29 focused CTests. Combined acceptance: 15 stages, eight native strict1.3 device selections/cleanups, all guarded buffers/eight images exact, zero errors/warnings.
 - Windows PowerShell parsing/diff checks PASS; source commit precedes clean package build. Package build, relocation/integrity/negative/Intel verification pending at this preparation checkpoint; append actual results before handing off. New frontend native RDNA1 and Astro Bot NOT RUN. No push.
+
+#### Final S-040 verification and stop
+
+- Source87e912bd/build20261029T081156341Z clean ZIP 2,586,529 bytes; SHA256 `336303B17E837E97E5CEFF4EEE458460AECDB5C9AFDE22DB377ECDCB7FD06D89`, matching sidecar. Full report `docs/RDNA1_FRONTEND_PACKAGE_S040.md`; ignored `_Build/p3-s040/` and package evidence retain actual commands/logs/inventories.
+- Clean scoped build PASS; 29 CTests 21 PASS/8 strict SKIPPED/0 FAIL (3.89 s). Fifteen expected Unicode relocation/unrelated-CWD/integrity/offline/auxiliary/strict/RX-guard/legacy/conflict/missing/tamper/launcher outcomes PASS. Eight images independently checked (32,768 pixels); actual Intel auxiliary full buffers/pixels and zero errors/warnings through eight cleanups. Native frontend RDNA1 and Astro Bot NOT RUN; all prior failures/provenance limits retained.
+- Necessary next hardware gate: normal-user `Run-Frontend-Milestone.cmd -IsolateImplicitLayers` from this ZIP. Require all 15 stages PASS, eight native RX5700XT strict1.3 selections and cleanups, all buffers/images exact, zero errors/warnings, matching source/build, complete result folder. Stop under D-033; no push or next-phase work.
 
 ## 8. Change history (append-only)
 

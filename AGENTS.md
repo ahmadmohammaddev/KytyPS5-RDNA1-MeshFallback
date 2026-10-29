@@ -54,7 +54,7 @@ Intel Vulkan 1.2 and native RX strict Vulkan 1.3 evidence remain distinct. Never
 ### Authorized sequential run (D-033)
 The user explicitly requests related steps one after another with a commit for each, until a native RX test is unavoidable. During this authorized run, continue after each bounded, tested and documented subtask rather than stopping automatically. At a necessary RX-only gate, first complete a verified clean consolidated ZIP, provide one experiment command and stop. This supersedes the default per-subtask stop for this run; D-028 batching, accurate statuses, source provenance and no-push remain mandatory. Later user steering/cancellation takes precedence.
 
-## Current next task (checkpoint S-036)
+## Retained next task (checkpoint S-036)
 Actual authored ISA decoder/mesh frontend plus normal pre-resource SSA/constant/identity/dead-code/read-lane preparation passes and validates. Both complete probes retain two IR blocks; research lowerer correctly rejects the structural limit with empty output. Five offline tests PASS, build PASS. Source-backed live vertex-ID inventory includes GetBuiltin/MeshDrawParameter and guarded guest index loads. See `docs/RDNA1_FRONTEND_S036.md` and ignored evidence.
 
 Next bounded local task: support complete acyclic linear IR block chains with strict graph/SSA order checks; reject forks/joins/cycles/incomplete graphs; lower the full constant frontend probe and retain the next precise vertex-ID semantic rejection. Continue subsequent local fixes/commits under D-033 until required native RX handoff; no production renderer change or push.
@@ -129,14 +129,17 @@ Historical S-012 totals: 64 distinct passing registered cases, 1 failed-only tim
 
 Next single task: P4.1 synthetic Vulkan compute prototype of the hardened contract. Initialize Pending, author a public compute shader writing three float4 positions, indices 0/1/2, counts 3/1/reserved 0 and final stored Ok; preserve guards and unused words. Acceptance: SPIR-V validated offline for Vulkan 1.3; one-workgroup dispatch with core + synchronization validation; explicit dependencies/fence and required mapped-memory handling; full-blob host readback compared exactly; record physical device/driver/ICD and provenance. Intel results are Intel only; software ICD results are software only; unavailable Vulkan is a skip, never a pass. No emulator/renderer source change, guest translation or timer change; commit and stop. Ready for this isolated task under D-016; no next-phase work performed in S-012.
 
-## Current checkpoint S-037
+## Retained checkpoint S-037
 Complete linear-chain lowering and constant actual frontend SPIR-V PASS. Focused suite 20 PASS/7 strict SKIPPED/0 FAIL, 3.45 s; existing Intel auxiliary regressions clean. Live vertex-ID prologue fails closed at GetBuiltin. Full provenance and initial test-lifetime failure retained; see docs/RDNA1_LINEAR_IR_S037.md. Next bounded local task: explicit non-indexed single-group frontend specialization and local invocation semantics, rejection coverage and offline validation. Continue authorized sequential commits under D-033 until necessary RX handoff; no push.
 
-## Current checkpoint S-038
+## Retained checkpoint S-038
 Bounded non-indexed single-group specialization and actual frontend triangle SPIR-V PASS offline. Full graph retained, ordinary propagation/DCE removes inactive index reads; nine context negatives and malformed parameter reject without partial mutation. 20 PASS/7 strict SKIPPED/0 FAIL (3.29 s), full snapshots/logs retained. Next run actual frontend triangle through standalone indexed draw with complete independent oracles and validation through cleanup. New frontend GPU/RX/game NOT RUN. Continue sequential commits under D-033; no push.
 
-## Current checkpoint S-039
+## Retained checkpoint S-039
 Actual frontend-derived triangle/permuted/zero conventional draws PASS Intel1.2 auxiliary, all full buffers/pixels and zero validation messages through cleanup. 29 cases 21 PASS/8 strict SKIPPED/0 FAIL (4.00 s); wrong valid module/missing strict module correctly FAIL. Complete snapshots/logs `_Build/p3-s039/` and capture folders retained. New native frontend gate NOT RUN. Next clean consolidated frontend milestone package/runner, relocation/integrity/API/RX guard verification; then give ZIP and one RX command and stop under D-033. No production/game claim or push.
 
 ## S-040 package preparation
 Frontend milestone runner/launcher and 29-case clean-source package inventory prepared. Commit source, build/verify package including Unicode relocation, checksums, auxiliary exact buffers/images, strict skip and RX guard; append actual results. Native acceptance requires 15 stages/eight strict RX selections/eight cleanups, exact blobs/images, zero errors/warnings. Then deliver ZIP/one command and stop under D-033. No push.
+
+## Current checkpoint S-040 — stop for native frontend gate
+Clean package source87e912bd9786abd206b635ff7c68a832562f9b8a/build20261029T081156341Z verified. 29 tests 21 PASS/8 strict SKIPPED/0 FAIL (3.89 s), 15 expected package outcomes, eight exact images/full blobs and zero validation messages through eight Intel1.2 cleanups. ZIP2,586,529 bytes SHA256336303B17E837E97E5CEFF4EEE458460AECDB5C9AFDE22DB377ECDCB7FD06D89. See docs/RDNA1_FRONTEND_PACKAGE_S040.md. Next only: RX normal-user `Run-Frontend-Milestone.cmd -IsolateImplicitLayers`, require all15 stages/eight native strict1.3 selections/cleanups, exact guarded buffers/eight images, zero errors/warnings and full result folder. New frontend native gate and game NOT RUN. Stop under D-033, no push or production integration.
