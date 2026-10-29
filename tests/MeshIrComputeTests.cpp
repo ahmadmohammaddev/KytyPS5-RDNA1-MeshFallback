@@ -512,6 +512,51 @@ void Positives(const std::filesystem::path &dir) {
     Check(!file.fail(), "host oracle artifact write");
   }
 }
+void LinearChains() {
+  namespace CFG = Libs::Graphics::ShaderRecompiler::CFG;
+  auto metadata = [] {
+    std::array<IR::BlockInfo,2> info{};
+    info[0].id=7; info[0].terminator.kind=CFG::TerminatorKind::Branch;info[0].terminator.true_block=8;
+    info[1].id=8;
+    return info;
+  };
+  {
+    Fixture f; IR::Block entry;
+    entry.AddBranch(&f.block);
+    std::array<IR::Block*,2> blocks{&entry,&f.block}; auto info=metadata();
+    auto input=f.Input();input.blocks=blocks;input.block_info=info;
+    auto linear=R::Lower(input);Valid(linear);
+    Check(linear.binary==R::Lower(Fixture{}.Input()).binary,"empty entry chain preserves exact shader output");
+    auto& packed=entry.AppendNewInst(Op::IAdd32,{IR::Value(0x002003ffu),IR::Value(1u)});
+    f.primitive->Arg(0).TryInstruction()->SetArg(0,IR::Value(&packed));
+    Valid(R::Lower(input));
+    // Unlike IR::Program these stack-owned blocks do not have a shared
+    // destructor. Detach the cross-block use before entry is destroyed first.
+    f.primitive->Arg(0).TryInstruction()->SetArg(0,IR::Value(0x00200400u));
+  }
+  auto reject=[&](const char* name,const char* diagnostic,auto mutation) {
+    Fixture f;IR::Block entry,foreign; entry.AddBranch(&f.block);
+    std::array<IR::Block*,2> blocks{&entry,&f.block};auto info=metadata();
+    auto input=f.Input();input.blocks=blocks;input.block_info=info;
+    mutation(f,entry,foreign,input,info,blocks);
+    auto r=R::Lower(input);
+    Check(!r && r.binary.empty() && r.assembly.empty(),name);
+    Check(r.error.find(diagnostic)!=std::string::npos,name);
+  };
+  reject("missing terminators","metadata",[](auto&,auto&,auto&,auto& i,auto&,auto&){i.block_info={};});
+  reject("conditional terminator","terminator",[](auto&,auto&,auto&,auto&,auto& m,auto&){m[0].terminator.kind=CFG::TerminatorKind::ConditionalBranch;});
+  reject("early return","terminator",[](auto&,auto&,auto&,auto&,auto& m,auto&){m[0].terminator.kind=CFG::TerminatorKind::Return;});
+  reject("wrong target","terminator",[](auto&,auto&,auto&,auto&,auto& m,auto&){m[0].terminator.true_block=42;});
+  reject("duplicate IDs","duplicate",[](auto&,auto&,auto&,auto&,auto& m,auto&){m[1].id=m[0].id; m[0].terminator.true_block=m[0].id;});
+  reject("reordered blocks","CFG",[](auto&,auto&,auto&,auto&,auto&,auto& b){std::swap(b[0],b[1]);});
+  reject("duplicate pointers","CFG",[](auto&,auto&,auto&,auto&,auto&,auto& b){b[1]=b[0];});
+  reject("cycle","CFG",[](auto& f,auto& e,auto&,auto&,auto&,auto&){f.block.AddBranch(&e);});
+  reject("fork","CFG",[](auto&,auto& e,auto& other,auto&,auto&,auto&){e.AddBranch(&other);});
+  reject("join","CFG",[](auto& f,auto&,auto& other,auto&,auto&,auto&){other.AddBranch(&f.block);});
+  reject("foreign successor","CFG",[](auto& f,auto&,auto& other,auto&,auto&,auto&){f.block.AddBranch(&other);});
+  reject("instruction limit across blocks","limit",[](auto&,auto& e,auto&,auto&,auto&,auto&){for(unsigned i=0;i<244;++i)e.AppendNewInst(Op::IAdd32,{IR::Value(1u),IR::Value(2u)});});
+  reject("cross-block forward SSA","SSA",[](auto& f,auto& e,auto&,auto&,auto&,auto&){e.AppendNewInst(Op::IAdd32,{IR::Value(f.lane),IR::Value(1u)});});
+}
 using Mutate = std::function<void(Fixture &, R::Input &)>;
 void Reject(const char *name, const char *diagnostic, const Mutate &mutation) {
   Fixture f;
@@ -723,8 +768,9 @@ void UvRejections() {
 }
 int main(int argc, char **argv) {
   const std::string mode = argc > 1 ? argv[1] : "";
-  if (mode == "--positive")
-    Positives({});
+  if (mode == "--positive") {
+    Positives({});LinearChains();
+  }
   else if (mode == "--reject")
     Rejections();
   else if (mode == "--uv-positive")

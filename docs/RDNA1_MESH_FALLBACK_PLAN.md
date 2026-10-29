@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 3.6. **Overall status:** S-036 real decoder/mesh frontend/normal pre-resource preparation fixtures PASS; complete IR is correctly rejected at the current one-block limit. Next close linear-chain compatibility locally, then the retained NGG semantic gaps; user authorized sequential commits until required RX handoff.
+> **Last edited:** 2026-10-29. **Plan revision:** 3.7. **Overall status:** S-036 real decoder/mesh frontend/normal pre-resource preparation fixtures PASS; complete IR is correctly rejected at the current one-block limit. Next close linear-chain compatibility locally, then the retained NGG semantic gaps; user authorized sequential commits until required RX handoff.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P3 IN_PROGRESS: bounded IR geometry/arithmetic/UV and generated draw native gates verified; real frontend/NGG compatibility remains open** |
-| Current subtask | S-036 frontend compatibility diagnostic DONE; complete linear-chain lowering next |
+| Current subtask | S-037 complete linear-chain lowering DONE; bounded frontend prologue semantics next |
 | Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | S-036 input `136629d7ea9cd42dc7625c875fe984492f464672`; complete pre-build source snapshot retained |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | S-035 input clean, pinned ancestry and all 14 matching recursive submodules verified; nineteen desktop files copied/hash-checked |
 | Build status | S-036 standalone frontend two-job build PASS; no core/GUI/Vulkan initialization |
 | Native RDNA1 smoke test | S-035 PASS for generated triangle/permuted/zero and UV/UV-zero sampled draws: native RX5700XT API1.4.308 AMD25.6.1, strict1.3, all blobs/pixels exact and zero errors/warnings through all five cleanups |
-| Passing tests | S-036 five offline tests PASS, 0.16 s; two frontend probes explicitly UNSUPPORTED by compute lowerer, not a GPU success |
+| Passing tests | S-037 27 focused tests: 20 PASS, 7 strict SKIPPED, 0 FAIL (3.45 s); constant frontend module validates offline; live vertex-ID prologue remains unsupported |
 | Known blockers / limits | Current research accepts authored IR, not the real frontend NGG prologue. Guest resources/CFG/LDS/dynamic counts, noncoherent/production/game/timer remain open |
-| Next single actionable task | Accept complete acyclic linear IR chains with graph/SSA validation; lower constant real-frontend probe and preserve exact next vertex-ID semantic rejection; continue local commits under D-033 |
+| Next single actionable task | Explicit bounded non-indexed single-group frontend specialization and LocalInvocationIndex semantics, with rejection tests; continue local commits under D-033 |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -834,6 +834,13 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 - Two-job build PASS; five offline tests PASS (0.16 s). Complete dirty snapshot and build/dumps/logs retained. Existing shader validation tests PASS, new frontend compute output not generated; Vulkan/RDNA1/game NOT RUN. See `docs/RDNA1_FRONTEND_S036.md` for exact scope/limits.
 - D-033 records explicit user authorization to continue next bounded local task after each tested/documented commit, stopping only at necessary RX handoff with verified ZIP/one command. Next fix complete linear-chain validation/codegen, then address actual remaining semantic gaps; preserve native defaults/no push.
 
+### Session S-037 — 2026-10-29 — Complete linear IR chains
+
+- Input `8b43abc5ea1d65b8096bbefa7b3269b7ebd7a928`; retain all blocks, validate unique graph/metadata IDs, unconditional Branch/Return, predecessor/successor agreement, SSA order, 16-block/256-instruction limits. No CFG flattening or selected-block shortcut. Constant actual frontend now produces valid Vulkan1.3 SPIR-V; vertex-ID program precisely rejects GetBuiltin.
+- Positive byte-equivalence and cross-block SSA checks plus 13 malformed-chain regressions. First positive test failed exit321 due test object lifetime (entry destroyed before its body user); fixed ownership/use detachment, retained failure. Both two-job builds PASS; final 27-case suite 20 PASS/7 strict SKIPPED/0 FAIL, 3.45 s.
+- Full dirty snapshots `_Build/p0-s012/p3-s037-pre-build-01/` and `-02/`; logs/dumps/XML `_Build/p3-s037/`. Compilation/unit/SPIR-V scoped PASS; existing Intel1.2 Vulkan regressions PASS, strict1.3 SKIPPED; new frontend GPU/RDNA1/game NOT RUN. Native renderer unchanged. Report `docs/RDNA1_LINEAR_IR_S037.md`.
+- Next bounded local task: explicit non-indexed single-group draw specialization of real NGG prologue and exact LocalInvocationIndex support, fail closed for unsupported contexts; test/validate before runtime integration. Continue per D-033; no push.
+
 ## 8. Change history (append-only)
 
 | Date | Plan revision | Sections | Reason / evidence |
@@ -885,6 +892,8 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 | 2026-10-29 | 3.5 | checkpoint/P3/decision/experiment/handoff; AGENTS; native RX milestone report | S-035 accepts generated IR untextured/textured native gates; D-032 targets missing real frontend/NGG boundary next |
 
 | 2026-10-29 | 3.6 | frontend fixture/target, plan/AGENTS/report | S-036 proves real frontend boundary and structural rejection; D-033 records authorized sequential local commits |
+
+| 2026-10-29 | 3.7 | linear-chain lowerer/tests/frontend; plan/AGENTS/report | S-037 closes structural frontend gap; retains explicit vertex-ID semantic boundary and failed test lifetime run |
 
 ## 9. Quick commands (reference; verify before running)
 

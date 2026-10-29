@@ -2,6 +2,7 @@
 #include "../MeshOutputContract.h"
 #include <array>
 #include <map>
+#include <set>
 #include <spirv-tools/libspirv.hpp>
 #include <sstream>
 #include <unordered_map>
@@ -10,6 +11,7 @@ namespace Kyty::MeshResearch {
 namespace {
 using Op = IR::ValueOpcode;
 using Type = IR::Type;
+namespace CFG = Libs::Graphics::ShaderRecompiler::CFG;
 // Separate UV ABI already exercised by MeshTextureProbe.h: guards at
 // 0/1,130/131,134/135; 64 raw float2 slots begin at word 2.
 constexpr uint32_t kUvCapacity = 64, kUvWords = 136;
@@ -275,33 +277,59 @@ struct Compiler {
       Fail("declared capacities outside guarded ABI");
     else if (input.enable_uv && (input.uv_capacity == 0 || input.uv_capacity > kUvCapacity))
       Fail("UV capacity outside guarded ABI");
-    else if (input.blocks.size() != 1 || input.blocks[0] == nullptr)
-      Fail("exactly one complete IR block required");
+    else if (input.blocks.empty())
+      Fail("at least one complete IR block required");
     if (!result.error.empty())
       return std::move(result);
-    const auto &block = *input.blocks[0];
-    if (!block.ImmPredecessors().empty() || !block.ImmSuccessors().empty())
-      Fail("CFG edges/loops unsupported");
-    if (block.Instructions().size() > 256)
-      Fail("research IR instruction limit exceeded");
+    if (input.blocks.size() > 16) Fail("research linear CFG block limit exceeded");
+    if ((input.blocks.size() > 1 || !input.block_info.empty()) &&
+        input.block_info.size() != input.blocks.size())
+      Fail("complete CFG terminator metadata required");
+    std::set<const IR::Block*> seen;
+    std::set<uint32_t> ids;
+    size_t instructions = 0;
+    if (result.error.empty()) for (size_t i = 0; i < input.blocks.size(); ++i) {
+      const auto* block = input.blocks[i];
+      if (!block || !seen.insert(block).second) { Fail("null or duplicate CFG block"); break; }
+      const auto pred = block->ImmPredecessors(), succ = block->ImmSuccessors();
+      if ((i == 0 ? !pred.empty() : pred.size() != 1 || pred[0] != input.blocks[i-1]) ||
+          (i+1 == input.blocks.size() ? !succ.empty() : succ.size() != 1 || succ[0] != input.blocks[i+1])) {
+        Fail("require complete ordered acyclic linear CFG chain"); break;
+      }
+      if (!input.block_info.empty()) {
+        const auto& info = input.block_info[i];
+        const auto& term = info.terminator;
+        const bool last = i+1 == input.blocks.size();
+        if (!ids.insert(info.id).second || term.condition != CFG::BranchCondition::Always ||
+            term.loop_header || term.merge_block != UINT32_MAX || term.continue_block != UINT32_MAX ||
+            (last ? term.kind != CFG::TerminatorKind::Return :
+                    term.kind != CFG::TerminatorKind::Branch || term.true_block != input.block_info[i+1].id)) {
+          Fail("unsupported CFG terminator or duplicate block ID"); break;
+        }
+      }
+      if (block->Instructions().size() > 256 - instructions) { Fail("research IR instruction limit exceeded"); break; }
+      instructions += block->Instructions().size();
+    }
     body << "%main = OpFunction %void None %func\n%entry = OpLabel\n%lane = "
             "OpLoad %uint %local\n";
-    if (result.error.empty())
-      for (const auto &inst : block) {
-        if (inst.Parent() != &block) {
+    if (result.error.empty()) for (const auto* block : input.blocks) {
+      for (const auto &inst : *block) {
+        if (inst.Parent() != block) {
           Fail("IR parent mismatch");
           break;
         }
         if (!Instruction(inst))
           break;
       }
+      if (!result.error.empty()) break;
+    }
     if (result.error.empty() && (!allocation || !position || !primitive))
       Fail("allocation/position/primitive export missing");
     if (result.error.empty() && input.enable_uv && !uv)
       Fail("UV export missing");
     if (!result.error.empty())
       return std::move(result);
-    // Every invocation reaches this barrier: accepted IR has no CFG or early
+    // Every invocation reaches this barrier: accepted IR has only unconditional linear control flow and no early
     // return. UniformMemory applies to StorageBuffer. Scope=Workgroup,
     // AcquireRelease.
     body << "OpControlBarrier " << U(2) << " " << U(2) << " " << U(72) << "\n";

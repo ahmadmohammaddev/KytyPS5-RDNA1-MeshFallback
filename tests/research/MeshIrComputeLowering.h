@@ -8,13 +8,16 @@
 namespace Kyty::MeshResearch {
 namespace IR = Libs::Graphics::ShaderRecompiler::IR;
 // A non-owning view of ALL post-prologue/SSA blocks and export metadata. This
-// proof accepts exactly one straight-line block, not a selected block of a CFG.
+// proof accepts a complete straight-line chain, never a selected block of a CFG.
 // It is not a guest ISA decoder or a general NGG prologue lowering.
 struct Input {
   Libs::Graphics::ShaderType stage = Libs::Graphics::ShaderType::Mesh;
   Libs::Graphics::ShaderMeshInputInfo mesh;
   std::span<IR::Block *const> blocks;
   std::span<const IR::ExportInfo> exports;
+  // Required for multi-block inputs: full terminator metadata proves each edge
+  // unconditional and the last block a return (not a masked/indirect exit).
+  std::span<const IR::BlockInfo> block_info;
   // Research-only parameter-0 xy raw float bits, set 0/binding 2. The fixed
   // 544-byte guarded buffer is independent of the position/index ABI.
   bool enable_uv = false;

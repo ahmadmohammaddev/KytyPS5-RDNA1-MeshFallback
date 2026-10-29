@@ -10,6 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <spirv-tools/libspirv.hpp>
 
 namespace S = Libs::Graphics::ShaderRecompiler;
 namespace R = Kyty::MeshResearch;
@@ -92,17 +93,30 @@ void Test(bool consumes_prologue,const std::filesystem::path& out) {
   Check(program.blocks.size()==2,"preparation retains complete block graph");
   Check(inventory["MeshAllocate"]==1 && inventory["SetAttribute"]==2,"allocation and exports survive normal preparation");
   if(consumes_prologue) Check(inventory["MeshDrawParameter"]>0,"used prologue values survive ordinary DCE");
-  R::Input view{.stage=program.stage,.mesh=mesh,.blocks=program.blocks,.exports=program.export_info};
+  R::Input view{.stage=program.stage,.mesh=mesh,.blocks=program.blocks,.exports=program.export_info,.block_info=program.block_info};
   const auto result=R::Lower(view);
-  Check(!result && result.binary.empty() && result.assembly.empty(),"unsupported whole frontend program fails closed");
-  Check(result.error=="exactly one complete IR block required","first compatibility gap is structural, not hidden by selecting body");
+  if (!consumes_prologue) {
+    Check(static_cast<bool>(result), "complete constant frontend program now lowers");
+    spvtools::SpirvTools tools(SPV_ENV_VULKAN_1_3);
+    Check(tools.Validate(result.binary), "constant frontend SPIR-V validates Vulkan 1.3");
+    Check(result.vertices==3 && result.primitives==1, "frontend allocation preserved");
+  } else {
+    Check(!result && result.binary.empty() && result.assembly.empty(), "unsupported real prologue semantics fail closed");
+    Check(result.error=="unsupported IR opcode: GetBuiltin", "next actual semantic gap named precisely");
+  }
   std::cout << name << ": frontend PASS, complete blocks=" << program.blocks.size()
-            << ", compute compatibility UNSUPPORTED: " << result.error << '\n';
+            << ", compute compatibility " << (result ? "PASS" : "UNSUPPORTED: "+result.error) << '\n';
   for(const auto& [op,count]:inventory) std::cout << "  " << op << '=' << count << '\n';
   if(!out.empty()) {
     std::filesystem::create_directories(out);
     std::ofstream(out/(std::string(name)+"-raw.ir")) << raw;
     std::ofstream(out/(std::string(name)+"-prepared.ir")) << IR::ProgramToString(program);
+    if(result) {
+      std::ofstream binary(out/(std::string(name)+".spv"),std::ios::binary);
+      binary.write(reinterpret_cast<const char*>(result.binary.data()),result.binary.size()*4);
+      binary.close();Check(!binary.fail(), "frontend SPIR-V artifact saved");
+      std::ofstream(out/(std::string(name)+".spvasm")) << result.assembly;
+    }
   }
 }
 int main(int argc,char** argv) {
