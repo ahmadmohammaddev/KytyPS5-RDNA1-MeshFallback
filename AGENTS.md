@@ -131,3 +131,6 @@ Next single task: P4.1 synthetic Vulkan compute prototype of the hardened contra
 
 ## Current checkpoint S-037
 Complete linear-chain lowering and constant actual frontend SPIR-V PASS. Focused suite 20 PASS/7 strict SKIPPED/0 FAIL, 3.45 s; existing Intel auxiliary regressions clean. Live vertex-ID prologue fails closed at GetBuiltin. Full provenance and initial test-lifetime failure retained; see docs/RDNA1_LINEAR_IR_S037.md. Next bounded local task: explicit non-indexed single-group frontend specialization and local invocation semantics, rejection coverage and offline validation. Continue authorized sequential commits under D-033 until necessary RX handoff; no push.
+
+## Current checkpoint S-038
+Bounded non-indexed single-group specialization and actual frontend triangle SPIR-V PASS offline. Full graph retained, ordinary propagation/DCE removes inactive index reads; nine context negatives and malformed parameter reject without partial mutation. 20 PASS/7 strict SKIPPED/0 FAIL (3.29 s), full snapshots/logs retained. Next run actual frontend triangle through standalone indexed draw with complete independent oracles and validation through cleanup. New frontend GPU/RX/game NOT RUN. Continue sequential commits under D-033; no push.

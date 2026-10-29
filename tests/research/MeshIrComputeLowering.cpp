@@ -186,7 +186,7 @@ struct Compiler {
       return Export(inst);
     Value v;
     v.id = Id();
-    if (op == Op::GetAttribute) {
+    if (op == Op::GetAttribute || op == Op::GetBuiltin) {
       const auto a = inst.Arg(0), b = inst.Arg(1);
       if (!a.IsImmediate() || !b.IsImmediate() || a.GetType() != Type::U32 ||
           b.GetType() != Type::U32 ||
