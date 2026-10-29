@@ -14,6 +14,7 @@
 #include "graphics/shader/recompiler/ir/passes/ConstantPropagation.h"
 #include "graphics/shader/recompiler/ir/passes/DeadCodeElimination.h"
 #include "graphics/shader/recompiler/ir/passes/ExecSelectElimination.h"
+#include "graphics/shader/recompiler/ir/passes/PreparePreResource.h"
 #include "graphics/shader/recompiler/ir/passes/ReadLaneElimination.h"
 #include "graphics/shader/recompiler/ir/passes/ResourceMaterialization.h"
 #include "graphics/shader/recompiler/ir/passes/ResourceTracking.h"
@@ -913,28 +914,14 @@ TranslateResult TranslateProgram(std::span<const uint32_t> code, const CompileOp
 	     " elapsed_ms=%" PRIu64 "\n",
 	     GetDumpLabel(options), StageName(options.stage), options.shader_hash,
 	     static_cast<uint64_t>(ir.blocks.size()), phase_ms());
-	IR::RewriteToSsa(ir.blocks);
-	IR::ConstantPropagationPass(ir.blocks, ir.wave_size);
-	IR::ResolveControlFlowIdentities(ir);
-	IR::RemoveIdentities(ir.blocks);
-	IR::EliminateDeadCode(ir.blocks);
-	// KYTY_FOLD_LANE_MASKS (default off): mask reads that fold can make select conditions and phis
-	// identical, so fold until stable; before read-lane elimination, which then sees the folded
-	// EXEC of a lane reduction (x || !x is every lane).
-	for (int round = 0; round < 4 && IR::FoldLaneMasks(ir) != 0; round++) {
-		IR::ConstantPropagationPass(ir.blocks, ir.wave_size);
-		IR::ResolveControlFlowIdentities(ir);
-		IR::RemoveIdentities(ir.blocks);
-		IR::EliminateDeadCode(ir.blocks);
-	}
-	const auto read_lane_stats = IR::EliminateReadLane(ir, ir.wave_size);
+	// The shared pre-resource normalization prefix (SsaRewrite plus ordinary propagation,
+	// control-flow identity removal, dead-code elimination, lane-mask folding and read-lane
+	// elimination); ir/passes/PreparePreResource.h is the single source of this sequence, so
+	// compute-adapter consumers cannot keep a drifting hand-copied pass order.
+	const auto read_lane_stats = IR::PreparePreResource(ir);
 	if (read_lane_stats.rewritten_reads != 0) {
 		LOGF("%s read-lane elimination: reads=%" PRIu32 "\n", GetDumpLabel(options),
 		     read_lane_stats.rewritten_reads);
-		IR::ConstantPropagationPass(ir.blocks, ir.wave_size);
-		IR::ResolveControlFlowIdentities(ir);
-		IR::RemoveIdentities(ir.blocks);
-		IR::EliminateDeadCode(ir.blocks);
 	}
 	LowerTessellationMemory(ir, options);
 	// KYTY_DUMP_STDOUT=1 with the early dump: the decoded ISA and the IR that resource tracking is

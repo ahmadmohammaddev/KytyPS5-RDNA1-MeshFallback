@@ -1,5 +1,6 @@
-#include "MeshIrComputeLowering.h"
-#include "../MeshOutputContract.h"
+// SPDX-License-Identifier: GPL-2.0-only
+#include "graphics/shader/recompiler/MeshComputeLowering.h"
+
 #include <array>
 #include <map>
 #include <set>
@@ -7,16 +8,12 @@
 #include <sstream>
 #include <unordered_map>
 
-namespace Kyty::MeshResearch {
+namespace Libs::Graphics::ShaderRecompiler::MeshCompute {
+namespace MeshOutput = Kyty::MeshOutput;
 namespace {
 using Op = IR::ValueOpcode;
 using Type = IR::Type;
 namespace CFG = Libs::Graphics::ShaderRecompiler::CFG;
-// Separate UV ABI already exercised by MeshTextureProbe.h: guards at
-// 0/1,130/131,134/135; 64 raw float2 slots begin at word 2.
-constexpr uint32_t kUvCapacity = 64, kUvWords = 136;
-constexpr uint32_t kUvCountWord = 132, kUvStatusWord = 133;
-static_assert(2 + kUvCapacity * 2 == 130 && kUvWords * 4 == 544);
 struct Value {
   Type type = Type::Void;
   std::string id;
@@ -275,7 +272,7 @@ struct Compiler {
              m.max_primitives == 0 ||
              m.max_primitives > MeshOutput::kMaxPrimitives)
       Fail("declared capacities outside guarded ABI");
-    else if (input.enable_uv && (input.uv_capacity == 0 || input.uv_capacity > kUvCapacity))
+    else if (input.enable_uv && (input.uv_capacity == 0 || input.uv_capacity > MeshOutput::kUvCapacity))
       Fail("UV capacity outside guarded ABI");
     else if (input.blocks.empty())
       Fail("at least one complete IR block required");
@@ -339,8 +336,8 @@ struct Compiler {
          << " " << commit << " " << end << "\n"
          << commit << " = OpLabel\n";
     if (input.enable_uv) {
-      Store(U(kUvCountWord), U(result.vertices), "%uv");
-      Store(U(kUvStatusWord), U(0), "%uv");
+      Store(U(MeshOutput::kUvCountWord), U(result.vertices), "%uv");
+      Store(U(MeshOutput::kUvStatusWord), U(0), "%uv");
     }
     Store(U(MeshOutput::kCountsStartWord), U(result.vertices));
     Store(U(MeshOutput::kCountsStartWord + 1), U(result.primitives));
@@ -349,7 +346,7 @@ struct Compiler {
     body << "OpBranch " << end << "\n"
          << end << " = OpLabel\nOpReturn\nOpFunctionEnd\n";
     const auto length = U(MeshOutput::kTotalWords);
-    const auto uv_length = input.enable_uv ? U(kUvWords) : std::string();
+    const auto uv_length = input.enable_uv ? U(MeshOutput::kUvWords) : std::string();
     std::ostringstream module;
     module
         << "OpCapability Shader\nOpMemoryModel Logical GLSL450\n"
@@ -389,4 +386,4 @@ struct Compiler {
 };
 } // namespace
 Result Lower(const Input &input) { return Compiler{input}.Run(); }
-} // namespace Kyty::MeshResearch
+} // namespace Libs::Graphics::ShaderRecompiler::MeshCompute

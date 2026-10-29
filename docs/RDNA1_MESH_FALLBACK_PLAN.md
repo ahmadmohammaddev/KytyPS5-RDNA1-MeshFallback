@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 4.7. **Overall status:** S-047 pure production-owned candidate policy and CPU invariants PASS, renderer unwired. S-045 native frontend geometry+UV milestone retained. Next production-owned isolated compiler adapter/shared preparation; P5/game still unimplemented.
+> **Last edited:** 2026-10-29. **Plan revision:** 4.8. **Overall status:** S-048 moved the bounded lowering/specialization/ABI into a production-owned isolated compiler adapter under `src` with shared actual pre-resource preparation; byte-for-byte module compatibility and focused/auxiliary regressions PASS locally. **All S-048 work is uncommitted and pending user review** (nothing committed or pushed). S-047 policy and S-045 native frontend geometry+UV milestone retained. Renderer wiring/cache/bridge/scheduler not started.
 
 ## 0. Mission and boundaries
 
@@ -35,17 +35,17 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 
 | Field | Current value |
 | --- | --- |
-| Current phase | **P3 IN_PROGRESS: bounded IR geometry/arithmetic/UV and generated draw native gates verified; real frontend/NGG compatibility remains open** |
-| Current subtask | S-047 isolated candidate policy DONE with CPU evidence; compiler adapter next |
-| Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
-| Last verified git commit | S-047 input05f38700; complete pre-build snapshot retained; package/native sourcea183c190 unchanged |
+| Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
+| Current subtask | S-048 production-owned isolated compiler adapter implemented locally, UNCOMMITTED and under review; no call sites, no renderer/default behavior change |
+| Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
+| Last verified git commit | S-047 input05f38700 (HEAD); all S-048 edits pending review in working tree; package/native sourcea183c190 unchanged |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
-| Checkout evidence | Clean committed package source; pinned ancestry and all 14 recursive submodules matching/clean |
-| Build status | S-044 clean focused2-job package build PASS; no memory retry/PGO/IPO |
-| Native RDNA1 smoke test | S-045 actual frontend geometry+UV/zero and prior generated regressions PASS RX5700XT API1.4.308 AMD25.6.1; ten strict1.3 selections/zero-error-warning cleanups |
-| Passing tests | S-04732 focused cases23 PASS/9 strict SKIPPED/0 FAIL(4.76s),512 policy combinations in two modes and negative bounds checked |
-| Known blockers / limits | No blocker for local adapter mapping; indexed/dynamic/CFG/LDS/resources/noncoherent/production/game/timer remain open |
-| Next single actionable task | Production-owned isolated bounded compiler adapter/lowering/ABI and shared pre-resource preparation, no test-source dependency; preserve exact binaries/ABI/default native behavior and reject unsupported inputs |
+| Checkout evidence | Clean committed package source; pinned ancestry and all 14 recursive submodules matching/clean; S-048 dirty tree captured before builds (`_Build/p0-s012/p2-s048-pre-build-01/`, 16 files + 7 untracked) |
+| Build status | S-048 focused 2-job build PASS; `kyty_emulator` incremental build+link PASS with the moved adapter sources; no memory retry/PGO/IPO |
+| Native RDNA1 smoke test | S-045 actual frontend geometry+UV/zero and prior generated regressions PASS RX5700XT API1.4.308 AMD25.6.1 retained; no new hardware run or package |
+| Passing tests | S-048 byte-compat 33/33 baseline modules exact; 15 focused serial ctests PASS/0 FAIL, four Intel1.2 auxiliary runtime PASS, four strict1.3 SKIPPED (VK_LAYER_PATH process-local `_Build/p4-s013/tools/validationlayers`) |
+| Known blockers / limits | Adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache/bridge/scheduler/production/game remain open; S-048 not committed until user review |
+| Next single actionable task | User review/commit of the S-048 working tree (or corrected fixes), then separate cache/bridge/scheduler gate — none started this session; no RX package
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -54,11 +54,11 @@ Never change a phase to `DONE` without a command/test/log and its actual result.
 
 | Validation category | Current evidence in this fork |
 | --- | --- |
-| Compilation | S-034 clean focused package build PASS retained; no S-035 build |
-| Unit tests | S-035 supplied host/IR/UV/oracle preflights PASS; prior deferred timer failure retained |
-| Shader compilation and SPIR-V validation | S-035 IR assembly/validation and packaged module validation PASS; no desktop GLSL source compile |
-| Vulkan integration tests | S-035 all five generated strict cases/full guarded buffers/images PASS, zero errors/warnings through cleanup; Intel auxiliary retained separately |
-| RDNA1 hardware tests | S-035 native generated untextured/textured milestone PASS on RX5700XT; frontend/production gates still open |
+| Compilation | S-048 focused 2-job build PASS and `kyty_emulator` incremental build+link PASS (adapter sources inside the emulator glob); earlier clean package builds retained |
+| Unit tests | S-048 15 focused serial ctests 15 PASS/0 FAIL (7 non-GPU plus 4 Intel1.2 runtime and 4 strict1.3 SKIP); earlier host/IR/UV/oracle preflights retained |
+| Shader compilation and SPIR-V validation | S-048 byte-compat 33/33 baseline modules exact; runtime SPIR-V shape/valid checks PASS in both auxiliary cases; no desktop GLSL source compile |
+| Vulkan integration tests | S-048/retained Intel auxiliary runtime cases PASS with zero-error gate; strict1.3 SKIPPED on Intel API1.2.172; S-035 five generated strict RX cases PASS retained |
+| RDNA1 hardware tests | S-045 native generated untextured/textured frontend UV milestone PASS on RX5700XT retained; no new RX experiment |
 | Astro Bot compatibility tests | NOT RUN; pre-fork observations retained separately |
 
 ## 2. Operating protocol for Codex (mandatory)
@@ -342,6 +342,8 @@ Status: **NOT_STARTED**
 
 | D-033 | 2026-10-29 | User authorizes sequential related development, validation and individual commits until native RX testing is unavoidable; then provide one verified ZIP and one command and stop | Explicit user instruction supersedes the default stop after each selected subtask for this authorized run. Retain bounded scope per commit, complete evidence and D-028 batching; no pushes or fabricated hardware outcomes | Required native-only evidence after all useful authorized local work; user steering/cancellation overrides continuation |
 
+| D-034 | 2026-10-29 | Move the bounded lowering/specialization/ABI into a production-owned isolated compiler adapter under `src` and share the actual pre-resource preparation instead of test-side copies; keep all S-048 edits uncommitted until user review | User-directed S-048 task. Preserve byte-for-byte generated modules and the existing ABI, compile the moved sources into `kyty_emulator`, reject unsupported inputs with stable diagnostics and empty outputs, and never wire renderer call sites in this step | Production linker/renderer integration, first wiring commit, cache/bridge/scheduler and positive RX package remain separate; D-028 batching and D-033 ordering still apply |
+
 ## 5. Experiments and evidence
 
 | ID | Environment / git SHA | Hypothesis and test | Actual observed result | Outcome / artifact |
@@ -393,6 +395,8 @@ Status: **NOT_STARTED**
 | E-035 | Run UTC2026-10-29T07:28:23Z; package source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`; native RX5700XT/API1.4.308/AMD25.6.1/loader1.4.309 | User strict required-RX consolidated milestone with process-local implicit isolation | 13 stages PASS, no FAIL/SKIP; five cases select native RX strict1.3, exact buffers/images and zero errors/warnings through cleanup. All 20,480 supplied RGB pixels and hashes independently exact; host stages0.4559741/0.177837 s | `docs/RDNA1_RX_IR_MILESTONE_S035.md`; nineteen raw copies/hashes/verification/preview in ignored `_Build/p3-s035/`; no raw buffer/desktop ZIP rehash/GPU metrics, new build, auxiliary desktop runtime or game run |
 
 | E-036 | 2026-10-29; input `136629d7ea9cd42dc7625c875fe984492f464672` plus dirty snapshot; development laptop | Actual authored ISA through decoder/mesh frontend/normal pre-resource passes, full IR to lowerer | Build PASS; five offline tests PASS (0.16 s); both whole programs reject at two-block structural limit. Vertex-ID inventory exposes live NGG/draw/resource semantics. No new compute binary/GPU run | `docs/RDNA1_FRONTEND_S036.md`; ignored `_Build/p3-s036/` and `_Build/p0-s012/p3-s036-pre-build-01/` |
+
+| E-048 | 2026-10-29; HEAD `a7fbbb97` + uncommitted S-048 tree (pre-build snapshot `_Build/p0-s012/p2-s048-pre-build-01/`, 16 captured files + 7 untracked); development laptop, no new GPU claim | Promote research lowering/specialization/ABI into `src/graphics/shader/recompiler/MeshCompute*` plus shared `IR::PreparePreResource`; rebuild focused targets and `kyty_emulator` (2 jobs); emit all generated modules and compare against the 33-module baseline; run 15 focused serial ctests including Intel1.2 auxiliary runtime (VK_LAYER_PATH process-local) | Two build failures during development (static_assert typo; illegal `using ... MeshOutput` alias) fixed before pass; final build exit 0, no new warnings. Byte-compat 33/33 modules exact (0 mismatches). Focused 7 cases PASS; auxiliary `mesh_ir_runtime_vk12`/`add`/`draw`/`textured_draw` PASS; the four strict1.3 cases SKIP; initial no-layer-path run honestly SKIPped all runtime cases before the process-local layer discovery was restored | `docs/RDNA1_ADAPTER_S048.md`; `_Build/p2-s048/` baseline module hashes, `build-01/02/03.log`, `build-emulator.log`, `after/module-hashes.txt`; nothing committed or pushed |
 
 New experiments MUST include real date, commit SHA, driver, device, exact command/config, time budget, result (PASS/FAIL/INCONCLUSIVE), and logs/artifact location. Hardware tests must also follow section 2.5 for package identity, screenshots and metrics (or explicit unavailability reasons). Avoid adding game code/assets to git.
 
@@ -920,6 +924,15 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 - Complete dirty snapshot `_Build/p0-s012/p2-s047-pre-build-01/`; two-job build PASS;32 focused serial cases23 PASS/9 strict SKIPPED/0 FAIL(4.76s). Logs/XML `_Build/p2-s047/`, report `docs/RDNA1_FALLBACK_POLICY_S047.md`. Compilation/unit/existing SPIR-V/Intel auxiliary Vulkan PASS; new RX/game NOT RUN. Existing native S-045 retained; no push or RX transfer.
 - Next isolated production compiler adapter/backend/ABI promotion and shared pre-resource preparation; preserve exact generated binaries/ABI and native default, explicit unsupported diagnostics/empty outputs with focused regressions. Cache/fragment bridge/scheduler integration remain separate gates; P5 not active.
 
+## Session S-048 — 2026-10-29 — Production-owned isolated compiler adapter (UNCOMMITTED)
+
+- Input HEAD `a7fbbb97` (S-047 commit) plus a fully uncommitted S-048 working tree; user-requested promotion of the tested research lowering/specialization/ABI into production-owned sources with no test-source dependency and shared actual pre-resource preparation. Nothing committed or pushed; all results below are review-pending.
+- New production sources: `src/graphics/shader/recompiler/MeshComputeAbi.h` (ABI moved verbatim with static asserts), `MeshComputeLowering.h/.cpp` (lowerer moved verbatim; namespace `Libs::Graphics::ShaderRecompiler::MeshCompute`), `MeshComputeSpecialization.h` (moved), `MeshComputeAdapter.h` (new `Compile(IR::Program&, CompileRequest&)`: PreparePreResource → optional SpecializeNonIndexedDraw → PreparePreResource → Lower; unsupported stage or failed specialization returns a stable diagnostic with EMPTY binary/assembly and no graph mutation). Shared preparation extracted as `IR::PreparePreResource(Program&)` in `ir/passes/PreparePreResource.h/.cpp` using the exact prefix previously in `ShaderRecompiler.cpp` (SSA rewrite, constant propagation, control-flow identities, identities removal, dead code, optional FoldLaneMasks gate, EliminateReadLane + follow-ups); `ShaderRecompiler.cpp` now calls it and keeps its own read-lane log. `tests/MeshOutputContract.h` became a forwarding shim; `tests/research/MeshIrComputeLowering.*` and `MeshIrFrontendSpecialization.h` deleted; `MeshIrUvOracle.h` (test-side oracle) retained.
+- CMake: test targets now compile the moved `MeshComputeLowering.cpp` and `PreparePreResource.cpp`; the emulator glob already picks up `graphics/shader/recompiler/*.cpp|.h`. `tools/mesh-prototype/Build-Package.ps1` staging paths updated; **no package built** (out of scope/forbidden this session). Renderer/native/default path untouched; adapter has no production call site.
+- Evidence: pre-build complete snapshot `_Build/p0-s012/p2-s048-pre-build-01/`; baseline of 33 generated modules recaptured from pre-change binaries (`_Build/p2-s048/baseline/`). Build attempts 1–2 FAIL (static_assert `kUvWords` typo; illegal `using` of a namespace), retained with logs; build-03 PASS exit 0 with only pre-existing upstream warnings; `kyty_emulator` incremental build+link PASS. Byte-compat: all 33 baseline modules byte-identical SHA-256 (0 mismatches) plus 67 additional new test outputs. Final serial run: 7 offline focused ctests PASS/0 FAIL; with process-local `VK_LAYER_PATH=_Build\p4-s013\tools\validationlayers` the Intel1.2 auxiliary `mesh_ir_runtime_vk12`, `mesh_ir_add_runtime_vk12`, `mesh_ir_draw_vk12` and `mesh_ir_textured_draw_vk12` PASS and the four strict1.3 cases SKIP (device API 1.2.172). Report `docs/RDNA1_ADAPTER_S048.md`.
+- Execution categories: compilation PASS (focused + emulator), unit/offline PASS, SPIR-V/runtime shape PASS, Intel auxiliary Vulkan PASS (separate from strict 1.3), RDNA1 NOT RUN (no package, no RX request), Astro Bot NOT RUN. Adapter stays unwired; cache/bridge/scheduler and renderer fallback remain separate future gates.
+- Next single actionable task: user reviews the uncommitted S-048 tree; on approval commit it. Then the next distinct gate (per D-034) is the production cache/fragment-bridge/scheduler mapping — only if the user directs it. No RX package, no renderer integration.
+
 ## 8. Change history (append-only)
 
 | Date | Plan revision | Sections | Reason / evidence |
@@ -994,6 +1007,8 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 
 | 2026-10-29 | 4.7 | pure policy/CPU test/CMake/plan/AGENTS/report | S-047 implements fail-closed candidate admission without activating renderer fallback |
 
+| 2026-10-29 | 4.8 | src adapter/ABI/lowering/specialization/shared pre-resource pass, tests/CMake/package-script, plan/AGENTS/report | S-048 promotes the tested subset into production-owned sources with byte-identical modules and retained ABI; UNCOMMITTED pending user review; no native/default or renderer change |
+
 ## 9. Quick commands (reference; verify before running)
 
 ```powershell
@@ -1012,3 +1027,13 @@ git push -u origin feature/rdna1-mesh-fallback
 ```
 
 Toolchain and baseline build directions: read the checked-out upstream `README.md` and `docs/EXPERIMENTAL.md`, especially the Windows Release + Ninja + clang-cl requirements. **Do not assume the first local non-PGO build matches the optimized upstream release FPS.**
+
+### S-048 review repair addendum — UNCOMMITTED pending review
+
+All previously reproduced adapter findings repaired: const raw-input/private clone prevents context reuse corruption; program/request wave32 agreement checked; CFG/block/terminator/arity/parent validation precedes passes; prepared inputs reject; raw frontend positive/negative/equivalence/source-preservation regressions added. SSA-preserving follow-up normalization avoids a second SSA rewrite. Existing ProgramClone reused with frontend test linkage added. No renderer activation/native pass-order change.
+
+Full final source capture `_Build/p0-s012/p2-s048-fix-pre-build-03/` matches final built code. Historical original snapshot discrepancy remains recorded; no retrospective claim about those builds. Build PASS including emulator,32 cases23 PASS/9 strict SKIPPED/0 FAIL(4.35s),33 baseline modules byte-identical. Independent reproduced cases now correct, logs `_Build/p2-s048-fix/`. No commit/push/new RX/game/package. Next single task review these uncommitted repairs against S-048 gate before further integration.
+
+### S-048 final commit handoff
+
+User authorized commit after repair verification. Final source snapshot and23 PASS/9 strict SKIPPED/0 FAIL(4.35s), emulator build and33 byte-identical modules retained; final diff check PASS, no code changes or redundant tests in this commit-only handoff. Historical failed builds/review repros/provenance limits preserved. Adapter promotion and fixes committed together; no push. Next single local task define and test canonical backend/draw-context/ABI cache identity for the isolated adapter, including native-vs-compute separation and distinct baked-context keys; no renderer activation or RX transfer for this CPU-only boundary.

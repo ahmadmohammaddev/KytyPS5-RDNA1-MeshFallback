@@ -1,11 +1,14 @@
+// SPDX-License-Identifier: GPL-2.0-only
 #pragma once
-// Opt-in research specialization. Never invoked by the production compiler.
+// Isolated opt-in bounded draw specialization, moved from the research dir
+// (S-048) so production code never depends on tests. Never invoked by the
+// production native compile path.
 #include "graphics/shader/recompiler/ir/ShaderIR.h"
 #include <array>
 #include <string>
 #include <vector>
 
-namespace Kyty::MeshResearch {
+namespace Libs::Graphics::ShaderRecompiler::MeshCompute {
 struct NonIndexedDraw {
   uint32_t count = 3;
   uint32_t base_vertex = 0;
@@ -54,4 +57,4 @@ inline bool SpecializeNonIndexedDraw(IR::Program& program, const NonIndexedDraw&
   for(auto [inst,value]:replacements) inst->ReplaceUsesWith(IR::Value(value));
   return true;
 }
-} // namespace Kyty::MeshResearch
+} // namespace Libs::Graphics::ShaderRecompiler::MeshCompute

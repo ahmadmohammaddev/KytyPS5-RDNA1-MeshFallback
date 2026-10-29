@@ -143,10 +143,13 @@ try {
         CopyPayload "$repo/tests/$file" "source/$file"
     }
     CopyPayload "$repo/tests/MeshIrFrontendTests.cpp" 'source/MeshIrFrontendTests.cpp'
-    CopyPayload "$repo/tests/research/MeshIrFrontendSpecialization.h" 'source/research/MeshIrFrontendSpecialization.h'
+    foreach ($file in @('MeshComputeAbi.h','MeshComputeLowering.h','MeshComputeLowering.cpp','MeshComputeSpecialization.h','MeshComputeAdapter.h')) {
+        CopyPayload "$repo/src/graphics/shader/recompiler/$file" "source/graphics/shader/recompiler/$file"
+    }
+    foreach ($file in @('PreparePreResource.h','PreparePreResource.cpp')) {
+        CopyPayload "$repo/src/graphics/shader/recompiler/ir/passes/$file" "source/graphics/shader/recompiler/ir/passes/$file"
+    }
     CopyPayload "$repo/tests/MeshIrComputeTests.cpp" 'source/MeshIrComputeTests.cpp'
-    CopyPayload "$repo/tests/research/MeshIrComputeLowering.cpp" 'source/research/MeshIrComputeLowering.cpp'
-    CopyPayload "$repo/tests/research/MeshIrComputeLowering.h" 'source/research/MeshIrComputeLowering.h'
     CopyPayload "$repo/tests/research/MeshIrUvOracle.h" 'source/research/MeshIrUvOracle.h'
     foreach ($shader in @('mesh_output_proto.comp','mesh_draw.vert','mesh_draw.frag','mesh_uv.comp','mesh_texture.vert','mesh_texture.frag')) {
         CopyPayload "$repo/tests/shaders/$shader" "source/$shader"

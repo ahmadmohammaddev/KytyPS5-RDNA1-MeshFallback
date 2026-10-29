@@ -1,6 +1,7 @@
 #include "MeshOutputContract.h"
 #include "graphics/shader/recompiler/ir/IREmitter.h"
-#include "research/MeshIrComputeLowering.h"
+// S-048: the lowering/adapter now lives in production src; no test-source dependency.
+#include "graphics/shader/recompiler/MeshComputeLowering.h"
 #include <bit>
 #include <filesystem>
 #include <fstream>
@@ -12,7 +13,7 @@
 #include <spirv/unified1/spirv.hpp>
 #include <stdexcept>
 
-namespace R = Kyty::MeshResearch;
+namespace R = Libs::Graphics::ShaderRecompiler::MeshCompute;
 namespace IR = Libs::Graphics::ShaderRecompiler::IR;
 using Op = IR::ValueOpcode;
 int failures = 0;

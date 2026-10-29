@@ -1,12 +1,10 @@
-#include "research/MeshIrComputeLowering.h"
-#include "research/MeshIrFrontendSpecialization.h"
+﻿#include "graphics/shader/recompiler/MeshComputeAdapter.h"
+#include "graphics/shader/recompiler/MeshComputeLowering.h"
+#include "graphics/shader/recompiler/MeshComputeSpecialization.h"
 #include "graphics/shader/recompiler/frontend/cfg/ShaderCFG.h"
 #include "graphics/shader/recompiler/frontend/decode/ShaderDecoder.h"
 #include "graphics/shader/recompiler/frontend/translate/Translate.h"
-#include "graphics/shader/recompiler/ir/passes/SsaRewrite.h"
-#include "graphics/shader/recompiler/ir/passes/ConstantPropagation.h"
-#include "graphics/shader/recompiler/ir/passes/DeadCodeElimination.h"
-#include "graphics/shader/recompiler/ir/passes/ReadLaneElimination.h"
+#include "graphics/shader/recompiler/ir/passes/PreparePreResource.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -18,7 +16,7 @@
 #include <spirv-tools/libspirv.hpp>
 
 namespace S = Libs::Graphics::ShaderRecompiler;
-namespace R = Kyty::MeshResearch;
+namespace R = Libs::Graphics::ShaderRecompiler::MeshCompute;
 namespace IR = S::IR;
 #include "research/MeshIrUvOracle.h"
 int failures = 0;
@@ -69,24 +67,10 @@ std::vector<uint32_t> Fixture(bool consumes_prologue,bool uv=false) {
   return code;
 }
 void Simplify(IR::Program& program) {
-  // Exact production pre-resource normalization prefix in ShaderRecompiler.cpp.
-  // No test-side rewriting, register substitution, block selection or flattening.
-  IR::ConstantPropagationPass(program.blocks,program.wave_size);
-  IR::ResolveControlFlowIdentities(program);
-  IR::RemoveIdentities(program.blocks);
-  IR::EliminateDeadCode(program.blocks);
-  for (int round=0;round<4 && IR::FoldLaneMasks(program)!=0;++round) {
-    IR::ConstantPropagationPass(program.blocks,program.wave_size);
-    IR::ResolveControlFlowIdentities(program);
-    IR::RemoveIdentities(program.blocks);
-    IR::EliminateDeadCode(program.blocks);
-  }
-  if (IR::EliminateReadLane(program,program.wave_size).rewritten_reads) {
-    IR::ConstantPropagationPass(program.blocks,program.wave_size);
-    IR::ResolveControlFlowIdentities(program);
-    IR::RemoveIdentities(program.blocks);
-    IR::EliminateDeadCode(program.blocks);
-  }
+  // Shared production pre-resource preparation prefix (PreparePreResource) â€”
+  // no test-side rewriting, register substitution, block selection or flattening.
+  // ValidateProgram stays a test-side assertion on the prepared graph.
+  IR::PreparePreResource(program);
   IR::ValidateProgram(program,true);
 }
 void Test(bool consumes_prologue,const std::filesystem::path& out,int variant=0,bool uv=false) {
@@ -114,7 +98,31 @@ void Test(bool consumes_prologue,const std::filesystem::path& out,int variant=0,
   const auto raw=IR::ProgramToString(program);
   Check(program.blocks.size()==2,"real frontend includes entry prologue and body");
   Check(raw.find("MeshDrawParameter")!=std::string::npos,"normal NGG prologue present before preparation");
-  IR::RewriteToSsa(program.blocks);
+  R::CompileRequest request;request.mesh=mesh;request.enable_uv=uv;
+  R::NonIndexedDraw draw{};request.specialization=consumes_prologue ? &draw : nullptr;
+  const auto adapted=R::Compile(program,request);
+  Check(IR::ProgramToString(program)==raw,"adapter preserves raw caller source");
+  const auto repeated=R::Compile(program,request);
+  Check(adapted && repeated.binary==adapted.binary,"raw repeat deterministic");
+  if(consumes_prologue) {
+    draw.base_vertex=1;
+    const auto changed=R::Compile(program,request);
+    auto fresh=S::Frontend::TranslateProgram(decoded,cfg,options);
+    const auto expected=R::Compile(fresh,request);
+    Check(changed && changed.binary==expected.binary,"changed context matches fresh raw compile");
+    if(variant!=2) Check(changed.binary!=adapted.binary,"changed context does not reuse old binary");
+    draw.base_vertex=0;
+  }
+  auto rejects=[&](const char* why){const auto bad=R::Compile(program,request);Check(!bad && !bad.error.empty() && bad.binary.empty() && bad.assembly.empty(),why);};
+  program.wave_size=64;rejects("wave64 source rejects");program.wave_size=32;
+  request.mesh.wave_size=64;rejects("request wave mismatch rejects");request.mesh.wave_size=32;
+  program.blocks.push_back(nullptr);rejects("null block rejects safely");program.blocks.pop_back();
+  auto* last=program.blocks.back();program.blocks.back()=program.blocks.front();rejects("duplicate block rejects");program.blocks.back()=last;
+  auto info=program.block_info.back();program.block_info.pop_back();rejects("missing CFG metadata rejects");program.block_info.push_back(info);
+  auto* first=program.blocks.front();IR::Block foreign;program.blocks.front()=&foreign;rejects("foreign block rejects");program.blocks.front()=first;
+  auto stage=program.stage;program.stage=Libs::Graphics::ShaderType::Compute;rejects("nonmesh adapter rejects");program.stage=stage;
+  if(consumes_prologue) {draw.index_bytes=4;rejects("indexed context rejects");draw.index_bytes=0;}
+  Check(IR::ProgramToString(program)==raw,"failed requests preserve source");
   Simplify(program);
   std::map<std::string,unsigned> inventory;
   for(const auto* block:program.blocks)
@@ -201,6 +209,9 @@ void Test(bool consumes_prologue,const std::filesystem::path& out,int variant=0,
       Check(validator.Validate(changed.binary) && !CheckUvBinary(changed), "valid wrong UV constant fails independent oracle");
     }
   }
+  Check(adapted.binary==result.binary && adapted.assembly==result.assembly,
+        "raw adapter matches independent direct preparation sequence");
+  rejects("already prepared source rejects rather than silently rebaking");
   std::cout << name << ": frontend PASS, complete blocks=" << program.blocks.size()
             << ", compute compatibility " << (result ? "PASS" : "UNSUPPORTED: "+result.error) << '\n';
   std::cout << "  pre-specialization inventory:\n";

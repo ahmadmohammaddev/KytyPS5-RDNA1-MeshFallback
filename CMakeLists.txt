@@ -846,13 +846,16 @@ target_include_directories(device_compat_tests PRIVATE ${inc_headers})
 # mesh-output compute prototype (tests/MeshOutputContractTests.cpp): fixed positions/indices/
 # count/status layout, guard rows, capacity arithmetic, zero-output and overflow cases.
 # CPU only; no Vulkan device, dispatch or renderer wiring.
+# S-048: the ABI itself now lives in src (graphics/shader/recompiler/MeshComputeAbi.h);
+# tests/MeshOutputContract.h only forwards to it and remains under review.
 add_executable(mesh_output_contract_tests EXCLUDE_FROM_ALL
 	"${KYTY_TESTS_DIR}/MeshOutputContractTests.cpp"
 )
 target_include_directories(mesh_output_contract_tests PRIVATE ${inc_headers})
 
-# P4.1 synthetic Vulkan compute prototype of the mesh-output contract (S-013): the same
-# constants stay in tests/MeshOutputContract.h; the authored compute shader is compiled
+# P4.1 synthetic Vulkan compute prototype of the mesh-output contract (S-013): the
+# constants now stay in src/graphics/shader/recompiler/MeshComputeAbi.h (forwarded
+# through tests/MeshOutputContract.h, S-048); the authored compute shader is compiled
 # twice by the pinned glslang, once for vulkan1.3 and once for vulkan1.2, and both
 # modules are offline-validated for their target environments. --run requires a
 # Vulkan 1.3 device; --run-vulkan12 is separate auxiliary evidence. Intel or software
@@ -923,11 +926,13 @@ foreach(api IN ITEMS 12 13)
 endforeach()
 add_custom_target(mesh_texture_shaders DEPENDS ${mesh_texture_modules})
 # P3.1 isolated offline research: actual repository IR, no native emitter/renderer changes.
+# S-048: the lowering/specialization/ABI/adapter live in src/graphics/shader/recompiler
+# (MeshComputeLowering/Specialization/Abi/Adapter); tests only consume them.
 add_executable(mesh_fallback_policy_tests EXCLUDE_FROM_ALL "${KYTY_TESTS_DIR}/MeshFallbackPolicyTests.cpp")
 target_include_directories(mesh_fallback_policy_tests PRIVATE ${inc_headers})
 add_executable(mesh_ir_compute_tests EXCLUDE_FROM_ALL
 	"${KYTY_TESTS_DIR}/MeshIrComputeTests.cpp"
-	"${KYTY_TESTS_DIR}/research/MeshIrComputeLowering.cpp"
+	"${KYTY_SOURCE_DIR}/graphics/shader/recompiler/MeshComputeLowering.cpp"
 	"${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/Block.cpp"
 	"${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/Value.cpp"
 	"${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/Type.cpp"
@@ -943,16 +948,19 @@ file(GLOB mesh_ir_frontend_sources CONFIGURE_DEPENDS
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/frontend/translate/*.cpp")
 add_executable(mesh_ir_frontend_tests EXCLUDE_FROM_ALL
   "${KYTY_TESTS_DIR}/MeshIrFrontendTests.cpp"
-  "${KYTY_TESTS_DIR}/research/MeshIrComputeLowering.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/MeshComputeLowering.cpp"
   ${mesh_ir_frontend_sources}
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/CodegenOptions.cpp"
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/Block.cpp"
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/IREmitter.cpp"
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/Program.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/ProgramClone.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/ProgramClone.cpp"
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/Type.cpp"
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/Value.cpp"
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/opcodes/ValueOpcodes.cpp"
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/passes/SsaRewrite.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/passes/PreparePreResource.cpp"
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/passes/ConstantPropagation.cpp"
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/passes/DeadCodeElimination.cpp"
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/passes/ReadLaneElimination.cpp")
