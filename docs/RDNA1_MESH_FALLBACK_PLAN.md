@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 4.4. **Overall status:** S-041 native RX actual frontend triangle/permuted/zero gate PASS; all fifteen stages, eight strict selections/cleanups and images exact. Bounded frontend UV export next; production/game integration remains open.
+> **Last edited:** 2026-10-29. **Plan revision:** 4.4. **Overall status:** S-044 actual frontend geometry/UV textured milestone verified locally and clean transfer ZIP ready. Stop for new native strict RX frontend UV gate. S-041 native geometry remains PASS; production/game integration open.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P3 IN_PROGRESS: bounded IR geometry/arithmetic/UV and generated draw native gates verified; real frontend/NGG compatibility remains open** |
-| Current subtask | S-041 native frontend milestone acceptance DONE with evidence |
+| Current subtask | S-044 clean actual frontend UV package DONE locally; native UV texture gate pending |
 | Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
-| Last verified git commit | S-041 input `39b32c36096e20e95233500c91ea75f511d008a1`; tested package source87e912bd/build20261029T081156341Z |
+| Last verified git commit | S-044 clean package source `a183c1904f11e9c6f6c035ad58432d3456f859e0`, build20261029T095304950Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | Clean committed package source; pinned ancestry and all 14 recursive submodules matching/clean |
-| Build status | S-040 clean two-job focused package build PASS; no memory retry/PGO/IPO |
+| Build status | S-044 clean focused2-job package build PASS; no memory retry/PGO/IPO |
 | Native RDNA1 smoke test | S-035 PASS for generated triangle/permuted/zero and UV/UV-zero sampled draws: native RX5700XT API1.4.308 AMD25.6.1, strict1.3, all blobs/pixels exact and zero errors/warnings through all five cleanups |
-| Passing tests | S-041 all15 desktop stages PASS, 0 FAIL/SKIPPED; eight native strict1.3 cases/cleanups, buffers/images exact |
-| Known blockers / limits | No blocker for next bounded local UV task; indexed/resources/CFG/LDS/dynamic counts/noncoherent/production/game/timer remain open |
-| Next single actionable task | Actual frontend bounded parameter0 xy UV export offline: metadata/mask rejection, independent UV values, unchanged geometry ABI, SPIR-V1.3 and focused regressions; runtime integration follows separately |
+| Passing tests | S-04431 cases22 PASS/9 strict SKIPPED/0 FAIL(4.38s);15 expected package outcomes PASS, ten independent images exact |
+| Known blockers / limits | New native actual frontend UV texture gate pending; indexed/dynamic/CFG/LDS/resources/noncoherent/production/game/timer remain open |
+| Next single actionable task | Run clean S-044 ZIP on RX with Run-Frontend-Milestone.cmd -IsolateImplicitLayers; require16 stages/ten native strict selections/cleanups, exact geometry/UV/images and zero errors/warnings; return complete results |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -890,6 +890,12 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 ### Session S-044 — 2026-10-29 — Complete bounded frontend package
 
 - Input95f89587; extend existing FrontendMilestone with actual frontend UV/zero textured stage, four API-specific modules and31-case suite. One existing launcher now covers16 stages, ten native selections/cleanups/images, all complete geometry/UV/pixel expectations and zero validation messages. Windows PowerShell syntax checked. Clean source commit precedes build; final package/relocation/integrity/Intel/strict/RX guard results pending below. No native new UV/game claim or push.
+
+#### Final S-044 package verification and stop
+
+- Clean sourcea183c1904f11e9c6f6c035ad58432d3456f859e0/build20261029T095304950Z, ZIP2,600,296 bytes SHA256 `6447AE462F7869E2A6CCBDF1AADA661C68288EBF30ADC8989BBF021DA3010F1A`, matching sidecar. Report `docs/RDNA1_FRONTEND_UV_PACKAGE_S044.md`.71 payload files; all32 legacy modules byte-identical.
+-31-case suite22 PASS/9 strict SKIPPED/0 FAIL(4.38s);15 expected Unicode relocation/integrity/offline/auxiliary/strict/RX-guard/legacy/conflict/missing/tamper/launcher outcomes PASS. Ten auxiliary full buffers/images and cleanups exact/zero validation messages;40,960 RGB pixels match independent references. Compilation/unit/SPIR-V/Intel auxiliary Vulkan scoped PASS; new actual frontend UV native RX and Astro Bot NOT RUN.
+- Next native gate16 stages/ten strict RX selections+cleanups, exact complete geometry/UV/ten images, zero errors/warnings and correct identity, complete result folder. Normal-user `Run-Frontend-Milestone.cmd -IsolateImplicitLayers`. Stop under D-028/D-033; no next integration or push. Raw evidence `_Build/p3-s044/` and package evidence retained.
 
 ## 8. Change history (append-only)
 

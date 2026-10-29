@@ -144,14 +144,17 @@ Frontend milestone runner/launcher and 29-case clean-source package inventory pr
 ## Retained checkpoint S-040 — stop for native frontend gate
 Clean package source87e912bd9786abd206b635ff7c68a832562f9b8a/build20261029T081156341Z verified. 29 tests 21 PASS/8 strict SKIPPED/0 FAIL (3.89 s), 15 expected package outcomes, eight exact images/full blobs and zero validation messages through eight Intel1.2 cleanups. ZIP2,586,529 bytes SHA256336303B17E837E97E5CEFF4EEE458460AECDB5C9AFDE22DB377ECDCB7FD06D89. See docs/RDNA1_FRONTEND_PACKAGE_S040.md. Next only: RX normal-user `Run-Frontend-Milestone.cmd -IsolateImplicitLayers`, require all15 stages/eight native strict1.3 selections/cleanups, exact guarded buffers/eight images, zero errors/warnings and full result folder. New frontend native gate and game NOT RUN. Stop under D-033, no push or production integration.
 
-## Current checkpoint S-041
+## Retained checkpoint S-041
 Native actual frontend triangle/permuted/zero strict1.3 gate PASS on RX5700XT API1.4.308 AMD25.6.1. Package source87e912bd/build20261029T081156341Z; all15 stages PASS, eight cleanups zero errors/warnings, full buffers/images exact. All24 files copied/hash-verified `_Build/p3-s041/`; see docs/RDNA1_RX_FRONTEND_S041.md. No production/game claim. Next one local task: bounded actual frontend parameter0 xy UV export into existing544-byte guarded ABI; public ISA/full graph, metadata/mask rejection, independent expected UVs, SPIR-V1.3 and focused regressions/provenance. Runtime integration follows separately; D-028 batched RX cadence, no push.
 
-## Current checkpoint S-042
+## Retained checkpoint S-042
 Actual frontend UV/zero export offline PASS through complete graph and independent136-word binary oracle; rejection and valid wrong-UV mutation checked. Build PASS;29 cases21 PASS/8 strict SKIPPED/0 FAIL(4.48s), full snapshot/logs retained. New frontend UV runtime/RX/game NOT RUN. Next actual frontend UV textured runtime with exact buffers/images and validation through cleanup; D-033 sequential commits, no push.
 
-## Current checkpoint S-043
+## Retained checkpoint S-043
 Actual frontend UV/zero textured runtime PASS Intel1.2: full geometry/UV and pixels exact, zero validation through cleanup.31 cases22 PASS/9 strict SKIPPED/0 FAIL(4.42s), wrong valid UV/missing strict mutants fail correctly, full provenance retained. Next clean consolidated frontend geometry+UV package/relocation/integrity/API/device verification then native strict gate. No production/game claim or push; D-033 continuation.
 
 ## S-044 package preparation
 Existing FrontendMilestone now includes actual frontend UV/zero texture. Commit source then build31 tests/package and verify Unicode relocation,16 stages/ten auxiliary selections/images, strict SKIP/RX guard/integrity negatives. New native gate NOT RUN. Once verified deliver ZIP/one launcher command and stop, no push.
+
+## Current checkpoint S-044 — stop for native frontend UV gate
+Clean sourcea183c1904f11e9c6f6c035ad58432d3456f859e0/build20261029T095304950Z package verified.31 tests22 PASS/9 strict SKIPPED/0 FAIL(4.38s),15 expected package outcomes, ten exact auxiliary images/full buffers/cleanups zero validation.32 legacy modules identical. ZIP2,600,296 bytes SHA2566447AE462F7869E2A6CCBDF1AADA661C68288EBF30ADC8989BBF021DA3010F1A. Report docs/RDNA1_FRONTEND_UV_PACKAGE_S044.md. Next only native RX `Run-Frontend-Milestone.cmd -IsolateImplicitLayers`:16 stages/ten strict native selections+cleanups, exact geometry/UV/images, zero errors/warnings and complete result folder. New native UV/game NOT RUN; prior S-041 geometry native PASS. Stop under D-033; no production integration or push.
