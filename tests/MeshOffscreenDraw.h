@@ -391,7 +391,8 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
         if (float_diagnostic) {
             const bool has_triangle = draw && scenario.primitive_count != 0;
             const auto stats = InspectPairedFloat(static_cast<const float*>(readback.mapped),has_triangle);
-            PrintLine1("paired-float diagnostic: draw=%u covered=%zu structural-errors=%zu max-ideal-error=%.9g (observation only; no numeric acceptance tolerance)",has_triangle,stats.covered,stats.structural_errors,stats.max_error);
+            PrintLine1("paired-float diagnostic: draw=%u covered=%zu structural-errors=%zu max-ideal-error=%.9g (numeric gate: absolute error <= 2^-20)",has_triangle,stats.covered,stats.structural_errors,stats.max_error);
+            Expect(stats.numeric_errors==0,"all float pixels meet explicit 2^-20 fixture budget");
             Expect(stats.structural_errors==0,"diagnostic finite values, channel pairing and exact clear controls");
             if(draw && !image_path.empty()) {
                 auto csv_path=image_path;csv_path.replace_extension(".csv");
@@ -412,7 +413,8 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		                                    : PixelMismatches(static_cast<const uint8_t*>(readback.mapped), draw && scenario.primitive_count != 0);
 		PrintLine1("offscreen %s: 64x64 RGBA pixels mismatched=%zu/4096; full blob checked",
 		           draw ? (scenario.primitive_count == 0 ? "compute-zero-output" : (paired ? "paired-production-pixel" : textured ? "textured-compute-indexed-triangle" : "compute-indexed-triangle")) : "clear-only-control", mismatches);
-		Expect(mismatches == 0, "all 4096 offscreen RGBA pixels match");
+        if(paired)PrintLine1("paired conversion: nearest-different=%zu permitted-set-invalid=%zu",PairedMismatches(static_cast<const uint8_t*>(readback.mapped),draw && scenario.primitive_count!=0,true),mismatches);
+		Expect(mismatches == 0, "all 4096 offscreen RGBA pixels satisfy selected oracle");
 		if (draw && !image_path.empty()) {
 			std::ofstream file(image_path, std::ios::binary | std::ios::trunc);
 			file << "P6\n64 64\n255\n";

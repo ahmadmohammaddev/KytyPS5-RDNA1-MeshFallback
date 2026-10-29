@@ -1537,6 +1537,11 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 	                                  descriptor_set, output_buffer, payload_buffer, image_path, true, ir_uv ? &scenarios.front() : nullptr, ir_uv ? &uv_buffer : nullptr, paired, float_diagnostic)) {
 		return fail_and_cleanup();
 	}
+    // A portable UNORM set alone cannot establish numerical shader accuracy.
+    // Every normal paired run must ALSO pass the independent float draw.
+    if(paired && !float_diagnostic && !RunOffscreenDraw(device,get_device_proc,selected_memory,device_13_capable,
+        queue,command_buffer,submit_fence,pipeline,pipeline_layout,descriptor_set,output_buffer,payload_buffer,
+        image_path,true,&scenarios.front(),&uv_buffer,true,true))return fail_and_cleanup();
 	// Validation and comparison results decide the run result; warnings alone do
 	// not fail, but every validation ERROR does (a silenced failure is no pass).
 	cleanup_all();
@@ -1637,10 +1642,10 @@ int RunMain(int argc, char** argv) {
 	}
 	if (dispatch_result == 0) {
         if(float_diagnostic) {
-            PrintLine1("DIAGNOSTIC RESULT: PASS (RGBA32F capture/structural controls completed; NOT paired color acceptance; Vulkan %s%s)",runtime13?"1.3":"1.2",runtime12?" AUXILIARY":"");
+            PrintLine1("DIAGNOSTIC RESULT: PASS (RGBA32F capture/numeric controls completed; NOT full paired color acceptance; Vulkan %s%s)",runtime13?"1.3":"1.2",runtime12?" AUXILIARY":"");
             return 0;
         }
-		if(paired)PrintLine1("PAIRED RESULT: PASS (actual frontend geometry/UV, generated bridge, native pixel; exact complete buffers/RGBA; zero validation including cleanup)");
+		if(paired)PrintLine1("PAIRED RESULT: PASS (actual frontend geometry/UV, generated bridge, native pixel; exact buffers/coverage, permitted UNORM sets + bounded RGBA32F; zero validation including cleanup)");
 		if (ir_mode) { PrintLine1("IR RESULT: PASS (generated modules, exact full blobs, validation including cleanup)"); }
 		if (ir_texture && !paired) { PrintLine1("IR TEXTURE RESULT: PASS (generated UV and geometry, exact full buffers/RGBA, validation including cleanup)"); }
 		if (textured && !ir_texture) { PrintLine1("TEXTURE RESULT: PASS (sampled texture, compute UVs/guards/boundaries, exact RGBA, validation including cleanup)"); }

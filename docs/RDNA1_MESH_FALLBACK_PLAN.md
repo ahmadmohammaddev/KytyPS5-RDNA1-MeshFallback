@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 5.6. **Overall status:** S-056 RX float capture PASS, accurate to1.1920929e-7; nearest-only RGBA8 gate still FAIL58 pixels. Next portable acceptance contract, no renderer integration. No production renderer/game integration.
+> **Last edited:** 2026-10-29. **Plan revision:** 5.7. **Overall status:** S-057 portable UNORM and bounded float acceptance PASS locally; fresh strict RX acceptance pending.
 
 ## 0. Mission and boundaries
 
@@ -36,7 +36,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
-| Current subtask | S-056 native float capture reviewed:19 stages PASS/1 FAIL; original nearest-only color gate remains FAIL |
+| Current subtask | S-057 portable paired acceptance implemented/tested locally; historical native failure retained |
 | Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | Clean package source `ad57feab7d794b7cedb855a6fb5411ca76881200`, build20261029T122933634Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
@@ -45,7 +45,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Native RDNA1 smoke test | S-056 same native RX/API/driver: float triangle+zero PASS, maxerror1.1920929e-7, zero validation; original paired RGBA8 FAIL58, original paired zero NOT RUN |
 | Passing tests | S-05543 cases32 PASS/11 strict SKIPPED/0 FAIL(5.73s);21 expected transfer/negative outcomes,12 exact PPMs/2 complete CSVs/44 unchanged modules |
 | Known blockers / limits | Nearest-only UNORM oracle stronger than portable guarantee; numeric float acceptance not implemented; original native combined gate remains FAIL; adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache wiring/scheduler/production/game remain open |
-| Next single actionable task | Implement/test portable per-channel UNORM conversion sets plus independently justified bounded float numeric acceptance; preserve exact buffers/coverage/negative checks, then strict RX rerun |
+| Next single actionable task | Clean consolidated acceptance package with mandatory float CSV inventory, relocation/integrity/API/negative verification, then fresh strict RX acceptance |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -1120,3 +1120,13 @@ All RGB channels fit ideal and measured-float floor/ceil sets; nearest-from-capt
 Next single local task portable paired UNORM acceptance sets and separate justified bounded RGBA32F numeric gate with independent missing/swapped/shifted/nonfinite/value/boundary negative checks, full exact geometry/UV/coverage/clear and conversion statistics. Focused builds/SPIR-V/Intel auxiliary validation and provenance, then batched clean strict RX rerun before combined closure. No renderer wiring.
 
 Change history5.6: S-056 records accurate native float results, preserves nearest-only color failure and selects source-backed portable acceptance correction.
+
+### Session S-057 / Experiment E-057 — Portable paired acceptance
+
+Input47a11a40 clean correct branch/14 submodules. Added exact rational per-channel floor/ceil UNORM sets, integer/endpoints exact, separate nearest diagnostics; mandatory additional bounded numerical RGBA32F draw for normal paired modes. Absolute2^-20 budget is conservative fixture admission, not universal Vulkan guarantee; all finite/channel/clear controls retained. Historical native nearest-only failures unchanged. Report docs/RDNA1_PAIRED_ACCEPTANCE_S057.md.
+
+Complete dirty snapshots -01/-02; focused2-job builds PASS, final43 cases32 PASS/11 strict SKIPPED/0 FAIL(8.70s). Intel1.2 full triangle/zero gates PASS maxfloaterror1.17317078e-7, zero validation through cleanup. Valid wrong bridge FAIL488 UNORM pixels and independently numeric floatFAIL0.952628968 with structural errors0, cleanup validation0. Independent boundary/missing/swap/shift/perturbation/nonfinite regressions PASS;44 modules unchanged. Compilation/unit/SPIR-V/IntelVulkan scopedPASS; new RX acceptance/gameNOT RUN. No package/push/renderer wiring.
+
+Next one task clean consolidated acceptance package: mandatory float CSV inventory/43-case suite/Unicode relocation/integrity/API/RX guards/negative tests, then one strict native RX acceptance command. Source committed before packaging; retain oldFAIL, no acceptance closure from replay or Intel.
+
+Change history5.7: S-057 replaces nearest-only oracle with portable conversion sets and independent mandatory bounded numerical float gate.

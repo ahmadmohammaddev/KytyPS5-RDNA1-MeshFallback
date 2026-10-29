@@ -178,3 +178,16 @@ independently reports ideal nearest differences and correlation with float
 capture. Python is optional analysis on the development host, not required to
 run the desktop capture. Separate-format draws can interpolate differently, so
 correlation alone does not prove identical values in the RGBA8 draw.
+
+## S-057 portable paired acceptance
+
+Normal paired runs now require BOTH per-channel rational UNORM floor/ceil sets
+(with exact integer/clear/saturated values) and an additional RGBA32F draw with
+absolute error <=2^-20 on every channel of every pixel. This is a deliberately
+strict bounded-fixture admission budget, not a universal Vulkan precision claim.
+It is less than1/4096 of a UNORM step and less than1/48 of this fixture's nearest
+threshold margin. Missing, swapped or shifted output cannot pass by selecting an
+adjacent UNORM value. Nearest-only differences remain printed for diagnosis.
+The standalone float diagnostic now also enforces that numeric budget; its old
+S-055 observational-only description above is historical. Original S-054/S-056
+failures remain retained. Native acceptance requires a fresh strict RX rerun.
