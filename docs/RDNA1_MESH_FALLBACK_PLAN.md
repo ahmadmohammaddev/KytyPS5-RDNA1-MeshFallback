@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 5.2. **Overall status:** S-051 actual production pixel compiler/vertex bridge offline pairing PASS, independent interface validation and rejection coverage. Combined generated-stage runtime is next; production renderer/game still unimplemented.
+> **Last edited:** 2026-10-29. **Plan revision:** 5.3. **Overall status:** S-051 actual production pixel compiler/vertex bridge offline pairing PASS, independent interface validation and rejection coverage. Combined generated-stage runtime is next; production renderer/game still unimplemented.
 
 ## 0. Mission and boundaries
 
@@ -1071,3 +1071,8 @@ Change history5.1: S-051 closes actual production pixel emitter offline pairing;
 - Compilation/unit/SPIR-V/Intel auxiliary Vulkan scoped PASS; native combined RX and Astro Bot NOT RUN. No push/new package. Next clean consolidated combined-stage package/runner with41-case regressions/relocation/integrity/auxiliary/strict/RX guard verification, then stop for native gate per D-028/D-033.
 
 Change history5.2: combined actual frontend compute/generated bridge/native pixel runtime, strict vs auxiliary explicit, native transfer gate next.
+
+### Session S-053 — 2026-10-29 — Combined-stage package preparation
+
+- Inputc887ddd3; add CombinedMilestone runner/strict required-RX launcher.19 stages/12 native selections+cleanups/images, new paired oracle/module validation/runtime alongside prior modes. Clean package41-test inventory, eight paired modules and corresponding public source/bridge/oracle dependencies. Full compiler test runs only at build time; not distributed as emulator executable. Existing runner/API/device truth preserved.
+- Windows PowerShell parsing/diff checked; commit source then clean build/relocation/integrity/API/device verification before native handoff. Native combined gate and game NOT RUN; no push.

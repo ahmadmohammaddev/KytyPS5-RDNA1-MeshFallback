@@ -12,9 +12,12 @@ param(
     [switch]$IrAdd,
     [switch]$IrMilestone,
     [switch]$FrontendMilestone,
+    [switch]$CombinedMilestone,
     [switch]$IsolateImplicitLayers
 )
 $ErrorActionPreference = 'Stop'
+if ($CombinedMilestone -and ($FrontendMilestone -or $IrMilestone -or $Ir -or $IrAdd -or $Draw -or $Texture)) { Write-Host 'FAIL: choose combined milestone or another mode'; exit 1 }
+if ($CombinedMilestone) { $FrontendMilestone = $true }
 if ($FrontendMilestone -and ($IrMilestone -or $Ir -or $IrAdd -or $Draw -or $Texture)) { Write-Host 'FAIL: choose frontend milestone or another mode'; exit 1 }
 if ($FrontendMilestone) { $IrMilestone = $true }
 if ($Texture) { $Draw = $true }
@@ -163,6 +166,13 @@ try {
             if ($run.record.exit -ne 0) { $preflightOk = $false; break }
         }
     }
+    if ($preflightOk -and $CombinedMilestone) {
+        foreach ($argument in @('--check-paired-oracle','--validate-paired-spirv')) {
+            $name = if ($argument -eq '--check-paired-oracle') { 'paired-oracle' } else { 'paired-spirv' }
+            $run = RunCheck -Name $name -Exe 'mesh_compute_proto_tests.exe' -Arguments @($argument)
+            if ($run.record.exit -ne 0) { $preflightOk = $false; break }
+        }
+    }
     $runtimeStatus = 'NOT RUN'
     $runtimeIdentity = @()
     $runtimeStages = [Collections.Generic.List[object]]::new()
@@ -200,9 +210,13 @@ try {
             $plans += @{name='runtime-frontend-texture'; arguments=@("--frontend-texture$suffix",'--image-output',(Join-Path $results 'frontend-texture.ppm')); devices=2;
               images=@('frontend-texture-frontend_uv.ppm','frontend-texture-frontend_uv_zero.ppm')}
         }
+        if ($CombinedMilestone) {
+            $plans += @{name='runtime-paired'; arguments=@("--paired-draw$suffix",'--image-output',(Join-Path $results 'paired.ppm')); devices=2;
+              images=@('paired-frontend_uv.ppm','paired-frontend_uv_zero.ppm')}
+        }
         foreach ($plan in $plans) {
             $run = RunCheck -Name $plan.name -Exe 'mesh_compute_proto_tests.exe' -Arguments $plan.arguments
-            $identity = @($run.lines | Where-Object { $_ -match 'physical-devices:|\[\d+\].*type=|selected:|selected-driver:|dispatch-module:|summary after cleanup:|offscreen.*pixels|DRAW RESULT:|TEXTURE RESULT:|UV boundary|UV full-buffer:|IR case:|IR RESULT:' })
+            $identity = @($run.lines | Where-Object { $_ -match 'physical-devices:|\[\d+\].*type=|selected:|selected-driver:|dispatch-module:|summary after cleanup:|offscreen.*pixels|DRAW RESULT:|TEXTURE RESULT:|UV boundary|UV full-buffer:|IR case:|IR RESULT:|PAIRED RESULT:|paired native' })
             $runtimeIdentity += $identity
             $selectedDevices = @($run.lines | Where-Object { $_ -match '^\[p41\] selected:' })
             $rxDevices = @($selectedDevices | Where-Object { $_ -match 'RX\s*5700\s*XT' })
@@ -239,7 +253,7 @@ try {
         $overall = if (@($runtimeStages | Where-Object { $_.targetStatus -eq 'FAIL' }).Count) { 'FAIL' } else { $runtimeStatus }
     }
     $summary = [ordered]@{schema=1; gitCommit=$manifest.gitCommit; buildId=$manifest.buildId;
-        mode=$Mode; ir=[bool]$Ir; irAdd=[bool]$IrAdd; irMilestone=[bool]$IrMilestone; frontendMilestone=[bool]$FrontendMilestone; draw=[bool]$Draw; texture=[bool]$Texture; isolateImplicitLayers=[bool]$IsolateImplicitLayers; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
+        mode=$Mode; ir=[bool]$Ir; irAdd=[bool]$IrAdd; irMilestone=[bool]$IrMilestone; frontendMilestone=[bool]$FrontendMilestone; combinedMilestone=[bool]$CombinedMilestone; draw=[bool]$Draw; texture=[bool]$Texture; isolateImplicitLayers=[bool]$IsolateImplicitLayers; requireRx5700Xt=[bool]$RequireRx5700Xt; status=$overall; runtime=$runtimeStatus;
         runs=@($runs.ToArray()); runtimeStages=@($runtimeStages.ToArray()); images=@($imageRecords.ToArray()); deviceEvidence=$runtimeIdentity;
         environment=@{VK_LAYER_PATH=$env:VK_LAYER_PATH; VK_INSTANCE_LAYERS=$env:VK_INSTANCE_LAYERS;
             VK_DRIVER_FILES=$env:VK_DRIVER_FILES; VK_ICD_FILENAMES=$env:VK_ICD_FILENAMES;

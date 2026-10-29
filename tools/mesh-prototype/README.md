@@ -152,3 +152,9 @@ Run `Run-Frontend-Milestone.cmd -IsolateImplicitLayers` as a normal user on the 
 The draw context is explicitly specialized to non-indexed count3, base vertex0, first instance0, one wave32 workgroup and no first-group offset. This is isolated synthetic research, not emulator or game integration. `-Mode Vulkan12 -FrontendMilestone` on Run-Prototype.ps1 is auxiliary only. Missing strict prerequisites produce SKIPPED, never PASS. Indexed/multi-group/guest resources/arbitrary CFG/LDS remain unsupported.
 
 The frontend milestone also executes actual frontend parameter0.xy UV/zero exports into the separate guarded544-byte buffer and sampled drawing. Geometry, UV and complete images must match; no authored compute replacement is used for frontend UV generation.
+
+## Combined generated stages milestone
+
+Run `Run-Combined-Milestone.cmd -IsolateImplicitLayers` on RX5700XT as a normal user. In addition to the frontend milestone it executes frontend geometry+UV compute, generated vertex bridge and production-compiled public pixel fragment together. Require19 stages PASS,12 strict native selections and zero-error/warning cleanups, complete geometry/UV/RGBA expectations and12 PPM images. Preserve the entire result folder. Float32 signed-zero/Inf/NaN preservation is required; missing prerequisite SKIPPED is not acceptance. The new fragment displays interpolated UV colors, not texture sampling or a game frame.
+
+Native pixel and bridge modules are generated/validated during the clean build; the full emulator-linked compiler test executable is not distributed. Source identity and public fixture source are retained in the package. Existing launchers keep their previous modes; standalone harness is not an emulator.
