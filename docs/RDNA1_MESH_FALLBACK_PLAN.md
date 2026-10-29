@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 4.6. **Overall status:** S-045 actual frontend geometry+UV native strict RX milestone PASS: all16 stages/ten native selections and cleanups, complete outputs/ten images exact. Next define source-backed production adapter boundary; general P3/P5/game remain open.
+> **Last edited:** 2026-10-29. **Plan revision:** 4.7. **Overall status:** S-047 pure production-owned candidate policy and CPU invariants PASS, renderer unwired. S-045 native frontend geometry+UV milestone retained. Next production-owned isolated compiler adapter/shared preparation; P5/game still unimplemented.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P3 IN_PROGRESS: bounded IR geometry/arithmetic/UV and generated draw native gates verified; real frontend/NGG compatibility remains open** |
-| Current subtask | S-046 production adapter boundary contract DONE; pure capability/draw candidate policy next |
+| Current subtask | S-047 isolated candidate policy DONE with CPU evidence; compiler adapter next |
 | Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
-| Last verified git commit | S-045 inputaee91fe8; package source `a183c1904f11e9c6f6c035ad58432d3456f859e0`, build20261029T095304950Z |
+| Last verified git commit | S-047 input05f38700; complete pre-build snapshot retained; package/native sourcea183c190 unchanged |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | Clean committed package source; pinned ancestry and all 14 recursive submodules matching/clean |
 | Build status | S-044 clean focused2-job package build PASS; no memory retry/PGO/IPO |
 | Native RDNA1 smoke test | S-045 actual frontend geometry+UV/zero and prior generated regressions PASS RX5700XT API1.4.308 AMD25.6.1; ten strict1.3 selections/zero-error-warning cleanups |
-| Passing tests | S-045 all16 desktop stages PASS,0 FAIL/SKIPPED; ten images match independent references and complete output checks pass |
+| Passing tests | S-04732 focused cases23 PASS/9 strict SKIPPED/0 FAIL(4.76s),512 policy combinations in two modes and negative bounds checked |
 | Known blockers / limits | No blocker for local adapter mapping; indexed/dynamic/CFG/LDS/resources/noncoherent/production/game/timer remain open |
-| Next single actionable task | P2.2a isolated production-owned pure mesh fallback capability/draw candidate policy and CPU tests; OFF/native preference, strict supported bounds and precise fail-closed reasons, no renderer activation or RX rerun |
+| Next single actionable task | Production-owned isolated bounded compiler adapter/lowering/ABI and shared pre-resource preparation, no test-source dependency; preserve exact binaries/ABI/default native behavior and reject unsupported inputs |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -202,6 +202,8 @@ Status: **IN_PROGRESS** — P2.1 DONE (S-010), review fixes DONE (S-012); select
 - Design fallback mode selection using explicit capability check; optional env flag remains off by default.
 
 **Gate:** Same baseline behavior when flag off; deterministic test/log for unsupported GPU; no fake Vulkan extensions.
+
+- P2.2a pure capability/draw candidate policy **DONE locally (S-047)**: explicit opt-in candidate, native/ordinary preference, strict capability/direct bounded draw rejection, CPU tests. Unwired; no production path selection or renderable fallback claim.
 
 ### P3 — Offline synthetic shader translation feasibility
 Status: **IN_PROGRESS** — bounded P3.1–P3.6 gates have scoped evidence; S-035 accepts native generated untextured/textured drawing. Real frontend/NGG semantics remain open. See `docs/RDNA1_RX_IR_MILESTONE_S035.md`.
@@ -912,6 +914,12 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 - Initial bounded admission/rejection and all baked draw/cache/ABI requirements explicit. Next smallest P2.2a pure candidate selector and CPU tests, production-owned but unwired; default/native unchanged. Subsequent compiler/cache/bridge/scheduler gates remain separate, no feature spoofing or skip-as-success.
 - Documentation diff checked; all six execution categories NOT RUN this mapping-only session. Prior native S-045 evidence retained. P5 NOT_STARTED. Commit mapping before implementation under D-033; no RX transfer for policy-only changes or push.
 
+### Session S-047 — 2026-10-29 — Pure fallback admission policy
+
+- Input05f38700; added production-owned pure header/CPU test and CMake registration. Existing/native routes unchanged by selector; explicit missing-native compute candidate requires strict capabilities/direct bounded metadata, stable reasons.512 combinations across two modes preserve disabled/native/ordinary invariants; individual limits/unknowns fail closed. Unwired candidate is not renderer readiness.
+- Complete dirty snapshot `_Build/p0-s012/p2-s047-pre-build-01/`; two-job build PASS;32 focused serial cases23 PASS/9 strict SKIPPED/0 FAIL(4.76s). Logs/XML `_Build/p2-s047/`, report `docs/RDNA1_FALLBACK_POLICY_S047.md`. Compilation/unit/existing SPIR-V/Intel auxiliary Vulkan PASS; new RX/game NOT RUN. Existing native S-045 retained; no push or RX transfer.
+- Next isolated production compiler adapter/backend/ABI promotion and shared pre-resource preparation; preserve exact generated binaries/ABI and native default, explicit unsupported diagnostics/empty outputs with focused regressions. Cache/fragment bridge/scheduler integration remain separate gates; P5 not active.
+
 ## 8. Change history (append-only)
 
 | Date | Plan revision | Sections | Reason / evidence |
@@ -983,6 +991,8 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 | 2026-10-29 | 4.5 | checkpoint/P3/evidence/handoff; AGENTS/native UV report | S-045 accepts actual frontend UV native milestone; selects production adapter boundary mapping |
 
 | 2026-10-29 | 4.6 | adapter boundary contract/plan/AGENTS | S-046 maps production gates and defines smallest pure capability/draw policy implementation |
+
+| 2026-10-29 | 4.7 | pure policy/CPU test/CMake/plan/AGENTS/report | S-047 implements fail-closed candidate admission without activating renderer fallback |
 
 ## 9. Quick commands (reference; verify before running)
 

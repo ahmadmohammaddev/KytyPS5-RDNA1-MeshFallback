@@ -1,0 +1,13 @@
+# S-047 pure fallback candidate policy
+
+Input `05f38700`, branch `feature/rdna1-mesh-fallback`. Adds isolated production-owned `src/graphics/host_gpu/renderer/meshFallbackPolicy.h` with no renderer call sites, flags, Vulkan initialization, compile or recording behavior. Native feature truth is caller-supplied actual enabled capability. Defaults are unknown/unsupported.
+
+Existing ordinary graphics and actually enabled native mesh retain priority. Explicit compute mode on missing-native mesh must satisfy Vulkan1.3, a compute+graphics queue, local size32x1x1/group-count limits, at least three per-stage/set storage bindings and1840-byte storage range. Direct metadata must be explicitly known: triangle list, non-indexed, non-indirect, no restart, count3/one instance/zero offsets and one group. Unsupported states return stable typed reasons. A positive result is named ComputeCandidate, never renderable readiness; shader/export/fragment/resource/cache/runtime proof remains mandatory.
+
+Dedicated CPU test covers exact capacity boundaries, invalid/unknown defaults/modes, individual capability and draw rejections and512 combinations across two modes asserting ordinary/native preservation and disabled fallback rejection. CMake registers mesh_fallback_policy and adds its small target to kyty_tests; no full renderer link.
+
+Full pre-build dirty patch/raw source/hash/cache/submodule snapshot `_Build/p0-s012/p2-s047-pre-build-01/`. Two-job focused build PASS; final32-case serial focused regression suite23 PASS/9 strict1.3 SKIPPED/0 FAIL,4.76s. Existing Intel1.2 auxiliary generated/plain/textured/frontend regressions remain clean; new CPU selector has no GPU execution claim. Logs/XML `_Build/p2-s047/`.
+
+Six categories: compilation PASS focused policy target; unit PASS; existing shader/SPIR-V regressions PASS; existing Intel auxiliary Vulkan PASS and strict SKIPPED; new RDNA1 and Astro Bot NOT RUN. Prior S-045 native geometry/UV evidence retained; no new RX request or push. No full emulator rebuild required for an unreferenced pure header/test.
+
+Next single local task: promote the tested bounded lowering/specialization/ABI into a production-owned isolated compiler adapter, eliminate test-source dependencies and share the actual pre-resource preparation prefix instead of drifting copies. Gate exact unchanged legacy generated binaries and ABI, actual frontend positive/negative regressions, empty diagnostic outputs on unsupported resources/states, Vulkan1.3 offline validation and focused tests/provenance; native CompileProgram/default behavior unchanged. No renderer activation until cache/bridge/scheduler gates are implemented.

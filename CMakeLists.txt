@@ -923,6 +923,8 @@ foreach(api IN ITEMS 12 13)
 endforeach()
 add_custom_target(mesh_texture_shaders DEPENDS ${mesh_texture_modules})
 # P3.1 isolated offline research: actual repository IR, no native emitter/renderer changes.
+add_executable(mesh_fallback_policy_tests EXCLUDE_FROM_ALL "${KYTY_TESTS_DIR}/MeshFallbackPolicyTests.cpp")
+target_include_directories(mesh_fallback_policy_tests PRIVATE ${inc_headers})
 add_executable(mesh_ir_compute_tests EXCLUDE_FROM_ALL
 	"${KYTY_TESTS_DIR}/MeshIrComputeTests.cpp"
 	"${KYTY_TESTS_DIR}/research/MeshIrComputeLowering.cpp"
@@ -1498,6 +1500,7 @@ if(BUILD_TESTING)
 		TIMEOUT 180)
 	add_test(NAME vram_budget COMMAND $<TARGET_FILE:vram_budget_tests>)
 	add_test(NAME device_compat COMMAND $<TARGET_FILE:device_compat_tests>)
+  add_test(NAME mesh_fallback_policy COMMAND $<TARGET_FILE:mesh_fallback_policy_tests>)
 	add_test(NAME mesh_output_contract COMMAND $<TARGET_FILE:mesh_output_contract_tests>)
 	add_test(NAME mesh_ir_compute_positive COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --positive)
 	add_test(NAME mesh_ir_compute_rejections COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --reject)
@@ -2690,6 +2693,7 @@ if(BUILD_TESTING)
 		pipeline_list_tests
 		vram_budget_tests
 		device_compat_tests
+		mesh_fallback_policy_tests
 		mesh_output_contract_tests
 		mesh_compute_proto_tests
 		mesh_ir_compute_tests
