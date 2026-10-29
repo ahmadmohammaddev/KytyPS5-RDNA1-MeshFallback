@@ -1175,3 +1175,17 @@ Initial platform decoding and empty-tracked-diff snapshot failure retained, not 
 Next one local task derive a pure execution plan with lowering-proven static counts/capacities, exact allocation/binding/vertex-index ranges/dependencies and independent triangle3/1/zero0/0/invalid count/range tests. Compile success is not permission to emit fixed draw counts. No Vulkan recording/renderer activation yet; scheduler/descriptors/lifetime follow distinctly.
 
 Change history6.0: S-060 atomic production-owned compile product and offline integration tests; selects missing output-proof/execution-plan boundary before scheduler.
+
+### External-agent handoff after S-060
+
+User requested context-plus-prompt.md for the next pure execution-plan task,
+with implementation performed in a separate clone and a complete Git diff delivered
+for owner review/application. No implementation in this handoff session. Exact
+source check found lowerer Result already exposes vertices/primitives: external
+agent must verify/reuse this proof rather than invent duplicate inference.
+README/full plan/status/branch/14 submodules inspected; baseline3691b781.
+Handoff includes file map, acceptance, tests/provenance and no-owner-write/no-push
+boundary, overriding sequential implementation for the delegated task. Compilation,
+unit, SPIR-V, Vulkan, RX and game tests NOT RUN (documentation only); diff checkPASS.
+Next: external agent delivers full patch against declared base, owner reviews/applies
+it. No scheduler activation or automatic continuation in this session.

@@ -252,3 +252,17 @@ Next single local task D-035: atomic isolated production-owned compile bundle jo
 Production meshFallbackBundle.h composes policy/private-clone adapter/reflected bridge/canonical identity with one Draw-derived specialization. Owning modules/key/ABI sizes published atomically; all rejection outputs empty with stable diagnostic, source preserved. Six real frontend fixtures plus authored fragment-interface regressions PASS; actual native pixel emission separate. Final full snapshot p3-s060-pre-build-03,2-job build PASS,43 cases32 PASS/11 strict SKIPPED/0 FAIL(6.40s),44 modules unchanged. Evidence `_Build/p3-s060/`, report docs/RDNA1_COMPILE_BUNDLE_S060.md. No renderer activation/cache mutation/new GPU or RX request/push/game claim.
 
 Next single local task lowering-proven static counts/capacities and pure execution plan: triangle3/1 andzero0/0, exact ABI allocations/bindings/vertex-index ranges/dependencies, invalid/unproven counts and unsafe ranges reject atomically. Do not assume successful compilation means fixed draw counts; no Vulkan command recording yet. Scheduler/descriptors/lifetime follow separately; S-059 standalone RX acceptance retained.
+
+### External-agent handoff after S-060
+
+User requested context-plus-prompt.md for the next pure execution-plan task,
+with implementation performed in a separate clone and a complete Git diff delivered
+for owner review/application. No implementation in this handoff session. Exact
+source check found lowerer Result already exposes vertices/primitives: external
+agent must verify/reuse this proof rather than invent duplicate inference.
+README/full plan/status/branch/14 submodules inspected; baseline3691b781.
+Handoff includes file map, acceptance, tests/provenance and no-owner-write/no-push
+boundary, overriding sequential implementation for the delegated task. Compilation,
+unit, SPIR-V, Vulkan, RX and game tests NOT RUN (documentation only); diff checkPASS.
+Next: external agent delivers full patch against declared base, owner reviews/applies
+it. No scheduler activation or automatic continuation in this session.
