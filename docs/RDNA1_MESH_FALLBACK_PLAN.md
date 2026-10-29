@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 5.5. **Overall status:** S-055 local paired float diagnosis/capture implemented; prepare clean diagnostic transfer; S-054 RX combined FAIL remains open. No production renderer/game integration.
+> **Last edited:** 2026-10-29. **Plan revision:** 5.5. **Overall status:** S-055 clean diagnostic package verified; stop for RX float capture; S-054 combined FAIL remains open. No production renderer/game integration.
 
 ## 0. Mission and boundaries
 
@@ -36,14 +36,14 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
-| Current subtask | S-055 independent precision analysis and RGBA32F diagnostic locally verified; clean transfer verification pending |
+| Current subtask | S-055 diagnostic implementation and clean transfer verification DONE locally; RX capture NOT RUN |
 | Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | Clean package source `ad57feab7d794b7cedb855a6fb5411ca76881200`, build20261029T122933634Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | Clean committed package source; pinned ancestry and all 14 recursive submodules matching/clean; S-048 dirty tree captured before builds (`_Build/p0-s012/p2-s048-pre-build-01/`, 16 files + 7 untracked) |
-| Build status | S-053 clean2-job focused package/producer build PASS; no memory retry/PGO/IPO |
+| Build status | S-055 clean2-job diagnostic package/producer build PASS; no memory retry/PGO/IPO |
 | Native RDNA1 smoke test | S-054 RX5700XT API1.4.308 AMD25.6.1: ten prior cases PASS, paired frontend_uv FAIL 58 pixels; paired zero NOT RUN |
-| Passing tests | S-05341 cases31 PASS/10 strict SKIPPED/0 FAIL(5.11s);16 expected package/negative outcomes,12 independent images exact |
+| Passing tests | S-05543 cases32 PASS/11 strict SKIPPED/0 FAIL(5.73s);21 expected transfer/negative outcomes,12 exact PPMs/2 complete CSVs/44 unchanged modules |
 | Known blockers / limits | Native paired color mismatch unresolved; adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache wiring/scheduler/production/game remain open |
 | Next single actionable task | Run verified clean S-055 diagnostic package on RX; retain original RGBA8 FAIL and collect both RGBA32F CSVs before source-backed correction/precision contract |
 
@@ -1102,3 +1102,11 @@ Full dirty snapshots -01/-02 retained, focused2-job build PASS;43 serial cases32
 Next one hardware task clean Run-Paired-Diagnostic.cmd -IsolateImplicitLayers; retain20-stage logs/JSON/PPMs and2 complete float CSVs even when original paired stage fails. Actual RX values and source-backed correction/precision contract required before closing failed combined gate. No production renderer integration.
 
 Change history5.5: S-055 independent precision analysis and isolated float capture; preserves prior native failure and strict/auxiliary separation.
+
+### Final clean package verification / stop for RX
+
+Clean source `0ebb417077d53534f0a38091cf0081d3ffd0449f`, build `20261029T130742949Z`. ZIP2,789,604 bytes, SHA-256 `0D1419F8DEC9876F1D35F49BB7FBB61A7E59C173F61A6314754130D18C1F49D5`, matching sidecar under ignored `_Build/mesh-prototype-packages/`. Source commit followed by clean2-job package build PASS,43 serial cases32 PASS/11 strict SKIPPED/0 FAIL(5.73s). Package/import/license/provenance audits PASS. Initial clean-source rejection caused by generated Python __pycache__ retained in package-initial-dirty-cache.log; cache moved into ignored evidence, no source discarded. Initial bare CTest command failure and all build attempts retained.
+
+Unicode/unrelated-CWD relocation:20 expected integrity/API/RX-guard/legacy/launcher/diagnostic outcomes verified. Actual auxiliary20 stages PASS,14 device selections/zero-error+warning cleanups,12 PPMs exact against independent references plus2 complete4096-row finite coordinate-ordered float CSVs.44 shader modules byte-identical to S-053. An explicitly mutated local package fixture adds a21st outcome: valid wrong bridge produces original pairedFAIL while float stagePASS saves both CSVs, overall remainsFAIL. Fixture is not the distributed artifact and does not establish source provenance for a hardware run. Logs `_Build/p3-s055/verification/`, diagnostic-negative-results/ and package -evidence retained. Final diagnostic package SHA checked against sidecar; no new RX/game evidence or push.
+
+STOP: next only native RX `Run-Paired-Diagnostic.cmd -IsolateImplicitLayers` from a fresh extraction. Return complete folder, especially paired-float-frontend_uv.csv and paired-float-frontend_uv_zero.csv. If original paired fails first case,13 actual selections rather than14 are possible; float stage must still complete both captures, prior failures remainFAIL, zero case in original stage remainsNOT RUN. Capture completion is not paired color acceptance. Do not change renderer or declare numeric cause solved before examining native pre-conversion evidence.
