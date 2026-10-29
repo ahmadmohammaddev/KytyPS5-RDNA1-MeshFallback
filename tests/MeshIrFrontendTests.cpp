@@ -1,4 +1,5 @@
 ﻿#include "graphics/shader/recompiler/MeshComputeAdapter.h"
+#include "graphics/host_gpu/renderer/meshFallbackBundle.h"
 #include "graphics/shader/recompiler/MeshComputeLowering.h"
 #include "graphics/shader/recompiler/MeshComputeSpecialization.h"
 #include "graphics/shader/recompiler/frontend/cfg/ShaderCFG.h"
@@ -100,6 +101,71 @@ void Test(bool consumes_prologue,const std::filesystem::path& out,int variant=0,
   Check(raw.find("MeshDrawParameter")!=std::string::npos,"normal NGG prologue present before preparation");
   R::CompileRequest request;request.mesh=mesh;request.enable_uv=uv;
   R::NonIndexedDraw draw{};request.specialization=consumes_prologue ? &draw : nullptr;
+  {
+    namespace B=Libs::Graphics::MeshFallback;
+    B::Capabilities caps;caps.api_major=1;caps.api_minor=3;caps.compute_graphics_queue=true;
+    caps.max_compute_invocations=caps.max_compute_size_x=32;
+    caps.max_compute_size_y=caps.max_compute_size_z=1;
+    caps.max_compute_groups_x=caps.max_compute_groups_y=caps.max_compute_groups_z=1;
+    caps.storage_buffers_per_stage=caps.storage_buffers_per_set=3;caps.max_storage_range=1840;
+    B::Draw d;d.metadata_known=true;d.topology=B::Topology::TriangleList;
+    d.vertex_count=3;d.instance_count=1;d.groups_x=d.groups_y=d.groups_z=1;
+    const char* text=R"(OpCapability Shader
+OpMemoryModel Logical GLSL450
+OpEntryPoint Fragment %main "main" %color
+OpExecutionMode %main OriginUpperLeft
+OpDecorate %color Location 0
+%void = OpTypeVoid
+%fn = OpTypeFunction %void
+%float = OpTypeFloat 32
+%v4 = OpTypeVector %float 4
+%ptr = OpTypePointer Output %v4
+%color = OpVariable %ptr Output
+%zero = OpConstant %float 0
+%value = OpConstantComposite %v4 %zero %zero %zero %zero
+%main = OpFunction %void None %fn
+%entry = OpLabel
+OpStore %color %value
+OpReturn
+OpFunctionEnd
+)";
+    spvtools::SpirvTools validator(SPV_ENV_VULKAN_1_3);std::vector<uint32_t> fragment;
+    std::string shader=text;
+    if(uv) {
+      auto at=shader.find("%color\n");shader.replace(at,7,"%color %parameter\n");
+      at=shader.find("%void =");shader.insert(at,"OpDecorate %parameter Location 0\n");
+      at=shader.find("%main =");shader.insert(at,"%pin = OpTypePointer Input %v4\n%parameter = OpVariable %pin Input\n");
+      at=shader.find("OpStore %color");shader.insert(at,"%loaded = OpLoad %v4 %parameter\n%x = OpCompositeExtract %float %loaded 0\n");
+    }
+    Check(validator.Assemble(shader,&fragment) && validator.Validate(fragment),"bundle public authored fragment validates");
+    auto req=request;req.specialization=nullptr;std::vector<uint8_t> identity{1,2,3};
+    auto run=[&](){return B::CompileBundle(B::Mode::Compute,caps,d,program,req,fragment,identity);};
+    auto bundle=run();Check(bool(bundle),"complete compile bundle accepted");
+    Check(bundle.compute==R::Compile(program,request).binary && validator.Validate(bundle.vertex),"bundle exact compute and validated bridge");
+    Check(bundle.geometry_bytes==1840 && bundle.uv_bytes==(uv?544:0),"bundle ABI sizes");
+    Check(run().key==bundle.key && IR::ProgramToString(program)==raw,"bundle deterministic/source preserved");
+    identity.push_back(4);Check(run().key!=bundle.key,"source identity separates keys");identity.pop_back();
+    req.uv_capacity=63;Check(run().key!=bundle.key,"capacity separates keys");req.uv_capacity=64;
+    auto reject=[&](){auto bad=run();Check(run().error==bad.error,"bundle diagnostic stable");Check(!bad && !bad.error.empty() && bad.compute.empty() && bad.vertex.empty() && bad.fragment.empty() && bad.key.empty() && bad.interface_identity.empty() && !bad.geometry_bytes && !bad.uv_bytes,"bundle rejection atomic");};
+    d.indexed=true;reject();d.indexed=false;
+    caps.native_mesh_enabled=true;reject();caps.native_mesh_enabled=false;
+    caps.api_minor=2;reject();caps.api_minor=3;
+    req.specialization=&draw;reject();req.specialization=nullptr;
+    identity.clear();reject();identity={1,2,3};
+    auto saved=fragment;fragment.clear();reject();fragment=saved;
+    for(size_t at=5;at<fragment.size();at+=fragment[at]>>16)if((fragment[at]&65535)==43 && (fragment[at]>>16)==4 && fragment[at+3]==0){fragment[at+3]=0x3f800000;break;}
+    Check(validator.Validate(fragment) && run().key!=bundle.key,"exact fragment words separate otherwise equal identity");fragment=saved;
+
+    if(uv) {
+      auto bad_shader=shader;auto at=bad_shader.find("%loaded 0");bad_shader.replace(at,9,"%loaded 3");
+      Check(validator.Assemble(bad_shader,&fragment) && validator.Validate(fragment),"valid unsupported fragment fixture");reject();fragment=saved;
+    }
+    auto disabled=B::CompileBundle(B::Mode::Disabled,caps,d,program,req,fragment,identity);
+    Check(!disabled && disabled.compute.empty() && !disabled.error.empty(),"disabled bundle cannot activate");
+    req.mesh.wave_size=64;reject();req.mesh.wave_size=32;
+    auto stage=program.stage;program.stage=Libs::Graphics::ShaderType::Pixel;reject();program.stage=stage;
+    Check(run().key==bundle.key && IR::ProgramToString(program)==raw,"bundle negatives preserve source and recover");
+  }
   const auto adapted=R::Compile(program,request);
   Check(IR::ProgramToString(program)==raw,"adapter preserves raw caller source");
   const auto repeated=R::Compile(program,request);

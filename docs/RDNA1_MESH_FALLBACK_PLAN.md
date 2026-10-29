@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 5.9. **Overall status:** S-059 standalone combined actual-stage portable acceptance PASS on native RX; production bundle/scheduler integration remains open.
+> **Last edited:** 2026-10-29. **Plan revision:** 6.0. **Overall status:** S-060 isolated atomic compile bundle locally verified; S-059 standalone RX acceptance retained; production execution planning/scheduler open.
 
 ## 0. Mission and boundaries
 
@@ -36,7 +36,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
-| Current subtask | S-059 native combined acceptance DONE with evidence; production integration not activated |
+| Current subtask | S-060 atomic isolated compile bundle DONE locally; renderer integration not activated |
 | Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | Clean package source `ad57feab7d794b7cedb855a6fb5411ca76881200`, build20261029T122933634Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
@@ -45,7 +45,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Native RDNA1 smoke test | S-059 RX5700XT API1.4.308 AMD25.6.1:19 stages PASS,12 native strict selections/cleanups zero errors/warnings; full paired triangle+zero accepted |
 | Passing tests | S-05543 cases32 PASS/11 strict SKIPPED/0 FAIL(5.73s);21 expected transfer/negative outcomes,12 exact PPMs/2 complete CSVs/44 unchanged modules |
 | Known blockers / limits | Standalone native portable combined gate PASS; production bundle/scheduler/descriptors/lifetime wiring remains open; adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache wiring/scheduler/production/game remain open |
-| Next single actionable task | Isolated atomic compile bundle joining admission/adapter/reflected bridge/canonical identity; CPU+SPIR-V accepted/rejected/context/source-preservation tests, no renderer activation |
+| Next single actionable task | Expose proven static output counts and derive pure ABI/buffer/binding/range/dependency execution plan for triangle and zero; reject unproven counts, no command recording |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -1165,3 +1165,13 @@ Compilation/new CTestNOT RUN this review; supplied host/offline/SPIR-VPASS, nati
 Decision D-035: after standalone combined acceptance, compose the existing separate admission/compiler/bridge/canonical identity helpers into one atomic production-owned isolated compile bundle before scheduler wiring. Reason: independent harness composition does not yet establish a complete fail-closed result for production consumers. Gate: accepted public pair yields modules/ABI/interface/context key, every rejected path empty outputs+stable diagnostic, context separation/source preservation/CPU+SPIR-V regressions and complete provenance; no renderer activation/cache mutation. Scheduler/descriptors/scratch/lifetime follow separately; batch RX cadence retained.
 
 Next one local task that compile bundle, no implementation in S-059. Change history5.9: native portable acceptance closes standalone gate; selects atomic production bundle preparation under D-035.
+
+### Session S-060 / Experiment E-060 — Atomic isolated compile bundle
+
+Input7c793311 clean branch/14 submodules. New production-owned meshFallbackBundle.h composes admission, private-clone compiler, fragment bridge and canonical module/context/ABI identity; sole admitted Draw derives specialization. Successful owning result only after all stages; rejection stable/atomic with no partial modules/key/ABI sizes. No renderer/cache/command activation. Existing frontend CPU tests cover six raw public programs plus independent authored plain/UV fragments, rejection paths/source preservation/key separation; production native pixel test stays separate. Builder staging header paths updated but no package built.
+
+Initial platform decoding and empty-tracked-diff snapshot failure retained, not valid build evidence; complete snapshots -02/-03 final sources retained. Focused2-job builds PASS,43 serial cases32 PASS/11 strict SKIPPED/0 FAIL(6.40s).44 modules byte-identical. Compilation/unit/offline/SPIR-V and existing Intel1.2 regressions scopedPASS; new bundle GPU/RX/gameNOT RUN. S-059 native standalone result retained. Logs `_Build/p3-s060/`, report docs/RDNA1_COMPILE_BUNDLE_S060.md. No push.
+
+Next one local task derive a pure execution plan with lowering-proven static counts/capacities, exact allocation/binding/vertex-index ranges/dependencies and independent triangle3/1/zero0/0/invalid count/range tests. Compile success is not permission to emit fixed draw counts. No Vulkan recording/renderer activation yet; scheduler/descriptors/lifetime follow distinctly.
+
+Change history6.0: S-060 atomic production-owned compile product and offline integration tests; selects missing output-proof/execution-plan boundary before scheduler.

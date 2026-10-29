@@ -150,6 +150,9 @@ try {
     foreach ($file in @('MeshComputePrototypeTests.cpp','MeshOutputContractTests.cpp','MeshOutputContract.h','MeshOffscreenDraw.h','MeshTextureProbe.h','MeshPairedDrawOracle.h','MeshPixelBridgePairingTests.inc','shaderCfgTests.cpp')) {
         CopyPayload "$repo/tests/$file" "source/$file"
     }
+    foreach ($file in @('meshFallbackPolicy.h','meshFallbackBundle.h')) {
+        CopyPayload "$repo/src/graphics/host_gpu/renderer/$file" "source/graphics/host_gpu/renderer/$file"
+    }
     CopyPayload "$repo/tests/MeshIrFrontendTests.cpp" 'source/MeshIrFrontendTests.cpp'
     foreach ($file in @('MeshComputeAbi.h','MeshComputeLowering.h','MeshComputeLowering.cpp','MeshComputeSpecialization.h','MeshComputeAdapter.h','MeshComputeCacheKey.h','MeshVertexBridge.h','MeshVertexBridge.cpp')) {
         CopyPayload "$repo/src/graphics/shader/recompiler/$file" "source/graphics/shader/recompiler/$file"

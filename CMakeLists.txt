@@ -955,6 +955,7 @@ file(GLOB mesh_ir_frontend_sources CONFIGURE_DEPENDS
 add_executable(mesh_ir_frontend_tests EXCLUDE_FROM_ALL
   "${KYTY_TESTS_DIR}/MeshIrFrontendTests.cpp"
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/MeshComputeLowering.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/MeshVertexBridge.cpp"
   ${mesh_ir_frontend_sources}
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/CodegenOptions.cpp"
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/ir/Block.cpp"
