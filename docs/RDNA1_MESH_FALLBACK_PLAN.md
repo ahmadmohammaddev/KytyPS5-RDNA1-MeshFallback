@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 5.5. **Overall status:** S-055 clean diagnostic package verified; stop for RX float capture; S-054 combined FAIL remains open. No production renderer/game integration.
+> **Last edited:** 2026-10-29. **Plan revision:** 5.6. **Overall status:** S-056 RX float capture PASS, accurate to1.1920929e-7; nearest-only RGBA8 gate still FAIL58 pixels. Next portable acceptance contract, no renderer integration. No production renderer/game integration.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
-| Current subtask | S-055 diagnostic implementation and clean transfer verification DONE locally; RX capture NOT RUN |
+| Current subtask | S-056 native float capture reviewed:19 stages PASS/1 FAIL; original nearest-only color gate remains FAIL |
 | Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | Clean package source `ad57feab7d794b7cedb855a6fb5411ca76881200`, build20261029T122933634Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | Clean committed package source; pinned ancestry and all 14 recursive submodules matching/clean; S-048 dirty tree captured before builds (`_Build/p0-s012/p2-s048-pre-build-01/`, 16 files + 7 untracked) |
 | Build status | S-055 clean2-job diagnostic package/producer build PASS; no memory retry/PGO/IPO |
-| Native RDNA1 smoke test | S-054 RX5700XT API1.4.308 AMD25.6.1: ten prior cases PASS, paired frontend_uv FAIL 58 pixels; paired zero NOT RUN |
+| Native RDNA1 smoke test | S-056 same native RX/API/driver: float triangle+zero PASS, maxerror1.1920929e-7, zero validation; original paired RGBA8 FAIL58, original paired zero NOT RUN |
 | Passing tests | S-05543 cases32 PASS/11 strict SKIPPED/0 FAIL(5.73s);21 expected transfer/negative outcomes,12 exact PPMs/2 complete CSVs/44 unchanged modules |
-| Known blockers / limits | Native paired color mismatch unresolved; adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache wiring/scheduler/production/game remain open |
-| Next single actionable task | Run verified clean S-055 diagnostic package on RX; retain original RGBA8 FAIL and collect both RGBA32F CSVs before source-backed correction/precision contract |
+| Known blockers / limits | Nearest-only UNORM oracle stronger than portable guarantee; numeric float acceptance not implemented; original native combined gate remains FAIL; adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache wiring/scheduler/production/game remain open |
+| Next single actionable task | Implement/test portable per-channel UNORM conversion sets plus independently justified bounded float numeric acceptance; preserve exact buffers/coverage/negative checks, then strict RX rerun |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -1110,3 +1110,13 @@ Clean source `0ebb417077d53534f0a38091cf0081d3ffd0449f`, build `20261029T1307429
 Unicode/unrelated-CWD relocation:20 expected integrity/API/RX-guard/legacy/launcher/diagnostic outcomes verified. Actual auxiliary20 stages PASS,14 device selections/zero-error+warning cleanups,12 PPMs exact against independent references plus2 complete4096-row finite coordinate-ordered float CSVs.44 shader modules byte-identical to S-053. An explicitly mutated local package fixture adds a21st outcome: valid wrong bridge produces original pairedFAIL while float stagePASS saves both CSVs, overall remainsFAIL. Fixture is not the distributed artifact and does not establish source provenance for a hardware run. Logs `_Build/p3-s055/verification/`, diagnostic-negative-results/ and package -evidence retained. Final diagnostic package SHA checked against sidecar; no new RX/game evidence or push.
 
 STOP: next only native RX `Run-Paired-Diagnostic.cmd -IsolateImplicitLayers` from a fresh extraction. Return complete folder, especially paired-float-frontend_uv.csv and paired-float-frontend_uv_zero.csv. If original paired fails first case,13 actual selections rather than14 are possible; float stage must still complete both captures, prior failures remainFAIL, zero case in original stage remainsNOT RUN. Capture completion is not paired color acceptance. Do not change renderer or declare numeric cause solved before examining native pre-conversion evidence.
+
+### Session S-056 / Experiment E-056 — 2026-10-29 — Native float evidence review
+
+Input793bf632 clean branch, pinned ancestry/14 matching submodules verified. Supplied source0ebb417077d53534f0a38091cf0081d3ffd0449f/build20261029T130742949Z Strict diagnostic run:20 stages19 PASS/1 FAIL/0 SKIPPED,1.4617007s stage sum, RX5700XT API1.4.308 AMD25.6.1.34 raw files/hash inventory retained `_Build/p3-s056/`; report docs/RDNA1_RX_PRECISION_S056.md. Original paired58-pixelFAIL repeats byte-identically; geometry/UV/clear PASS, zero errors/warnings after failure cleanup; original paired zero NOT RUN. Float triangle+zero PASS, both4096-row CSVs independently verified, exact background/zero and channel pairing, max four-channel ideal error1.1920928955078125e-7.13 selections/12 successful plus1 failure cleanup, all zero validation.
+
+All RGB channels fit ideal and measured-float floor/ceil sets; nearest-from-captured-float still differs58pixels. Vulkan allows either adjacent integer, nearest recommended: current exact-nearest oracle stronger than portable conversion rule. Separate-format draws prevent proving internal RGBA8 values or exact driver algorithm. Keep originalFAIL; float diagnosticPASS is not numeric gate completion. No new code/build/package/RX request/push; supplied host/offline/module validations PASS, native float Vulkan/RDNA1PASS and originalcombinedFAIL, gameNOT RUN.
+
+Next single local task portable paired UNORM acceptance sets and separate justified bounded RGBA32F numeric gate with independent missing/swapped/shifted/nonfinite/value/boundary negative checks, full exact geometry/UV/coverage/clear and conversion statistics. Focused builds/SPIR-V/Intel auxiliary validation and provenance, then batched clean strict RX rerun before combined closure. No renderer wiring.
+
+Change history5.6: S-056 records accurate native float results, preserves nearest-only color failure and selects source-backed portable acceptance correction.
