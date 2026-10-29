@@ -75,9 +75,12 @@ void Simplify(IR::Program& program) {
   }
   IR::ValidateProgram(program,true);
 }
-void Test(bool consumes_prologue,const std::filesystem::path& out) {
-  const auto name=consumes_prologue ? "vertex-id" : "constant";
+void Test(bool consumes_prologue,const std::filesystem::path& out,int variant=0) {
+  const auto name=consumes_prologue ? (variant==1 ? "frontend_permuted" : variant==2 ? "frontend_zero" : "frontend") : "constant";
   auto code=Fixture(consumes_prologue);
+  if(variant==1) { for(auto& word:code) if(word==0x00200400) word=0x00100002; }
+  if(variant==2) code[1]=0; // authored s_mov allocation changes before decoding
+
   S::Decoder::Program decoded;
   S::Decoder::DecodeProgram(code,decoded);
   for (const auto& inst:decoded.instructions)
@@ -143,7 +146,7 @@ void Test(bool consumes_prologue,const std::filesystem::path& out) {
     Check(static_cast<bool>(result), "complete frontend program lowers");
     spvtools::SpirvTools tools(SPV_ENV_VULKAN_1_3);
     Check(tools.Validate(result.binary), "frontend SPIR-V validates Vulkan 1.3");
-    Check(result.vertices==3 && result.primitives==1, "frontend allocation preserved");
+    Check(result.vertices==(variant==2 ? 0u : 3u) && result.primitives==(variant==2 ? 0u : 1u), "frontend allocation preserved");
   }
   std::cout << name << ": frontend PASS, complete blocks=" << program.blocks.size()
             << ", compute compatibility " << (result ? "PASS" : "UNSUPPORTED: "+result.error) << '\n';
@@ -159,14 +162,22 @@ void Test(bool consumes_prologue,const std::filesystem::path& out) {
       binary.write(reinterpret_cast<const char*>(result.binary.data()),result.binary.size()*4);
       binary.close();Check(!binary.fail(), "frontend SPIR-V artifact saved");
       std::ofstream(out/(std::string(name)+".spvasm")) << result.assembly;
+      if(consumes_prologue) for(int api:{12,13}) {
+        spvtools::SpirvTools tools(api==13 ? SPV_ENV_VULKAN_1_3 : SPV_ENV_VULKAN_1_2);
+        std::vector<uint32_t> words;
+        Check(tools.Assemble(result.assembly,&words) && tools.Validate(words), "separate API module validates");
+        std::ofstream file(out/(std::string("mesh_ir_")+name+"_vk"+std::to_string(api)+".spv"),std::ios::binary);
+        file.write(reinterpret_cast<const char*>(words.data()),words.size()*4);
+        file.close();Check(!file.fail(), "API module saved");
+      }
     }
   }
 }
 int main(int argc,char** argv) {
   std::filesystem::path out;
-  if(argc==3 && std::string(argv[1])=="--dump") out=argv[2];
+  if(argc==3 && (std::string(argv[1])=="--dump" || std::string(argv[1])=="--emit")) out=argv[2];
   else if(argc!=1) return 1;
-  Test(false,out);Test(true,out);
+  Test(false,out);Test(true,out);Test(true,out,1);Test(true,out,2);
   std::cout << "frontend compatibility regression: " << (failures ? "FAIL" : "PASS") << " (GPU NOT RUN)\n";
   return failures ? 1 : 0;
 }

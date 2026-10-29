@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 3.8. **Overall status:** S-036 real decoder/mesh frontend/normal pre-resource preparation fixtures PASS; complete IR is correctly rejected at the current one-block limit. Next close linear-chain compatibility locally, then the retained NGG semantic gaps; user authorized sequential commits until required RX handoff.
+> **Last edited:** 2026-10-29. **Plan revision:** 3.9. **Overall status:** S-036 real decoder/mesh frontend/normal pre-resource preparation fixtures PASS; complete IR is correctly rejected at the current one-block limit. Next close linear-chain compatibility locally, then the retained NGG semantic gaps; user authorized sequential commits until required RX handoff.
 
 ## 0. Mission and boundaries
 
@@ -36,7 +36,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P3 IN_PROGRESS: bounded IR geometry/arithmetic/UV and generated draw native gates verified; real frontend/NGG compatibility remains open** |
-| Current subtask | S-038 bounded non-indexed frontend specialization DONE offline; actual generated-module draw next |
+| Current subtask | S-039 actual frontend triangle/permuted/zero indexed draw PASS Intel auxiliary; consolidated native frontend gate pending |
 | Status | P2.1 DONE (with evidence); P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | S-036 input `136629d7ea9cd42dc7625c875fe984492f464672`; complete pre-build source snapshot retained |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
@@ -45,7 +45,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Native RDNA1 smoke test | S-035 PASS for generated triangle/permuted/zero and UV/UV-zero sampled draws: native RX5700XT API1.4.308 AMD25.6.1, strict1.3, all blobs/pixels exact and zero errors/warnings through all five cleanups |
 | Passing tests | S-037 27 focused tests: 20 PASS, 7 strict SKIPPED, 0 FAIL (3.45 s); constant frontend module validates offline; live vertex-ID prologue remains unsupported |
 | Known blockers / limits | Current research accepts authored IR, not the real frontend NGG prologue. Guest resources/CFG/LDS/dynamic counts, noncoherent/production/game/timer remain open |
-| Next single actionable task | Execute real frontend-generated triangle in standalone compute/indexed draw with independent complete buffer/pixel oracles; retain strict1.3 vs Intel1.2 separation |
+| Next single actionable task | Prepare clean committed-source frontend milestone package, verify relocation/integrity/Intel auxiliary and strict/RX guards, then stop for native RX gate |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -848,6 +848,13 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 - Two 2-job builds PASS; final 27 cases 20 PASS/7 strict SKIPPED/0 FAIL, 3.29 s. Complete snapshots `_Build/p0-s012/p3-s038-pre-build-01/` and `-02/`; logs/artifacts `_Build/p3-s038/`. Compilation/unit/SPIR-V scoped PASS; existing Intel1.2 Vulkan PASS; new frontend runtime/RDNA1/game NOT RUN. No renderer integration or native behavior changes.
 - Next one local task: run the actual frontend triangle module through the existing standalone compute/indexed draw, exact independent full-buffer/image checks and mutation rejection, validation through cleanup. Continue D-033; no push.
 
+### Session S-039 — 2026-10-29 — Actual frontend modules to conventional draw
+
+- Input `92692a49`; authored ISA variants triangle/permuted/zero pass actual decoder/frontend/SSA/specialization/ordinary optimization and complete-graph lowerer. CMake generates six API-separated modules; new opt-in frontend draw modes reuse full-buffer/pixel oracles and existing synchronization. No production renderer change.
+- Actual Intel Iris Xe Vulkan1.2 auxiliary: all three complete guarded 460-word buffers and images exact, zero validation errors/warnings including cleanup; independently checked 12,288 RGB pixels/hashes. Strict1.3 frontend CTest SKIPPED (API1.2.172). Valid permuted module substituted for triangle correctly FAILS full blob; missing strict zero module FAILS before device discovery.
+- Two 2-job builds PASS; initial edit helper failed before CMake edit (retained first partial-source snapshot/build), corrected dependency before runtime. Final 29 cases: 21 PASS/8 strict SKIPPED/0 FAIL (4.00 s). Complete snapshots `_Build/p0-s012/p3-s039-pre-build-01/` and `-02/`; full logs/XML/negative fixtures/images JSON `_Build/p3-s039/`.
+- Six categories: compilation/unit/SPIR-V scoped PASS; Intel1.2 Vulkan PASS, strict1.3 SKIPPED; new frontend RDNA1 and Astro Bot NOT RUN. Noncoherent, indexed/variable/multi-group/CFG/LDS/resource/production support open. Next consolidate clean frontend native milestone package/runner and verify before one RX command; continue D-033, no push.
+
 ## 8. Change history (append-only)
 
 | Date | Plan revision | Sections | Reason / evidence |
@@ -903,6 +910,8 @@ Source `70a80620c583037e1ed4fe372bdb89586dbd895a`, build `20261029T070921174Z`. 
 | 2026-10-29 | 3.7 | linear-chain lowerer/tests/frontend; plan/AGENTS/report | S-037 closes structural frontend gap; retains explicit vertex-ID semantic boundary and failed test lifetime run |
 
 | 2026-10-29 | 3.8 | research specialization/frontend fixtures/plan/AGENTS | S-038 declares bounded non-indexed draw constants and proves complete frontend SPIR-V; runtime gate next |
+
+| 2026-10-29 | 3.9 | frontend module generation/runtime/CMake/plan/AGENTS | S-039 executes actual frontend-generated geometry with independent complete oracles; native gate pending |
 
 ## 9. Quick commands (reference; verify before running)
 

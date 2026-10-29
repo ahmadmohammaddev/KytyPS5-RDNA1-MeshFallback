@@ -134,3 +134,6 @@ Complete linear-chain lowering and constant actual frontend SPIR-V PASS. Focused
 
 ## Current checkpoint S-038
 Bounded non-indexed single-group specialization and actual frontend triangle SPIR-V PASS offline. Full graph retained, ordinary propagation/DCE removes inactive index reads; nine context negatives and malformed parameter reject without partial mutation. 20 PASS/7 strict SKIPPED/0 FAIL (3.29 s), full snapshots/logs retained. Next run actual frontend triangle through standalone indexed draw with complete independent oracles and validation through cleanup. New frontend GPU/RX/game NOT RUN. Continue sequential commits under D-033; no push.
+
+## Current checkpoint S-039
+Actual frontend-derived triangle/permuted/zero conventional draws PASS Intel1.2 auxiliary, all full buffers/pixels and zero validation messages through cleanup. 29 cases 21 PASS/8 strict SKIPPED/0 FAIL (4.00 s); wrong valid module/missing strict module correctly FAIL. Complete snapshots/logs `_Build/p3-s039/` and capture folders retained. New native frontend gate NOT RUN. Next clean consolidated frontend milestone package/runner, relocation/integrity/API/RX guard verification; then give ZIP and one RX command and stop under D-033. No production/game claim or push.

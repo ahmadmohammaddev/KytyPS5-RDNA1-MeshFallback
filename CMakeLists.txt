@@ -977,10 +977,20 @@ add_custom_command(OUTPUT ${mesh_ir_uv_modules}
   COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --emit-uv "${mesh_proto_generated_dir}"
   DEPENDS mesh_ir_compute_tests VERBATIM)
 add_custom_target(mesh_ir_uv_generated_shaders DEPENDS ${mesh_ir_uv_modules})
+set(mesh_frontend_modules)
+foreach(api IN ITEMS 12 13)
+  foreach(name IN ITEMS frontend frontend_permuted frontend_zero)
+    list(APPEND mesh_frontend_modules "${mesh_proto_generated_dir}/mesh_ir_${name}_vk${api}.spv")
+  endforeach()
+endforeach()
+add_custom_command(OUTPUT ${mesh_frontend_modules}
+  COMMAND $<TARGET_FILE:mesh_ir_frontend_tests> --emit "${mesh_proto_generated_dir}"
+  DEPENDS mesh_ir_frontend_tests VERBATIM)
+add_custom_target(mesh_frontend_generated_shaders DEPENDS ${mesh_frontend_modules})
 add_executable(mesh_compute_proto_tests EXCLUDE_FROM_ALL
 	"${KYTY_TESTS_DIR}/MeshComputePrototypeTests.cpp"
 )
-add_dependencies(mesh_compute_proto_tests mesh_compute_proto_shaders mesh_offscreen_shaders mesh_texture_shaders mesh_ir_generated_shaders mesh_ir_uv_generated_shaders)
+add_dependencies(mesh_compute_proto_tests mesh_compute_proto_shaders mesh_offscreen_shaders mesh_texture_shaders mesh_ir_generated_shaders mesh_ir_uv_generated_shaders mesh_frontend_generated_shaders)
 target_link_libraries(mesh_compute_proto_tests spirv-tools Vulkan::Headers ${CMAKE_DL_LIBS})
 target_include_directories(mesh_compute_proto_tests PRIVATE ${inc_headers})
 target_compile_definitions(mesh_compute_proto_tests PRIVATE VK_NO_PROTOTYPES)
@@ -1495,6 +1505,11 @@ if(BUILD_TESTING)
 	add_test(NAME mesh_ir_uv_rejections COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --uv-reject)
 	add_test(NAME mesh_ir_frontend_compatibility COMMAND $<TARGET_FILE:mesh_ir_frontend_tests>)
 	set_tests_properties(mesh_ir_frontend_compatibility PROPERTIES TIMEOUT 120)
+  add_test(NAME mesh_frontend_draw COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --frontend-draw
+    --image-output "${PROJECT_BINARY_DIR}/mesh-frontend-vk13.ppm")
+  add_test(NAME mesh_frontend_draw_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --frontend-draw-vulkan12
+    --image-output "${PROJECT_BINARY_DIR}/mesh-frontend-vk12.ppm")
+  set_tests_properties(mesh_frontend_draw mesh_frontend_draw_vk12 PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 41)
 	add_test(NAME mesh_ir_runtime COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir)
 	add_test(NAME mesh_ir_runtime_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir-vulkan12)
 	add_test(NAME mesh_ir_add_runtime COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir-add)
