@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 5.3. **Overall status:** S-053 clean combined actual-stage package verified locally; stop for native RX strict combined compute/bridge/production-pixel gate. No production renderer/game integration.
+> **Last edited:** 2026-10-29. **Plan revision:** 5.4. **Overall status:** S-054 native RX combined gate FAIL: 58 paired color pixel mismatches; diagnose before further integration. No production renderer/game integration.
 
 ## 0. Mission and boundaries
 
@@ -36,16 +36,16 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
-| Current subtask | S-053 clean combined-stage package DONE locally; native strict gate pending |
+| Current subtask | S-054 supplied native strict combined evidence reviewed: 18 stages PASS, paired stage FAIL |
 | Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | Clean package source `ad57feab7d794b7cedb855a6fb5411ca76881200`, build20261029T122933634Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
 | Checkout evidence | Clean committed package source; pinned ancestry and all 14 recursive submodules matching/clean; S-048 dirty tree captured before builds (`_Build/p0-s012/p2-s048-pre-build-01/`, 16 files + 7 untracked) |
 | Build status | S-053 clean2-job focused package/producer build PASS; no memory retry/PGO/IPO |
-| Native RDNA1 smoke test | S-045 actual frontend geometry+UV/zero and prior generated regressions PASS RX5700XT API1.4.308 AMD25.6.1 retained; no new hardware run or package |
+| Native RDNA1 smoke test | S-054 RX5700XT API1.4.308 AMD25.6.1: ten prior cases PASS, paired frontend_uv FAIL 58 pixels; paired zero NOT RUN |
 | Passing tests | S-05341 cases31 PASS/10 strict SKIPPED/0 FAIL(5.11s);16 expected package/negative outcomes,12 independent images exact |
-| Known blockers / limits | Adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache/bridge/scheduler/production/game remain open; S-048 not committed until user review |
-| Next single actionable task | On RX run clean S-053 ZIP: Run-Combined-Milestone.cmd -IsolateImplicitLayers; require19 stages/12 native strict selections+cleanups/complete buffers+images/zero validation and correct identity; return full results |
+| Known blockers / limits | Native paired color mismatch unresolved; adapter has no production call site; indexed/dynamic/CFG/LDS/resources/noncoherent/cache wiring/scheduler/production/game remain open |
+| Next single actionable task | Diagnose S-054 paired 58-pixel mismatch with independent numerical controls; retain exact output/negative gates and establish justified correction before a strict RX rerun |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -1084,3 +1084,11 @@ Change history5.2: combined actual frontend compute/generated bridge/native pixe
 - Next only normal-user RX `Run-Combined-Milestone.cmd -IsolateImplicitLayers`:19 stages/12 native strict1.3 selections+cleanups, exact geometry/UV/RGBA/12 images, zero validation messages and source/build identity. Return complete folder. Stop D-028/D-033, no next integration work.
 
 Change history5.3: S-053 verified clean consolidated actual-stage package and native handoff.
+
+### Session S-054 / Experiment E-054 — 2026-10-29 — RX combined-stage failure review
+
+Input f1d687c1 clean branch; pinned ancestry and 14 matching recursive submodules verified. Reviewed supplied clean-source ad57feab7d794b7cedb855a6fb5411ca76881200/build20261029T122933634Z results, retained 19 logs/11 PPMs/JSON with hashes under `_Build/p3-s054/`. Strict RX5700XT API1.4.308 AMD25.6.1: 18 stages PASS/1 FAIL/0 SKIPPED. Ten earlier runtime cases/images exact with zero-error/warning cleanup summaries. Paired frontend_uv full buffers/clear PASS, RGBA FAIL58/4096, zero final validation errors including cleanup; normal final warning summary absent. Paired zero NOT RUN, 11/12 selections. Independent RGB check confirms58 pixels, only -1 channel deltas; cause unproven. Stage time sum1.0691s; no performance/game claim. Report `docs/RDNA1_RX_COMBINED_S054.md`.
+
+No build/code/new Vulkan execution this review. Desktop host/offline/module preflights PASS; native combined Vulkan/RDNA1 gate FAIL; Astro Bot NOT RUN. Intel auxiliary PASS remains separate. Next one local task diagnose interpolation/conversion/expectation with independent discriminating controls; acceptance is explained observed values and independently tested correction/precision contract preserving full comparisons and negative checks, followed by strict RX rerun before closing gate. No silent tolerance relaxation, renderer wiring, package/push or next phase in S-054.
+
+Change history5.4: retain native combined failure and redirect next bounded task to its diagnosis; prior successful gates unchanged.
