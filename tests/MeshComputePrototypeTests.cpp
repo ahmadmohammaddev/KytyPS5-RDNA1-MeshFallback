@@ -595,6 +595,7 @@ int CheckHostFixtures() {
 // Core-and-synchronization-validated dispatch at the explicitly requested API level.
 // A single registered skip code covers missing runtime prerequisites, never API failures.
 int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem::path& image_path = {}, bool textured = false, const char* ir_variant = nullptr) {
+	const bool ir_uv = ir_variant && (std::strcmp(ir_variant, "uv") == 0 || std::strcmp(ir_variant, "uv_zero") == 0);
 	void* loader = LoadLoaderLibrary();
 	if (loader == nullptr) {
 		PrintLine1("SKIP: the vulkan-1 system loader cannot be loaded; the dispatch part cannot "
@@ -1052,7 +1053,8 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 
 	// Pipeline and descriptors. Binding 0 is the read-only payload (256 position
 	// words + 192 index words in one buffer), binding 1 is the write-only output
-	// blob (460 words), and the push-constant block carries vertex_count /
+	// blob (460 words); generated UV mode adds binding 2 (136 words).
+	// The push-constant block carries vertex_count /
 	// primitive_count at offset 0. One descriptor set is allocated and updated
 	// once; the per-scenario variation rides in buffer contents and push
 	// constants only.
@@ -1067,6 +1069,7 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 	VkQueue queue                        = VK_NULL_HANDLE;
 	GpuBuffer payload_buffer;
 	GpuBuffer output_buffer;
+	GpuBuffer uv_buffer;
 	auto release_buffer = [&](GpuBuffer& buffer) {
 		if (buffer.buffer == VK_NULL_HANDLE && buffer.memory == VK_NULL_HANDLE) {
 			return;
@@ -1133,6 +1136,7 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 		if (command_pool != VK_NULL_HANDLE && vDestroyCommandPoolD != nullptr) {
 			vDestroyCommandPoolD(device, command_pool, nullptr);
 		}
+		release_buffer(uv_buffer);
 		release_buffer(output_buffer);
 		release_buffer(payload_buffer);
 		auto vDestroyDeviceD = reinterpret_cast<PFN_vkDestroyDevice>(dp("vkDestroyDevice"));
@@ -1181,16 +1185,21 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 	Expect(payload_buffer.size >= static_cast<VkDeviceSize>(kPositionWords + kIndexWords) * 4u,
 	       "payload buffer covers the full 448-word payload");
 
-	VkDescriptorSetLayoutBinding bindings[2] = {};
+	if (ir_uv && AllocateMappedBuffer(device, get_device_proc, selected_memory, kUvBytes,
+	        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+	        uv_buffer, "IR-uv-output") != 0) { return fail_and_cleanup(); }
+	VkDescriptorSetLayoutBinding bindings[3] = {};
 	bindings[0].binding         = 0;
 	bindings[0].descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	bindings[0].descriptorCount = 1;
 	bindings[0].stageFlags      = VK_SHADER_STAGE_COMPUTE_BIT;
 	bindings[1]                 = bindings[0];
 	bindings[1].binding         = 1;
+	bindings[2] = bindings[0]; bindings[2].binding = 2;
 	VkDescriptorSetLayoutCreateInfo set_layout_info = {};
 	set_layout_info.sType      = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	set_layout_info.bindingCount = 2;
+	set_layout_info.bindingCount = ir_uv ? 3 : 2;
 	set_layout_info.pBindings    = bindings;
 	auto vCreateDescriptorSetLayoutD = reinterpret_cast<PFN_vkCreateDescriptorSetLayout>(
 	    dp("vkCreateDescriptorSetLayout"));
@@ -1236,7 +1245,7 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 	}
 	VkDescriptorPoolSize pool_size  = {};
 	pool_size.type            = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	pool_size.descriptorCount = 2;
+	pool_size.descriptorCount = ir_uv ? 3 : 2;
 	VkDescriptorPoolCreateInfo pool_info = {};
 	pool_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	pool_info.maxSets       = 1;
@@ -1269,7 +1278,7 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 	output_range.buffer = output_buffer.buffer;
 	output_range.offset = 0;
 	output_range.range  = static_cast<VkDeviceSize>(kTotalBytes);
-	VkWriteDescriptorSet writes[2]      = {};
+	VkWriteDescriptorSet writes[3]      = {};
 	writes[0].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	writes[0].dstSet          = descriptor_set;
 	writes[0].dstBinding      = 0;
@@ -1279,13 +1288,15 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 	writes[1]                 = writes[0];
 	writes[1].dstBinding      = 1;
 	writes[1].pBufferInfo     = &output_range;
+	VkDescriptorBufferInfo uv_range = {uv_buffer.buffer, 0, kUvBytes};
+	writes[2] = writes[0]; writes[2].dstBinding = 2; writes[2].pBufferInfo = &uv_range;
 	auto vUpdateDescriptorSetsD =
 	    reinterpret_cast<PFN_vkUpdateDescriptorSets>(dp("vkUpdateDescriptorSets"));
 	if (vUpdateDescriptorSetsD == nullptr) {
 		Expect(false, "vkUpdateDescriptorSets is exported for the logical device");
 		return fail_and_cleanup();
 	}
-	vUpdateDescriptorSetsD(device, 2, writes, 0, nullptr);
+	vUpdateDescriptorSetsD(device, ir_uv ? 3 : 2, writes, 0, nullptr);
 	VkCommandPoolCreateInfo command_pool_info = {};
 	command_pool_info.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	command_pool_info.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
@@ -1367,7 +1378,7 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 	std::vector<Scenario> scenarios;
 	if (ir_variant) {
 		Scenario one; one.name = std::string("ir-") + ir_variant; one.initial.Init();
-		one.vertex_count = std::strcmp(ir_variant,"zero") == 0 ? 0 : 3;
+		one.vertex_count = (std::strcmp(ir_variant,"zero") == 0 || std::strcmp(ir_variant,"uv_zero") == 0) ? 0 : 3;
 		one.primitive_count = one.vertex_count ? 1 : 0;
 		const float pos[12] = {-.5f,-.5f,0,1,.5f,-.5f,0,1,-.5f,.484375f,0,1};
 		one.payload_positions.assign(kPositionWords,0); std::memcpy(one.payload_positions.data(),pos,sizeof(pos));
@@ -1382,7 +1393,9 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 	if (g_failures != 0 || g_validation_errors != 0) {
 		return fail_and_cleanup();
 	}
-	for (size_t s_index = 0; s_index < scenarios.size() && !aborted; ++s_index) {
+	// Generated UV mode initializes and checks both outputs inside the draw
+	// submission itself. No standalone dispatch/readback may supply its geometry.
+	for (size_t s_index = 0; s_index < scenarios.size() && !aborted && !ir_uv; ++s_index) {
 		const Scenario& scenario = scenarios[s_index];
 		PrintLine1("scenario %zu/%zu: %s (vertex_count=%u primitive_count=%u dispatch=%s)",
 		           s_index + 1, scenarios.size(), scenario.name.c_str(),
@@ -1496,14 +1509,14 @@ int RunPrototype(uint32_t required_api, bool draw = false, const std::filesystem
 	if (aborted) {
 		return fail_and_cleanup();
 	}
-	if (draw && !RunOffscreenDraw(device, get_device_proc, selected_memory, device_13_capable,
+	if (draw && !ir_uv && !RunOffscreenDraw(device, get_device_proc, selected_memory, device_13_capable,
 	                              queue, command_buffer, submit_fence, pipeline, pipeline_layout,
 	                              descriptor_set, output_buffer, payload_buffer, textured && !image_path.empty() ? image_path.parent_path() / "untextured.ppm" : image_path, false, ir_variant ? &scenarios.front() : nullptr)) {
 		return fail_and_cleanup();
 	}
 	if (textured && !RunOffscreenDraw(device, get_device_proc, selected_memory, device_13_capable,
 	                                  queue, command_buffer, submit_fence, pipeline, pipeline_layout,
-	                                  descriptor_set, output_buffer, payload_buffer, image_path, true)) {
+	                                  descriptor_set, output_buffer, payload_buffer, image_path, true, ir_uv ? &scenarios.front() : nullptr, ir_uv ? &uv_buffer : nullptr)) {
 		return fail_and_cleanup();
 	}
 	// Validation and comparison results decide the run result; warnings alone do
@@ -1529,11 +1542,12 @@ int RunMain(int argc, char** argv) {
 		return g_failures == 0 ? 0 : 1;
 	}
 	const std::string mode = argc >= 2 ? argv[1] : "";
+	const bool ir_texture = mode == "--ir-texture" || mode == "--ir-texture-vulkan12";
 	const bool ir_draw = mode == "--ir-draw" || mode == "--ir-draw-vulkan12";
 	const bool ir_add = mode == "--ir-add" || mode == "--ir-add-vulkan12";
-	const bool ir_mode = ir_draw || ir_add || mode == "--ir" || mode == "--ir-vulkan12";
-	const std::vector<const char*> ir_variants = ir_add ? std::vector<const char*>{"add", "wrap"} : std::vector<const char*>{"triangle", "permuted", "zero"};
-	const bool textured = mode == "--texture" || mode == "--texture-vulkan12";
+	const bool ir_mode = ir_texture || ir_draw || ir_add || mode == "--ir" || mode == "--ir-vulkan12";
+	const std::vector<const char*> ir_variants = ir_texture ? std::vector<const char*>{"uv", "uv_zero"} : ir_add ? std::vector<const char*>{"add", "wrap"} : std::vector<const char*>{"triangle", "permuted", "zero"};
+	const bool textured = ir_texture || mode == "--texture" || mode == "--texture-vulkan12";
 	const bool draw = ir_draw || textured || mode == "--draw" || mode == "--draw-vulkan12";
 	std::filesystem::path image_path;
 	if (draw && argc == 4 && std::strcmp(argv[2], "--image-output") == 0) {
@@ -1545,10 +1559,10 @@ int RunMain(int argc, char** argv) {
 	if (mode == "--validate-draw-spirv") { return ValidateDrawShaders() ? 0 : 1; }
 	if (mode == "--check-host-fixtures") { return CheckHostFixtures(); }
 	const bool validate_only = mode == "--validate-spirv";
-	const bool runtime13 = mode == "--run" || mode == "--draw" || mode == "--texture" || mode == "--ir" || mode == "--ir-add" || mode == "--ir-draw";
-	const bool runtime12 = mode == "--run-vulkan12" || mode == "--draw-vulkan12" || mode == "--texture-vulkan12" || mode == "--ir-vulkan12" || mode == "--ir-add-vulkan12" || mode == "--ir-draw-vulkan12";
+	const bool runtime13 = mode == "--run" || mode == "--draw" || mode == "--texture" || mode == "--ir" || mode == "--ir-add" || mode == "--ir-draw" || mode == "--ir-texture";
+	const bool runtime12 = mode == "--run-vulkan12" || mode == "--draw-vulkan12" || mode == "--texture-vulkan12" || mode == "--ir-vulkan12" || mode == "--ir-add-vulkan12" || mode == "--ir-draw-vulkan12" || mode == "--ir-texture-vulkan12";
 	if (!validate_only && !runtime13 && !runtime12) {
-		std::printf("[p41] usage: %s --validate-spirv | --run | --run-vulkan12 | --check-host-fixtures | --validate-module-vk13 FILE | --draw | --draw-vulkan12 [--image-output FILE] | --check-draw-oracle | --validate-draw-spirv | --texture | --texture-vulkan12 [--image-output FILE] | --check-texture-fixtures | --validate-texture-spirv | --ir | --ir-vulkan12 | --ir-add | --ir-add-vulkan12 | --ir-draw | --ir-draw-vulkan12 [--image-output FILE]\n", argv[0]);
+		std::printf("[p41] usage: %s --validate-spirv | --run | --run-vulkan12 | --check-host-fixtures | --validate-module-vk13 FILE | --draw | --draw-vulkan12 [--image-output FILE] | --check-draw-oracle | --validate-draw-spirv | --texture | --texture-vulkan12 [--image-output FILE] | --check-texture-fixtures | --validate-texture-spirv | --ir | --ir-vulkan12 | --ir-add | --ir-add-vulkan12 | --ir-draw | --ir-draw-vulkan12 | --ir-texture | --ir-texture-vulkan12 [--image-output FILE]\n", argv[0]);
 		return 1;
 	}
 	if (!RunOfflineValidation() || (draw && !ValidateDrawShaders()) || (textured && !ValidateTextureShaders())) {
@@ -1580,13 +1594,13 @@ int RunMain(int argc, char** argv) {
 		for (const char* variant : ir_variants) {
 			PrintLine1("IR case: %s", variant);
 			auto variant_image = image_path;
-			if (ir_draw && !image_path.empty()) {
+			if ((ir_draw || ir_texture) && !image_path.empty()) {
 				auto name = image_path.stem();
 				name += std::filesystem::path(std::string("-") + variant);
 				name += image_path.extension();
 				variant_image = image_path.parent_path() / name;
 			}
-			dispatch_result = RunPrototype(requested_api, ir_draw, variant_image, false, variant);
+			dispatch_result = RunPrototype(requested_api, ir_draw || ir_texture, variant_image, ir_texture, variant);
 			if (dispatch_result != 0 || g_failures != 0 || g_validation_errors != 0) { break; }
 		}
 	} else { dispatch_result = RunPrototype(requested_api, draw, image_path, textured); }
@@ -1598,7 +1612,8 @@ int RunMain(int argc, char** argv) {
 	}
 	if (dispatch_result == 0) {
 		if (ir_mode) { PrintLine1("IR RESULT: PASS (generated modules, exact full blobs, validation including cleanup)"); }
-		if (textured) { PrintLine1("TEXTURE RESULT: PASS (sampled texture, compute UVs/guards/boundaries, exact RGBA, validation including cleanup)"); }
+		if (ir_texture) { PrintLine1("IR TEXTURE RESULT: PASS (generated UV and geometry, exact full buffers/RGBA, validation including cleanup)"); }
+		if (textured && !ir_texture) { PrintLine1("TEXTURE RESULT: PASS (sampled texture, compute UVs/guards/boundaries, exact RGBA, validation including cleanup)"); }
 		if (draw) { PrintLine1("DRAW RESULT: PASS (clear control + compute-generated indexed triangle, all pixels/full blob, validation including cleanup)"); }
 		PrintLine1("RESULT: PASS (Vulkan %s%s; requested full-blob scenarios; core + synchronization validation including cleanup)",
 		           runtime13 ? "1.3" : "1.2", runtime12 ? " AUXILIARY, not Vulkan 1.3 evidence" : "");

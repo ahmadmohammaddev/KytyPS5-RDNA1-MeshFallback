@@ -946,10 +946,20 @@ add_custom_command(OUTPUT ${mesh_ir_generated_modules}
   COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --emit "${mesh_proto_generated_dir}"
   DEPENDS mesh_ir_compute_tests VERBATIM)
 add_custom_target(mesh_ir_generated_shaders DEPENDS ${mesh_ir_generated_modules})
+set(mesh_ir_uv_modules)
+foreach(api IN ITEMS 12 13)
+  foreach(name IN ITEMS uv uv_zero)
+    list(APPEND mesh_ir_uv_modules "${mesh_proto_generated_dir}/mesh_ir_${name}_vk${api}.spv")
+  endforeach()
+endforeach()
+add_custom_command(OUTPUT ${mesh_ir_uv_modules}
+  COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --emit-uv "${mesh_proto_generated_dir}"
+  DEPENDS mesh_ir_compute_tests VERBATIM)
+add_custom_target(mesh_ir_uv_generated_shaders DEPENDS ${mesh_ir_uv_modules})
 add_executable(mesh_compute_proto_tests EXCLUDE_FROM_ALL
 	"${KYTY_TESTS_DIR}/MeshComputePrototypeTests.cpp"
 )
-add_dependencies(mesh_compute_proto_tests mesh_compute_proto_shaders mesh_offscreen_shaders mesh_texture_shaders mesh_ir_generated_shaders)
+add_dependencies(mesh_compute_proto_tests mesh_compute_proto_shaders mesh_offscreen_shaders mesh_texture_shaders mesh_ir_generated_shaders mesh_ir_uv_generated_shaders)
 target_link_libraries(mesh_compute_proto_tests spirv-tools Vulkan::Headers ${CMAKE_DL_LIBS})
 target_include_directories(mesh_compute_proto_tests PRIVATE ${inc_headers})
 target_compile_definitions(mesh_compute_proto_tests PRIVATE VK_NO_PROTOTYPES)
@@ -1470,7 +1480,11 @@ if(BUILD_TESTING)
 		--image-output "${PROJECT_BINARY_DIR}/mesh-ir-draw-vk13.ppm")
 	add_test(NAME mesh_ir_draw_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir-draw-vulkan12
 		--image-output "${PROJECT_BINARY_DIR}/mesh-ir-draw-vk12.ppm")
-	set_tests_properties(mesh_ir_runtime mesh_ir_runtime_vk12 mesh_ir_add_runtime mesh_ir_add_runtime_vk12 mesh_ir_draw mesh_ir_draw_vk12 PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 41)
+	add_test(NAME mesh_ir_textured_draw COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir-texture
+		--image-output "${PROJECT_BINARY_DIR}/mesh-ir-texture-vk13.ppm")
+	add_test(NAME mesh_ir_textured_draw_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --ir-texture-vulkan12
+		--image-output "${PROJECT_BINARY_DIR}/mesh-ir-texture-vk12.ppm")
+	set_tests_properties(mesh_ir_runtime mesh_ir_runtime_vk12 mesh_ir_add_runtime mesh_ir_add_runtime_vk12 mesh_ir_draw mesh_ir_draw_vk12 mesh_ir_textured_draw mesh_ir_textured_draw_vk12 PROPERTIES TIMEOUT 180 SKIP_RETURN_CODE 41)
 	add_test(NAME mesh_proto_spirv COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --validate-spirv)
 	set_tests_properties(mesh_proto_spirv PROPERTIES TIMEOUT 120)
 	add_test(NAME mesh_proto_host_fixtures COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --check-host-fixtures)

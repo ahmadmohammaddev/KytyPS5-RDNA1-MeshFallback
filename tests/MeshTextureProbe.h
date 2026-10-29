@@ -146,6 +146,7 @@ struct TextureProbe {
   PFN_vkGetDeviceProcAddr proc;
   const VkPhysicalDeviceMemoryProperties &memory;
   GpuBuffer uv, staging;
+  bool borrowed_uv = false;
   VkImage image = VK_NULL_HANDLE;
   VkDeviceMemory image_memory = VK_NULL_HANDLE;
   VkImageView view = VK_NULL_HANDLE;
@@ -236,6 +237,7 @@ struct TextureProbe {
       FreeMemory(device, image_memory, nullptr);
     }
     for (auto *b : {&uv, &staging}) {
+      if (b == &uv && borrowed_uv) continue;
       if (b->mapped) {
         UnmapMemory(device, b->memory);
       }
@@ -247,7 +249,8 @@ struct TextureProbe {
       }
     }
   }
-  bool Initialize(bool api13) {
+  bool Initialize(bool api13, GpuBuffer* generated_uv = nullptr) {
+    borrowed_uv = generated_uv != nullptr;
     CreateImage =
         reinterpret_cast<PFN_vkCreateImage>(proc(device, "vkCreateImage"));
     if (!CreateImage) {
@@ -486,12 +489,15 @@ struct TextureProbe {
       Expect(false, "texture vkResetFences resolves");
       return false;
     }
-    if (AllocateMappedBuffer(device, proc, memory, kUvBytes,
+    // Adopt only after cleanup entry points have all been resolved, so a failed
+    // lookup cannot leave a borrowed live buffer with an incomplete destructor.
+    if (generated_uv) uv = *generated_uv;
+    if ((!borrowed_uv && AllocateMappedBuffer(device, proc, memory, kUvBytes,
                              VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
                                  VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
                              VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, uv,
-                             "uv-output") != 0 ||
+                             "uv-output") != 0) ||
         AllocateMappedBuffer(device, proc, memory, 16,
                              VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
@@ -609,6 +615,9 @@ struct TextureProbe {
     writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     writes[1].pImageInfo = &tex;
     UpdateDescriptorSets(device, 2, writes, 0, nullptr);
+    // The IR pipeline owns UV generation in borrowed mode. Do not even create
+    // the authored UV pipeline: its dispatch would hide translation mistakes.
+    if (borrowed_uv) return true;
     const auto words =
         LoadSpirvFile(TextureModulePath(api13, "comp"), "UV generator");
     if (words.empty()) {
@@ -663,13 +672,15 @@ struct TextureProbe {
     return true;
   }
   void Record(VkCommandBuffer cmd) {
-    CmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, compute);
-    CmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, compute_layout,
-                          0, 1, &uv_set, 0, nullptr);
-    const uint32_t count = 3;
-    CmdPushConstants(cmd, compute_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, 4,
-                     &count);
-    CmdDispatch(cmd, 1, 1, 1);
+    if (!borrowed_uv) {
+      CmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, compute);
+      CmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, compute_layout,
+                            0, 1, &uv_set, 0, nullptr);
+      const uint32_t count = 3;
+      CmdPushConstants(cmd, compute_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, 4,
+                       &count);
+      CmdDispatch(cmd, 1, 1, 1);
+    }
     VkBufferMemoryBarrier uv_barrier = {};
     uv_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
     uv_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
@@ -784,7 +795,7 @@ struct TextureProbe {
     }
     return true;
   }
-  bool Check(bool draw) {
+  bool Check(bool draw, uint32_t count = 3) {
     if (uv.noncoherent) {
       VkMappedMemoryRange range = {};
       range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
@@ -797,7 +808,7 @@ struct TextureProbe {
     }
     auto expected = InitUv();
     if (draw) {
-      WriteUv(expected, 3);
+      WriteUv(expected, count);
     }
     Expect(std::memcmp(uv.mapped, expected.data(), kUvBytes) == 0,
            "entire UV blob/count/status/guards/unused slots match");

@@ -86,7 +86,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
                       VkQueue queue, VkCommandBuffer cmd, VkFence fence,
                       VkPipeline compute, VkPipelineLayout compute_layout, VkDescriptorSet set,
                       GpuBuffer& output, GpuBuffer& payload, const std::filesystem::path& image_path, bool textured = false,
-                      const Scenario* generated = nullptr) {
+                      const Scenario* generated = nullptr, GpuBuffer* generated_uv = nullptr) {
 	// Resolve every entry point, including teardown, before creating any draw objects.
 #define DRAW_PROC(name) auto name = reinterpret_cast<PFN_vk##name>(proc(device, "vk" #name)); \
 	if (name == nullptr) { Expect(false, "draw entry point vk" #name); return false; }
@@ -131,7 +131,7 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		if (readback.buffer) { DestroyBuffer(device, readback.buffer, nullptr); }
 		if (readback.memory) { FreeMemory(device, readback.memory, nullptr); }
 	}};
-	if (textured && !texture.Initialize(api13)) { return false; }
+	if (textured && !texture.Initialize(api13, generated_uv)) { return false; }
 	VkImageCreateInfo image_info = {};
 	image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	image_info.imageType = VK_IMAGE_TYPE_2D;
@@ -385,8 +385,8 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		MeshOutputBlob actual;
 		std::memcpy(actual.words.data(), output.mapped, kTotalBytes);
 		CompareBlobWords(actual, draw ? scenario.expected : scenario.initial, "draw exact full output blob including guards");
-		if (textured && !texture.Check(draw)) { return false; }
-		const size_t mismatches = textured ? TextureMismatches(static_cast<const uint8_t*>(readback.mapped), draw)
+		if (textured && !texture.Check(draw, scenario.vertex_count)) { return false; }
+		const size_t mismatches = textured ? TextureMismatches(static_cast<const uint8_t*>(readback.mapped), draw && scenario.primitive_count != 0)
 		                                    : PixelMismatches(static_cast<const uint8_t*>(readback.mapped), draw && scenario.primitive_count != 0);
 		PrintLine1("offscreen %s: 64x64 RGBA pixels mismatched=%zu/4096; full blob checked",
 		           draw ? (scenario.primitive_count == 0 ? "compute-zero-output" : (textured ? "textured-compute-indexed-triangle" : "compute-indexed-triangle")) : "clear-only-control", mismatches);
@@ -403,6 +403,6 @@ bool RunOffscreenDraw(VkDevice device, PFN_vkGetDeviceProcAddr proc,
 		}
 		if (g_failures != 0 || g_validation_errors != 0) { return false; }
 	}
-	if (textured && !texture.CheckBoundaries(cmd, queue, fence)) { return false; }
+	if (textured && !generated_uv && !texture.CheckBoundaries(cmd, queue, fence)) { return false; }
 	return true; // scope cleanup runs before caller's final validation summary
 }
