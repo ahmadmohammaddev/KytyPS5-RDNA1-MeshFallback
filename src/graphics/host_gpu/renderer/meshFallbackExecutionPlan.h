@@ -9,6 +9,7 @@ namespace Libs::Graphics::MeshFallback {
 // are not compiler proof. Fresh initialized guarded storage per in-flight draw
 // must remain alive through compute AND graphics completion before reuse.
 struct ExecutionPlan {
+  bool operator==(const ExecutionPlan&) const = default;
   uint32_t vertices=0,primitives=0,index_count=0;
   uint64_t geometry_bytes=0,uv_bytes=0;
   uint64_t position_offset=0,position_bytes=0,index_offset=0,index_bytes=0;

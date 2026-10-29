@@ -2,7 +2,7 @@
 
 > **This is the project's durable memory.** It is a living plan, not a frozen specification. Keep it current in every Codex session, commit it alongside code changes, and do not pretend untested work is complete.
 >
-> **Last edited:** 2026-10-29. **Plan revision:** 6.4. **Overall status:** S-064 native isolated compiler-bundle/plan execution gate PASS; production resource lifetime/scheduler integration remains open.
+> **Last edited:** 2026-10-29. **Plan revision:** 6.6. **Overall status:** S-066 recoverable unsubmitted Buffer allocation/rollback verified locally; native S-064 bundle gate retained; descriptor/completion ownership remains open.
 
 ## 0. Mission and boundaries
 
@@ -36,7 +36,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Field | Current value |
 | --- | --- |
 | Current phase | **P2/P3 support IN_PROGRESS: adapter promotion moved compiler-owned lowering/specialization/ABI into `src`; renderer wiring remains open** |
-| Current subtask | S-064 native compiler-bundle execution acceptance DONE with evidence; renderer not activated |
+| Current subtask | S-066 recoverable unsubmitted Buffer boundary; CPU and real VMA rollback PASS; renderer not activated |
 | Status | P2.1 and S-045 evidence retained; P0/P0.4 incomplete and deferred per D-016; hardware gates open |
 | Last verified git commit | Clean package source `b2b9cb4c13f3f770bad0339d31fe33cae0c718d7`, build20261029T141854777Z |
 | Working branch | `feature/rdna1-mesh-fallback` (verified) |
@@ -45,7 +45,7 @@ Astro Bot stays installed locally on the desktop. Title `PPSA21567`, launcher-re
 | Native RDNA1 smoke test | S-064 RX5700XT API1.4.308 AMD25.6.1:21 stages PASS,15 native strict selections/cleanups zero errors/warnings; bundle triangle/permuted/zero accepted |
 | Passing tests | S-06346 cases34 PASS/12 strict SKIPPED/0 FAIL(7.01s);27 expected package/negative outcomes;15 exact PPMs/5 complete bounded float CSVs/44 unchanged modules |
 | Known blockers / limits | Native isolated bundle/plan gate PASS; production resource ownership/descriptors/lifetime/scheduler/cache activation and wider indexed/dynamic/CFG/LDS/resource/game support remain open |
-| Next single actionable task | Production per-draw resource/lifetime preparation using existing Buffer and scheduler completion contract; failure rollback/in-flight retention/exact-once retirement tests, no renderer activation |
+| Next single actionable task | Dedicated recoverable descriptor ownership around unsubmitted buffers, failure rollback and actual validation-clean allocation/update; then scheduler completion retention, no renderer activation |
 
 ### Definition of status
 `NOT_STARTED` / `IN_PROGRESS` / `BLOCKED` / `DONE (with evidence)` / `ABANDONED (with reason)`.
@@ -1238,3 +1238,15 @@ Input `a1b9d97be74c18ccc8ebbd65515becf86af8bd66`, branch `feature/rdna1-mesh-fal
 Compilation, unit tests, shader compilation/SPIR-V validation, Vulkan integration, new RDNA1 hardware tests, and Astro Bot tests: NOT RUN. S-064 native isolated bundle evidence remains unchanged. No build, renderer activation, package or push. Initial guessed source path failed and was corrected through `rg --files`; initial sandbox status/submodule commands failed and were rerun successfully outside sandbox.
 
 Next single task: implement and test a recoverable resource allocation boundary using the existing `Buffer` without changing existing callers' failure behavior; prove partial allocation rollback before proceeding to descriptor ownership and scheduler completion. Acceptance: injected allocation failure after an earlier successful allocation releases that allocation exactly once, returns a precise failure, and produces no usable partial resource; success and zero-output plans are covered. Retain complete dirty-build provenance and use two jobs/no PGO/IPO. Then continue the requested lifecycle work under D-033; no RX handoff yet.
+
+### Session S-066 / E-066 — recoverable unsubmitted Buffer boundary
+
+Input `753d376e`, branch feature/rdna1-mesh-fallback, all14 matching clean submodules and pinned ancestry verified. Selected first prerequisite from S-065. Shared Buffer allocation moved to bufferAllocation.cpp; new TryCreate returns precise errors for non-sparse/non-BDA scratch, legacy constructor retains fatal failure. Shared retry helper preserves reclaim/budget order. Checked bundle/plan preparation privately owns geometry/optional UV until complete success; zero guarded storage, error-plus-handle and partial-UV failure roll back exactly once. Immediate destruction means UNSUBMITTED only; no renderer or retirement activation.
+
+Evidence `_Build/p2-s066/`, complete snapshots `_Build/p0-s012/p2-s066-pre-build-01/` through `-09/` (final built code).49-case serial suite36 PASS/13 strict SKIPPED/0FAIL(8.24s). CPU retries/transaction PASS; real Intel IrisXe API1.2.172 Buffer+VMA allocation/host-memory/rollback PASS,8 native buffers created/destroyed,18 injected vkCreateBuffer refusals, zero validation errors/warnings through cleanup. Strict1.3 SKIPPED, missing layers correctly SKIPPED, bad CLI correctly FAIL.44 modules byte-identical. Real memory exhaustion/noncoherent guarantee/native RX/new game NOT RUN. Six categories: compilation full emulator+focused build PASS; unit PASS; shader/SPIR-V regressions PASS; Vulkan PASS auxiliary1.2 and SKIPPED strict1.3; RDNA1 NOT RUN for new boundary; Astro Bot NOT RUN. Historical S-064 native bundle result unchanged. Retain build04–08 failures and final09 link pass, details in docs/RDNA1_BUFFER_BOUNDARY_S066.md. No transferable package or push.
+
+Decision D-036: split S-064 resource milestone at the recoverable allocation prerequisite found in S-065. Do not retrofit global DescriptorHeap fatal behavior or claim immediate owners are safe in flight. Next single task dedicated recoverable compute descriptor ownership, bindings1/2 with no payload0, setup-failure rollback and exact-once cleanup/zero coverage plus actual Vulkan validation. Then explicit current-recording last-use retention and controlled completion/shutdown tests; no per-draw wait or renderer activation. D-028 batching/D-033 sequential authorization retained.
+
+Change history 6.6 (2026-10-29): S-066 recoverable Buffer prerequisite, CPU and actual VMA fault/rollback evidence; descriptor/completion gates remain open.
+
+Final verification: build10 full emulator+focused targets PASS exit0, serial final49-case suite36PASS/13SKIPPED/0FAIL(8.24s). Final13-file source manifest matches snapshot09 SHA-256 exactly; docs added after build. git diff --check PASS. No physical memory exhaustion, new RX or Astro Bot execution.

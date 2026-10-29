@@ -952,6 +952,29 @@ file(GLOB mesh_ir_frontend_sources CONFIGURE_DEPENDS
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/frontend/cfg/*.cpp"
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/frontend/decode/*.cpp"
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/frontend/translate/*.cpp")
+add_executable(mesh_buffer_vma_tests EXCLUDE_FROM_ALL
+  "${KYTY_TESTS_DIR}/MeshBufferVmaTests.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/host_gpu/renderer/cache/bufferAllocation.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/host_gpu/vma.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/host_gpu/vramStats.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/host_gpu/vramBudget.cpp"
+  "${KYTY_SOURCE_DIR}/graphics/host_gpu/queueSubmission.cpp")
+target_include_directories(mesh_buffer_vma_tests PRIVATE ${inc_headers})
+target_link_libraries(mesh_buffer_vma_tests PRIVATE common Vulkan::Headers ${CMAKE_DL_LIBS})
+if(MSVC)
+  target_compile_options(mesh_buffer_vma_tests PRIVATE /Gy /Gw)
+  target_link_options(mesh_buffer_vma_tests PRIVATE /OPT:REF)
+elseif(NOT APPLE)
+  target_compile_options(mesh_buffer_vma_tests PRIVATE -ffunction-sections -fdata-sections)
+  target_link_options(mesh_buffer_vma_tests PRIVATE -Wl,--gc-sections)
+endif()
+add_library(mesh_buffer_boundary_compile OBJECT EXCLUDE_FROM_ALL "${KYTY_TESTS_DIR}/MeshBufferPreparationCompile.cpp")
+target_include_directories(mesh_buffer_boundary_compile PRIVATE ${inc_headers})
+target_link_libraries(mesh_buffer_boundary_compile PRIVATE common Vulkan::Headers)
+add_executable(mesh_buffer_allocation_tests EXCLUDE_FROM_ALL "${KYTY_TESTS_DIR}/MeshBufferAllocationTests.cpp")
+add_dependencies(mesh_buffer_allocation_tests mesh_buffer_boundary_compile)
+target_include_directories(mesh_buffer_allocation_tests PRIVATE ${inc_headers})
+target_link_libraries(mesh_buffer_allocation_tests PRIVATE Vulkan::Headers)
 add_executable(mesh_ir_frontend_tests EXCLUDE_FROM_ALL
   "${KYTY_TESTS_DIR}/MeshIrFrontendTests.cpp"
   "${KYTY_SOURCE_DIR}/graphics/shader/recompiler/MeshComputeLowering.cpp"
@@ -1547,6 +1570,10 @@ if(BUILD_TESTING)
 	add_test(NAME mesh_ir_uv_rejections COMMAND $<TARGET_FILE:mesh_ir_compute_tests> --uv-reject)
 	add_test(NAME mesh_ir_frontend_compatibility COMMAND $<TARGET_FILE:mesh_ir_frontend_tests>)
 	set_tests_properties(mesh_ir_frontend_compatibility PROPERTIES TIMEOUT 120)
+  add_test(NAME mesh_buffer_vma COMMAND $<TARGET_FILE:mesh_buffer_vma_tests> --vulkan13)
+  add_test(NAME mesh_buffer_vma_vk12 COMMAND $<TARGET_FILE:mesh_buffer_vma_tests> --vulkan12)
+  set_tests_properties(mesh_buffer_vma mesh_buffer_vma_vk12 PROPERTIES TIMEOUT 60 SKIP_RETURN_CODE 41)
+  add_test(NAME mesh_buffer_allocation COMMAND $<TARGET_FILE:mesh_buffer_allocation_tests>)
   add_test(NAME mesh_bundle_offline COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --check-bundle)
   add_test(NAME mesh_bundle_draw COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --bundle-draw --image-output "${PROJECT_BINARY_DIR}/mesh-bundle-vk13.ppm")
   add_test(NAME mesh_bundle_draw_vk12 COMMAND $<TARGET_FILE:mesh_compute_proto_tests> --bundle-draw-vulkan12 --image-output "${PROJECT_BINARY_DIR}/mesh-bundle-vk12.ppm")
@@ -2754,6 +2781,8 @@ if(BUILD_TESTING)
 		mesh_output_contract_tests
 		mesh_compute_proto_tests
 		mesh_ir_compute_tests
+		mesh_buffer_vma_tests
+		mesh_buffer_allocation_tests
 		mesh_ir_frontend_tests
 		shader_precompile_tests
 		shader_vertex_metadata_tests

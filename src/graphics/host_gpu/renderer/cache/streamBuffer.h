@@ -6,6 +6,7 @@
 #include "graphics/host_gpu/vulkanCommon.h"
 
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <span>
 #include <utility>
@@ -47,6 +48,13 @@ public:
 	Buffer(GraphicContext& graphics, CommandScheduler& scheduler, MemoryUsage usage,
 	       uint64_t cpu_address, vk::BufferUsageFlags flags, uint64_t size,
 	       bool transfer_shared = false, bool host_cached = false, bool sparse_residency = false);
+	// Recoverable allocation-only boundary for non-sparse, non-BDA scratch.
+	// Same budget/reclaim retries as legacy creation. No commands are recorded;
+	// destruction is immediate, so an owner must retain submitted buffers.
+	// Null scheduler: allocation/host memory only; Fill explicitly rejects it.
+	[[nodiscard]] static std::unique_ptr<Buffer>
+	TryCreate(GraphicContext& graphics, CommandScheduler* scheduler, MemoryUsage usage,
+	          vk::BufferUsageFlags flags, uint64_t size, vk::Result& error);
 	~Buffer();
 	KYTY_CLASS_NO_COPY(Buffer);
 
@@ -58,11 +66,11 @@ public:
 	[[nodiscard]] MemoryUsage        Usage() const noexcept { return m_usage; }
 	[[nodiscard]] uint64_t           CpuAddress() const noexcept { return m_cpu_address; }
 	// GPU-thread command-recording revision, including writes that have not executed yet.
-	[[nodiscard]] uint64_t ContentRevision() const noexcept { return m_content_revision; }
-	void MarkContentWritten();
+	[[nodiscard]] uint64_t          ContentRevision() const noexcept { return m_content_revision; }
+	void                            MarkContentWritten();
 	[[nodiscard]] vk::DeviceAddress BufferDeviceAddress() const noexcept;
-	[[nodiscard]] uint64_t           Offset(uint64_t address) const noexcept {
-		return address - m_cpu_address;
+	[[nodiscard]] uint64_t          Offset(uint64_t address) const noexcept {
+        return address - m_cpu_address;
 	}
 	[[nodiscard]] bool IsInBounds(uint64_t address, uint64_t size) const noexcept;
 	void               IncreaseStreamScore(int score) noexcept { stream_score += score; }
@@ -74,10 +82,10 @@ public:
 	              vk::AccessFlags source_before      = vk::AccessFlagBits::eMemoryWrite,
 	              vk::AccessFlags destination_before = vk::AccessFlagBits::eMemoryRead |
 	                                                   vk::AccessFlagBits::eMemoryWrite,
-	              vk::AccessFlags source_after       = vk::AccessFlagBits::eMemoryRead |
-	                                                   vk::AccessFlagBits::eMemoryWrite,
-	              vk::AccessFlags destination_after  = vk::AccessFlagBits::eMemoryRead |
-	                                                   vk::AccessFlagBits::eMemoryWrite);
+	              vk::AccessFlags source_after = vk::AccessFlagBits::eMemoryRead |
+	                                             vk::AccessFlagBits::eMemoryWrite,
+	              vk::AccessFlags destination_after = vk::AccessFlagBits::eMemoryRead |
+	                                                  vk::AccessFlagBits::eMemoryWrite);
 	void Fill(uint64_t offset, uint64_t size, uint32_t value);
 
 	// BufferCache state lives directly on the resource.
@@ -92,26 +100,31 @@ protected:
 	[[nodiscard]] CommandScheduler& Scheduler() const noexcept { return *m_scheduler; }
 
 private:
+	struct EmptyTag {};
+	Buffer(EmptyTag, GraphicContext& graphics, CommandScheduler* scheduler, MemoryUsage usage,
+	       uint64_t cpu_address, uint64_t size) noexcept;
+	vk::Result Initialize(vk::BufferUsageFlags flags, bool transfer_shared, bool host_cached,
+	                      bool sparse_residency);
 	[[nodiscard]] vk::BufferMemoryBarrier Barrier(uint64_t offset, uint64_t size,
 	                                              vk::AccessFlags source,
 	                                              vk::AccessFlags destination) const;
 
-	GraphicContext*               m_graphics    = nullptr;
-	CommandScheduler*             m_scheduler   = nullptr;
-	MemoryUsage                   m_usage       = MemoryUsage::DeviceLocal;
-	uint64_t                      m_cpu_address = 0;
-	uint64_t                      m_content_revision = 1;
-	vk::DeviceAddress             m_device_address = 0;
-	vk::Buffer                    m_buffer     = nullptr;
-	VmaAllocation                 m_allocation = nullptr;
-	uint64_t                      m_size;
-	bool                          m_coherent = false;
-	bool                          m_sparse   = false;
-	std::span<uint8_t>            m_mapped;
+	GraphicContext*    m_graphics         = nullptr;
+	CommandScheduler*  m_scheduler        = nullptr;
+	MemoryUsage        m_usage            = MemoryUsage::DeviceLocal;
+	uint64_t           m_cpu_address      = 0;
+	uint64_t           m_content_revision = 1;
+	vk::DeviceAddress  m_device_address   = 0;
+	vk::Buffer         m_buffer           = nullptr;
+	VmaAllocation      m_allocation       = nullptr;
+	uint64_t           m_size;
+	bool               m_coherent = false;
+	bool               m_sparse   = false;
+	std::span<uint8_t> m_mapped;
 	// KYTY_VRAM_STATS (vramStats.h): what this buffer was counted as (0 bytes: not counted).
-	uint64_t                      m_vram_bytes        = 0;
-	uint8_t                       m_vram_kind         = 0;
-	bool                          m_vram_device_local = false;
+	uint64_t m_vram_bytes        = 0;
+	uint8_t  m_vram_kind         = 0;
+	bool     m_vram_device_local = false;
 };
 
 class StreamBuffer final: public Buffer {
@@ -119,8 +132,8 @@ public:
 	// extra_flags: usage beyond AllFlags (e.g. eShaderDeviceAddress for a ring whose ranges
 	// shaders reach by device address).
 	StreamBuffer(GraphicContext& graphics, CommandScheduler& scheduler, MemoryUsage usage,
-	             uint64_t size, bool transfer_shared = false,
-	             vk::BufferUsageFlags extra_flags = {}, bool host_cached = false);
+	             uint64_t size, bool transfer_shared = false, vk::BufferUsageFlags extra_flags = {},
+	             bool host_cached = false);
 
 	[[nodiscard]] std::pair<uint8_t*, uint64_t> Map(uint64_t size, uint64_t alignment = 0,
 	                                                bool allow_wait = true);

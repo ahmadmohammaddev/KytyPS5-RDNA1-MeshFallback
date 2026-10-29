@@ -91,7 +91,7 @@ try {
     Write-Host "Configure/build clean commit $commit (jobs=$Jobs); evidence: $evidence"
     Native -Exe $cmake -Arguments (@('-S',$repo,'-B',$build,'-G','Ninja') + $flags) -Log "$evidence/configure.log" | Out-Null
     Native -Exe $cmake -Arguments @('--build',$build,'--target','KytyGitVersion','--parallel',"$Jobs") -Log "$evidence/version-build.log" | Out-Null
-    Native -Exe $cmake -Arguments @('--build',$build,'--target','mesh_output_contract_tests','mesh_compute_proto_tests','mesh_ir_compute_tests','mesh_ir_frontend_tests','mesh_fallback_policy_tests','mesh_compute_cache_key_tests','mesh_vertex_bridge_tests','shader_cfg_tests','--parallel',"$Jobs") -Log "$evidence/build.log" | Out-Null
+    Native -Exe $cmake -Arguments @('--build',$build,'--target','mesh_buffer_allocation_tests','mesh_output_contract_tests','mesh_compute_proto_tests','mesh_ir_compute_tests','mesh_ir_frontend_tests','mesh_fallback_policy_tests','mesh_compute_cache_key_tests','mesh_vertex_bridge_tests','shader_cfg_tests','--parallel',"$Jobs") -Log "$evidence/build.log" | Out-Null
     Copy-Item -LiteralPath "$build/CMakeCache.txt" -Destination "$evidence/CMakeCache.txt"
     Copy-Item -LiteralPath "$build/kytyGitVersion.h" -Destination "$evidence/kytyGitVersion.h"
     $cache = Get-Content -LiteralPath "$build/CMakeCache.txt"
@@ -105,11 +105,11 @@ try {
         $env:VK_LAYER_PATH = $layer
     }
     $env:VK_INSTANCE_LAYERS = $null # the harness explicitly enables its required layer
-    $selection = '^(mesh_output_contract|mesh_proto_spirv|mesh_proto_host_fixtures|mesh_proto_reject_shape|mesh_compute_proto|mesh_compute_proto_vk12|mesh_draw_oracle|mesh_draw_spirv|mesh_offscreen_draw|mesh_offscreen_draw_vk12|mesh_texture_fixtures|mesh_texture_spirv|mesh_textured_draw|mesh_textured_draw_vk12|mesh_ir_compute_positive|mesh_ir_compute_rejections|mesh_ir_runtime|mesh_ir_runtime_vk12|mesh_ir_add_runtime|mesh_ir_add_runtime_vk12|mesh_ir_uv_positive|mesh_ir_uv_rejections|mesh_ir_draw|mesh_ir_draw_vk12|mesh_ir_textured_draw|mesh_ir_textured_draw_vk12|mesh_ir_frontend_compatibility|mesh_frontend_draw|mesh_frontend_draw_vk12|mesh_frontend_textured_draw|mesh_frontend_textured_draw_vk12|mesh_paired_float_diagnostic|mesh_paired_float_diagnostic_vk12|mesh_bundle_offline|mesh_bundle_draw|mesh_bundle_draw_vk12|mesh_paired_oracle|mesh_paired_spirv|mesh_paired_draw|mesh_paired_draw_vk12|mesh_fallback_policy|mesh_compute_cache_key|mesh_vertex_bridge|mesh_pixel_bridge_pairing|pixel_interface|unused_pixel_inputs)$'
+    $selection = '^(mesh_output_contract|mesh_proto_spirv|mesh_proto_host_fixtures|mesh_proto_reject_shape|mesh_compute_proto|mesh_compute_proto_vk12|mesh_draw_oracle|mesh_draw_spirv|mesh_offscreen_draw|mesh_offscreen_draw_vk12|mesh_texture_fixtures|mesh_texture_spirv|mesh_textured_draw|mesh_textured_draw_vk12|mesh_ir_compute_positive|mesh_ir_compute_rejections|mesh_ir_runtime|mesh_ir_runtime_vk12|mesh_ir_add_runtime|mesh_ir_add_runtime_vk12|mesh_ir_uv_positive|mesh_ir_uv_rejections|mesh_ir_draw|mesh_ir_draw_vk12|mesh_ir_textured_draw|mesh_ir_textured_draw_vk12|mesh_ir_frontend_compatibility|mesh_frontend_draw|mesh_frontend_draw_vk12|mesh_frontend_textured_draw|mesh_frontend_textured_draw_vk12|mesh_paired_float_diagnostic|mesh_paired_float_diagnostic_vk12|mesh_buffer_allocation|mesh_bundle_offline|mesh_bundle_draw|mesh_bundle_draw_vk12|mesh_paired_oracle|mesh_paired_spirv|mesh_paired_draw|mesh_paired_draw_vk12|mesh_fallback_policy|mesh_compute_cache_key|mesh_vertex_bridge|mesh_pixel_bridge_pairing|pixel_interface|unused_pixel_inputs)$'
     Native -Exe $ctest -Arguments @('--test-dir',$build,'--output-on-failure','--parallel','1','-V',
         '--output-junit',"$evidence/ctest.xml",'-R',$selection) -Log "$evidence/ctest.log" | Out-Null
     [xml]$junit = Get-Content -Raw -LiteralPath "$evidence/ctest.xml"
-    if ([int]$junit.testsuite.tests -ne 46 -or [int]$junit.testsuite.failures -ne 0) { throw 'Unexpected test inventory/results' }
+    if ([int]$junit.testsuite.tests -ne 47 -or [int]$junit.testsuite.failures -ne 0) { throw 'Unexpected test inventory/results' }
     $testResults = @($junit.testsuite.testcase | ForEach-Object {
         [ordered]@{name=$_.name; status=$(if ($_.skipped) { 'SKIPPED' } else { 'PASS' })}
     })
@@ -187,7 +187,7 @@ try {
         configuration=@{generator='Ninja'; flags=$flags; jobs=$Jobs; testParallelism=1};
         commands=@('cmake -S SOURCE -B BUILD -G Ninja [configuration.flags]',
             'cmake --build BUILD --target KytyGitVersion --parallel JOBS',
-            'cmake --build BUILD --target mesh_output_contract_tests mesh_compute_proto_tests mesh_ir_compute_tests mesh_ir_frontend_tests mesh_fallback_policy_tests mesh_compute_cache_key_tests mesh_vertex_bridge_tests shader_cfg_tests --parallel JOBS',
+            'cmake --build BUILD --target mesh_buffer_allocation_tests mesh_output_contract_tests mesh_compute_proto_tests mesh_ir_compute_tests mesh_ir_frontend_tests mesh_fallback_policy_tests mesh_compute_cache_key_tests mesh_vertex_bridge_tests shader_cfg_tests --parallel JOBS',
             "ctest --test-dir BUILD --output-on-failure --parallel 1 -V -R $selection");
         buildTests=$testResults; runtimeImports=$imports;
         externalPrerequisites=@('Windows 10/11 x64','Microsoft Visual C++ v14 x64 runtime (at least build tool version)',

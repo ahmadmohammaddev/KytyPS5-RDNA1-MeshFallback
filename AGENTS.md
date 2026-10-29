@@ -297,3 +297,11 @@ Next one local task production per-draw resource/lifetime preparation using exis
 
 ## S-065 investigation — incomplete
 Input `a1b9d97be74c18ccc8ebbd65515becf86af8bd66`; source review found existing `Buffer` allocation and `DescriptorHeap` fatal failure paths. No resource implementation or tests completed. Next: recoverable Buffer allocation boundary with injected partial-failure rollback/exact-once cleanup and zero-output tests, then continue lifecycle work under D-033. All six test categories NOT RUN this session; S-064 evidence unchanged. No renderer activation or push. See living plan S-065.
+
+## Current checkpoint S-066 — recoverable unsubmitted Buffer boundary
+
+Existing Buffer now offers a non-sparse/non-BDA recoverable TryCreate; legacy constructor retains fatal final-failure behavior and shared reclaim/retry order. Allocation/host-memory implementation split into cache/bufferAllocation.cpp so actual Buffer+VMA is independently testable. Production PrepareBuffers accepts a successful compiler bundle; checked-plan transaction publishes geometry/optional UV only after complete allocation. Zero plans retain guarded storage; partial allocation is destroyed exactly once before error return. No renderer call site or submitted-resource lifetime claim.
+
+49 focused cases36 PASS/13 strict SKIPPED/0 FAIL(8.24s). Actual Intel API1.2.172 real Buffer/VMA:8 created/8 destroyed,18 injected driver refusals (six exhausted three-attempt failures), zero core/synchronization errors/warnings through cleanup. Physical OOM NOT RUN; strict1.3 SKIPPED; new RX/game NOT RUN.44 existing modules byte-identical. Complete source captures -01 through -09 under _Build/p0-s012/, logs _Build/p2-s066/, report docs/RDNA1_BUFFER_BOUNDARY_S066.md. Final two-job emulator build+link10 PASS. Existing S-064 native evidence retained; no package/push.
+
+Next bounded local task dedicated recoverable descriptor ownership around these unsubmitted buffers: binding1 geometry/optional binding2 UV/no binding0; precise setup failure, atomic rollback/exact-once pool+buffer cleanup, zero/nonzero tests and real Vulkan validation-clean allocation/update. Follow with scheduler current-recording completion retention, pending/no-reuse/shutdown/abandonment tests before recording or activation. Continue D-033 locally; no per-patch RX request under D-028.
